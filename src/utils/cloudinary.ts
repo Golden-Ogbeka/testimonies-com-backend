@@ -1,10 +1,10 @@
-import * as dotenv from 'dotenv';
-import { NextFunction, Request, Response } from 'express';
-import multer, { FileFilterCallback } from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import { PRODUCT_NAME } from '../functions/env';
-import { sendErrorFeedback } from '../functions/feedback';
-const cloudinary = require('cloudinary').v2;
+import * as dotenv from "dotenv";
+import { NextFunction, Request, Response } from "express";
+import multer, { FileFilterCallback } from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { PRODUCT_NAME } from "../functions/env";
+import { sendErrorFeedback } from "../functions/feedback";
+const cloudinary = require("cloudinary").v2;
 // import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
@@ -19,16 +19,16 @@ cloudinary.config({
 const imageFileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ) => {
-  const allowedMimeTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+  const allowedMimeTypes = ["image/png", "image/jpg", "image/jpeg"];
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        `Invalid file type. Only JPG, PNG, and JPEG are allowed. Your file type is ${file.mimetype}`
-      )
+        `Invalid file type. Only JPG, PNG, and JPEG are allowed. Your file type is ${file.mimetype}`,
+      ),
     );
   }
 };
@@ -37,33 +37,33 @@ const imageFileFilter = (
 const documentFileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ) => {
   // Allowing both images and documents
   const allowedMimeTypes = [
     // images
-    'image/png',
-    'image/jpg',
-    'image/jpeg',
+    "image/png",
+    "image/jpg",
+    "image/jpeg",
 
     // documents
-    'application/pdf',
-    'application/doc',
-    'application/docx',
-    'application/xls',
-    'application/xlsx',
-    'application/ppt',
-    'application/pptx',
-    'text/plain',
-    'text/csv',
+    "application/pdf",
+    "application/doc",
+    "application/docx",
+    "application/xls",
+    "application/xlsx",
+    "application/ppt",
+    "application/pptx",
+    "text/plain",
+    "text/csv",
   ];
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        `Invalid file type. Only image and document files are allowed. Your file type is ${file.mimetype}`
-      )
+        `Invalid file type. Only image and document files are allowed. Your file type is ${file.mimetype}`,
+      ),
     );
   }
 };
@@ -72,13 +72,13 @@ const documentFileFilter = (
 const videoFileFilter = (
   req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: FileFilterCallback,
 ) => {
   const allowedMimeTypes = [
-    'video/mp4',
-    'video/mpeg',
-    'video/x-msvideo',
-    'video/x-matroska',
+    "video/mp4",
+    "video/mpeg",
+    "video/x-msvideo",
+    "video/x-matroska",
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -86,51 +86,51 @@ const videoFileFilter = (
   } else {
     cb(
       new Error(
-        `Invalid file type. Only MP4, MPEG, AVI, and MKV are allowed. Your file type is ${file.mimetype}`
-      )
+        `Invalid file type. Only MP4, MPEG, AVI, and MKV are allowed. Your file type is ${file.mimetype}`,
+      ),
     );
   }
 };
 
-const CLOUDINARY_FOLDER = PRODUCT_NAME || 'default_folder';
+const CLOUDINARY_FOLDER = PRODUCT_NAME || "default_folder";
 const ALLOWED_FORMATS = [
   // pictures
-  'jpg',
-  'png',
-  'jpeg',
-  'jfif',
-  'pjpeg',
-  'pjp',
+  "jpg",
+  "png",
+  "jpeg",
+  "jfif",
+  "pjpeg",
+  "pjp",
   // videos
-  'mp4',
-  'avi',
-  'mkv',
+  "mp4",
+  "avi",
+  "mkv",
   // documents
-  'pdf',
-  'doc',
-  'docx',
-  'xls',
-  'xlsx',
-  'ppt',
-  'pptx',
-  'txt',
-  'csv',
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
 ];
 
 const cloudStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isVideo = file.mimetype.startsWith('video');
-    const isDocument = file.mimetype.startsWith('application');
-    const subFolder = isVideo ? 'videos' : isDocument ? 'documents' : 'images';
+    const isVideo = file.mimetype.startsWith("video");
+    const isDocument = file.mimetype.startsWith("application");
+    const subFolder = isVideo ? "videos" : isDocument ? "documents" : "images";
     return {
       folder: `${CLOUDINARY_FOLDER}/${subFolder}`,
-      format: ALLOWED_FORMATS.includes(file.mimetype.split('/')[1])
-        ? file.mimetype.split('/')[1]
+      format: ALLOWED_FORMATS.includes(file.mimetype.split("/")[1])
+        ? file.mimetype.split("/")[1]
         : undefined,
       allowed_formats: ALLOWED_FORMATS,
-      resource_type: isVideo ? 'video' : isDocument ? 'raw' : 'image',
-      public_id: `${Date.now()}_${file.originalname.replace(' ', '_')}`,
+      resource_type: isVideo ? "video" : isDocument ? "raw" : "image",
+      public_id: `${Date.now()}_${file.originalname.replace(" ", "_")}`,
     };
   },
 });
@@ -163,7 +163,7 @@ const multerErrorHandler = (
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   if (err instanceof multer.MulterError) {
     // Multer-specific errors
@@ -177,4 +177,3 @@ const multerErrorHandler = (
 };
 
 export { documentParser, multerErrorHandler, parser, videoParser };
-

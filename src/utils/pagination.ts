@@ -1,5 +1,5 @@
-import express from 'express';
-import { PAGE_LIMIT } from '../functions/env';
+import express from "express";
+import { PAGE_LIMIT } from "../functions/env";
 
 export interface PaginationCustomLabels {
   totalDocs: string;
@@ -13,15 +13,15 @@ export interface PaginationCustomLabels {
 }
 
 export const paginationCustomLabels: PaginationCustomLabels = {
-  totalDocs: 'totalResults',
-  docs: 'results',
-  limit: 'resultsPerPage',
-  page: 'currentPage',
-  nextPage: 'nextPage',
-  prevPage: 'prevPage',
-  totalPages: 'totalPages',
+  totalDocs: "totalResults",
+  docs: "results",
+  limit: "resultsPerPage",
+  page: "currentPage",
+  nextPage: "nextPage",
+  prevPage: "prevPage",
+  totalPages: "totalPages",
   // pagingCounter: 'slNo',
-  meta: 'pagination',
+  meta: "pagination",
 };
 
 export const getPaginationOptions = (
@@ -31,7 +31,7 @@ export const getPaginationOptions = (
     unknown,
     { page: number; limit?: number; from?: string; to?: string }
   >,
-  sortBy?: {}
+  sortBy?: {},
 ) => {
   const { page = 1, limit } = req.query;
 

@@ -1,37 +1,37 @@
-import colors from 'colors/safe';
-import { NextFunction, Request, Response } from 'express';
+import colors from "colors/safe";
+import { NextFunction, Request, Response } from "express";
 
 const logger = (req: Request, res: Response, next: NextFunction) => {
-  let log = '';
+  let log = "";
   switch (req.method) {
-    case 'GET':
+    case "GET":
       log = colors.green(
-        `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
+        `${req.method} ${req.protocol}://${req.get("host")}${req.originalUrl}`,
       );
       break;
-    case 'POST':
+    case "POST":
       log = colors.yellow(
-        `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
+        `${req.method} ${req.protocol}://${req.get("host")}${req.originalUrl}`,
       );
       break;
-    case 'PUT':
+    case "PUT":
       log = colors.blue(
-        `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
+        `${req.method} ${req.protocol}://${req.get("host")}${req.originalUrl}`,
       );
       break;
-    case 'PATCH':
+    case "PATCH":
       log = colors.magenta(
-        `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
+        `${req.method} ${req.protocol}://${req.get("host")}${req.originalUrl}`,
       );
       break;
-    case 'DELETE':
+    case "DELETE":
       log = colors.red(
-        `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
+        `${req.method} ${req.protocol}://${req.get("host")}${req.originalUrl}`,
       );
       break;
     default:
       log = colors.white(
-        `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
+        `${req.method} ${req.protocol}://${req.get("host")}${req.originalUrl}`,
       );
       break;
   }

@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 
 export const getDateFilters = (
   req: express.Request<
@@ -8,14 +8,14 @@ export const getDateFilters = (
     { page: number; limit?: number; from?: string; to?: string }
   >,
   additionalFilters?: { [key: string]: any },
-  dateField?: string
+  dateField?: string,
 ) => {
   const { from, to } = req.query;
   let filters = {};
 
   if (from) {
     filters = {
-      [dateField || 'createdAt']: {
+      [dateField || "createdAt"]: {
         $gte: new Date(from),
         ...(to && {
           $lte: new Date(to),

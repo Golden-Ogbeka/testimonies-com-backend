@@ -1,24 +1,24 @@
-import compression from 'compression';
-import cors from 'cors';
-import * as dotenv from 'dotenv';
-import express, { NextFunction, Request, Response } from 'express';
-import mongoSanitize from 'express-mongo-sanitize';
-import { rateLimit } from 'express-rate-limit';
-import helmet from 'helmet';
-import hpp from 'hpp';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import AppRouter from './api';
-import { socketHandler } from './api/v1/socket';
-import { connectMongoDB } from './config/db';
-import { PRODUCT_NAME } from './functions/env';
-import { sendCatchFeedback, sendErrorFeedback } from './functions/feedback';
-import { AgendaControl } from './jobs';
-import logger from './middleware/logger';
-import { isValidAPI } from './middleware/shared';
-import { multerErrorHandler } from './utils/cloudinary';
-import { corsList } from './utils/constants';
-process.env.DOTENV_LOG = 'false';
+import compression from "compression";
+import cors from "cors";
+import * as dotenv from "dotenv";
+import express, { NextFunction, Request, Response } from "express";
+import mongoSanitize from "express-mongo-sanitize";
+import { rateLimit } from "express-rate-limit";
+import helmet from "helmet";
+import hpp from "hpp";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import AppRouter from "./api";
+import { socketHandler } from "./api/v1/socket";
+import { connectMongoDB } from "./config/db";
+import { PRODUCT_NAME } from "./functions/env";
+import { sendCatchFeedback, sendErrorFeedback } from "./functions/feedback";
+import { AgendaControl } from "./jobs";
+import logger from "./middleware/logger";
+import { isValidAPI } from "./middleware/shared";
+import { multerErrorHandler } from "./utils/cloudinary";
+import { corsList } from "./utils/constants";
+process.env.DOTENV_LOG = "false";
 
 dotenv.config();
 
@@ -28,9 +28,9 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: corsList,
-    methods: ['GET', 'POST'],
+    methods: ["GET", "POST"],
   },
-  path: '/socket.io',
+  path: "/socket.io",
 });
 
 const PORT = process.env.PORT || 5000;
@@ -38,7 +38,7 @@ const PORT = process.env.PORT || 5000;
 // Security Start
 
 // Enable trust proxy
-app.set('trust proxy', 1); // '1' means trust the first proxy in the chain
+app.set("trust proxy", 1); // '1' means trust the first proxy in the chain
 
 // Limit API requests in specified time
 const limiter = rateLimit({
@@ -46,7 +46,7 @@ const limiter = rateLimit({
   limit: 500, // Limit each IP to 500 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: 'Too many requests from this IP. Try again in 15 minutes',
+  message: "Too many requests from this IP. Try again in 15 minutes",
 });
 
 app.use(limiter);
@@ -55,7 +55,7 @@ app.use(limiter);
 app.use(
   cors({
     origin: corsList,
-  })
+  }),
 );
 
 // Use Helmet!
@@ -73,7 +73,7 @@ app.use(compression());
 // Security end
 
 // Add middlewares for parsing JSON and urlencoded data and populating `req.body`
-app.use(express.urlencoded({ extended: false, limit: '5mb' }));
+app.use(express.urlencoded({ extended: false, limit: "5mb" }));
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -82,16 +82,16 @@ app.use(express.json());
 app.use(logger);
 
 // base route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to ' + PRODUCT_NAME });
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to " + PRODUCT_NAME });
 });
 
 // API Routes
-app.use('/api', isValidAPI, AppRouter);
+app.use("/api", isValidAPI, AppRouter);
 
 // Not found route
 app.use((req, res) => {
-  return sendErrorFeedback(res, 404, 'API route not found.');
+  return sendErrorFeedback(res, 404, "API route not found.");
 });
 
 // Error Handling for multer
@@ -108,11 +108,11 @@ socketHandler(io);
 
 httpServer
   .listen(PORT, async () => {
-    console.log('Server running at PORT:', PORT);
+    console.log("Server running at PORT:", PORT);
     connectMongoDB();
     await AgendaControl.start();
   })
-  .on('error', (error) => {
+  .on("error", (error) => {
     // gracefully handle error
     throw new Error(error.message);
   });

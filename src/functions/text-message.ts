@@ -1,5 +1,5 @@
-import axios from 'axios';
-import twilio from 'twilio';
+import axios from "axios";
+import twilio from "twilio";
 
 import {
   OTP_EXPIRY,
@@ -9,14 +9,14 @@ import {
   SMS_SENDER_ID,
   TWILIO_SMS_API_KEY,
   TWILIO_SMS_SENDER_ID,
-} from './env';
+} from "./env";
 
 const client = twilio(TWILIO_SMS_SENDER_ID, TWILIO_SMS_API_KEY);
 
 export const sendMessageFromTwilio = async (
   to: string,
   message: string,
-  from = '+13022516742'
+  from = "+13022516742",
 ) => {
   try {
     const messageSent = await client.messages.create({
@@ -28,8 +28,8 @@ export const sendMessageFromTwilio = async (
     return messageSent;
   } catch (error: any) {
     throw new Error(
-      'Twilio SMS error: ' +
-        (error?.response?.data?.message || 'Could not send sms from Twilio')
+      "Twilio SMS error: " +
+        (error?.response?.data?.message || "Could not send sms from Twilio"),
     );
   }
 };
@@ -37,23 +37,23 @@ export const sendMessageFromTwilio = async (
 export const sendTextMessage = async (
   to: string,
   message: string,
-  channel = 'generic',
-  from = SMS_SENDER_ID
+  channel = "generic",
+  from = SMS_SENDER_ID,
 ) => {
   try {
     const data = {
       to,
       from,
       sms: message,
-      type: 'plain',
+      type: "plain",
       api_key: SMS_API_KEY,
       channel,
     };
     const options = {
-      method: 'POST',
-      url: 'https://v3.api.termii.com/api/sms/send',
+      method: "POST",
+      url: "https://v3.api.termii.com/api/sms/send",
       headers: {
-        'Content-Type': ['application/json'],
+        "Content-Type": ["application/json"],
       },
       data: JSON.stringify(data),
     };
@@ -68,22 +68,22 @@ export const sendTokenFromTermii = async (to: string) => {
   try {
     const data = {
       api_key: SMS_API_KEY,
-      message_type: 'ALPHANUMERIC',
+      message_type: "ALPHANUMERIC",
       to,
       from: SMS_SENDER_ID,
-      channel: 'generic',
+      channel: "generic",
       pin_attempts: 3,
       pin_time_to_live: 10,
       pin_length: 6,
-      pin_placeholder: '< 123456 >',
+      pin_placeholder: "< 123456 >",
       message_text: `Your ${PRODUCT_NAME} OTP is: < 123456 >. Expires ${OTP_EXPIRY}`,
-      pin_type: 'NUMERIC',
+      pin_type: "NUMERIC",
     };
     const options = {
-      method: 'POST',
+      method: "POST",
       url: `${SMS_BASE_URL}/api/sms/otp/send`,
       headers: {
-        'Content-Type': ['application/json'],
+        "Content-Type": ["application/json"],
       },
       data: JSON.stringify(data),
     };
@@ -93,7 +93,8 @@ export const sendTokenFromTermii = async (to: string) => {
     return res.data.pinId;
   } catch (error: any) {
     throw new Error(
-      'SMS OTP error: ' + (error?.response?.data?.message || 'Could not send sms otp')
+      "SMS OTP error: " +
+        (error?.response?.data?.message || "Could not send sms otp"),
     );
   }
 };
@@ -106,10 +107,10 @@ export const verifySMSTokenWithTermii = async (pinId: string, code: string) => {
       pin: code,
     };
     const options = {
-      method: 'POST',
+      method: "POST",
       url: `${SMS_BASE_URL}/api/sms/otp/verify`,
       headers: {
-        'Content-Type': ['application/json'],
+        "Content-Type": ["application/json"],
       },
       data: JSON.stringify(data),
     };
@@ -119,14 +120,14 @@ export const verifySMSTokenWithTermii = async (pinId: string, code: string) => {
     return res.data;
   } catch (error: any) {
     throw new Error(
-      'SMS OTP Verification error: ' +
-        (error?.response?.data?.message || 'Could not verify sms otp')
+      "SMS OTP Verification error: " +
+        (error?.response?.data?.message || "Could not verify sms otp"),
     );
   }
 };
 
 export const checkForTwilioAllowedCountry = (phoneNumber: string): boolean => {
-  const notAllowedCountry = ['+234'];
+  const notAllowedCountry = ["+234"];
 
   // Check if the phone number starts with any of the disallowed prefixes
   return !notAllowedCountry.some((code) => phoneNumber.startsWith(code));

@@ -8,7 +8,7 @@ export const paginate = ({
   limit: number;
 }) => {
   if (!page) {
-    throw Error('Please select a page');
+    throw Error("Please select a page");
   }
 
   // in case page is less than or equal to zero, change to 1

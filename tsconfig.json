@@ -10,15 +10,12 @@
     "strict": true,
     "moduleResolution": "nodenext",
     "resolveJsonModule": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
-  ],
+  "include": ["src/**/*.ts", "test/**/*.ts"],
   "ts-node": {
     "esm": true,
     "transpileOnly": true,
-    "files": true,
+    "files": true
   }
 }

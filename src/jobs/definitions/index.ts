@@ -1,6 +1,6 @@
-import Agenda from 'agenda';
-import { AdminCronDefinitions } from './admin';
-import { UserCronDefinitions } from './user';
+import Agenda from "agenda";
+import { AdminCronDefinitions } from "./admin";
+import { UserCronDefinitions } from "./user";
 
 const definitions = [AdminCronDefinitions, UserCronDefinitions];
 

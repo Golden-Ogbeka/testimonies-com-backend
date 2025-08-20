@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 
 dotenv.config();
 
@@ -36,7 +36,6 @@ export const TWILIO_SMS_API_KEY = process.env.TWILIO_SMS_API_KEY;
 // Google APIS
 export const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
-
 // MongoDB Atlas for Search Indexing
 export const MONGODB_ATLAS_PROJECT_ID = process.env.MONGODB_ATLAS_PROJECT_ID;
 export const MONGODB_ATLAS_CLUSTER = process.env.MONGODB_ATLAS_CLUSTER;
@@ -44,7 +43,8 @@ export const MONGODB_ATLAS_PUBLIC_KEY = process.env.MONGODB_ATLAS_PUBLIC_KEY;
 export const MONGODB_ATLAS_PRIVATE_KEY = process.env.MONGODB_ATLAS_PRIVATE_KEY;
 export const MONGODB_DATABASE = process.env.MONGODB_DATABASE;
 export const MONGODB_TEAM_COLLECTION = process.env.MONGODB_TEAM_COLLECTION;
-export const MONGODB_SEARCH_INDEX_LIMIT = process.env.MONGODB_SEARCH_INDEX_LIMIT;
+export const MONGODB_SEARCH_INDEX_LIMIT =
+  process.env.MONGODB_SEARCH_INDEX_LIMIT;
 
 // OAUTH
 export const GOOGLE_OATH_API_KEY = process.env.GOOGLE_OATH_API_KEY;
