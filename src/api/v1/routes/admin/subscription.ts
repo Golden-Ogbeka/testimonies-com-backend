@@ -130,12 +130,21 @@ AdminSubscriptionRouter.get(
 );
 
 // Get all users with active subscriptions
-AdminSubscriptionRouter.get("/active-subscriptions", Controller.GetActiveSubscriptions);
+AdminSubscriptionRouter.get(
+  "/active-subscriptions",
+  Controller.GetActiveSubscriptions,
+);
 
 // Get all users with cancelled subscriptions
-AdminSubscriptionRouter.get("/cancelled-subscriptions", Controller.GetCancelledSubscriptions);
+AdminSubscriptionRouter.get(
+  "/cancelled-subscriptions",
+  Controller.GetCancelledSubscriptions,
+);
 
 // Get all users without any subscriptions
-AdminSubscriptionRouter.get("/unsubscribed-users", Controller.GetUnsubscribedUsers);
+AdminSubscriptionRouter.get(
+  "/unsubscribed-users",
+  Controller.GetUnsubscribedUsers,
+);
 
 export default AdminSubscriptionRouter;
