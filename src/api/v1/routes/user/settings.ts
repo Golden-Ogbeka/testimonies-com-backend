@@ -8,7 +8,10 @@ const Controller = UserSettingsController();
 UserSettingsRouter.patch("/visibility", Controller.UpdateVisibilitySettings);
 
 // Update user's notification settings
-UserSettingsRouter.patch("/notifications", Controller.UpdateNotificationSettings);
+UserSettingsRouter.patch(
+  "/notifications",
+  Controller.UpdateNotificationSettings,
+);
 
 // Update user's privacy settings
 UserSettingsRouter.patch("/privacy", Controller.UpdatePrivacySettings);

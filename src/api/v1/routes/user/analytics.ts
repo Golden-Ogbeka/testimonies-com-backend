@@ -25,13 +25,22 @@ UserAnalyticsRouter.get("/engagement", Controller.GetEngagementStats);
 UserAnalyticsRouter.get("/team/summary", Controller.GetTeamAnalyticsSummary);
 
 // Get top testimonies by views
-UserAnalyticsRouter.get("/top-testimonies/views", Controller.GetTopTestimoniesByViews);
+UserAnalyticsRouter.get(
+  "/top-testimonies/views",
+  Controller.GetTopTestimoniesByViews,
+);
 
 // Get top testimonies by likes
-UserAnalyticsRouter.get("/top-testimonies/likes", Controller.GetTopTestimoniesByLikes);
+UserAnalyticsRouter.get(
+  "/top-testimonies/likes",
+  Controller.GetTopTestimoniesByLikes,
+);
 
 // Get top testimonies by replies
-UserAnalyticsRouter.get("/top-testimonies/replies", Controller.GetTopTestimoniesByReplies);
+UserAnalyticsRouter.get(
+  "/top-testimonies/replies",
+  Controller.GetTopTestimoniesByReplies,
+);
 
 // Get team analytics of single team member
 UserAnalyticsRouter.get(

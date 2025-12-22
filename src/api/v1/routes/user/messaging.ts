@@ -46,7 +46,10 @@ UserMessagingRouter.patch(
 );
 
 // Mark all conversations as read
-UserMessagingRouter.patch("/conversations/read-all", Controller.MarkAllConversationsAsRead);
+UserMessagingRouter.patch(
+  "/conversations/read-all",
+  Controller.MarkAllConversationsAsRead,
+);
 
 // Mark message as read
 UserMessagingRouter.patch(

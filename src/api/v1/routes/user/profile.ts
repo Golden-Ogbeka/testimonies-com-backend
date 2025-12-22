@@ -115,7 +115,10 @@ UserProfileRouter.get(
 UserProfileRouter.get("/share-url", Controller.GetProfileShareUrl);
 
 // Get another user's profile share url by username
-UserProfileRouter.get("/share-url/:username", Controller.GetProfileShareUrlByUsername);
+UserProfileRouter.get(
+  "/share-url/:username",
+  Controller.GetProfileShareUrlByUsername,
+);
 
 // Get user profile statistics (number of followers, following, testimonies, replies, likes received, views received)
 UserProfileRouter.get("/stats", Controller.GetProfileStats);

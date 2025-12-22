@@ -202,13 +202,19 @@ UserTestimonyRouter.get("/user/my-testimonies", Controller.GetMyTestimonies);
 UserTestimonyRouter.get("/user/my-replies", Controller.GetMyReplies);
 
 // Delete all testimonies for a user (for subscribed users only)
-UserTestimonyRouter.delete("/user/all-testimonies", Controller.DeleteAllTestimonies);
+UserTestimonyRouter.delete(
+  "/user/all-testimonies",
+  Controller.DeleteAllTestimonies,
+);
 
 // Delete all replies to testimonies for a user (for subscribed users only)
 UserTestimonyRouter.delete("/user/all-replies", Controller.DeleteAllReplies);
 
 // Get testimonies by tag (unauthenticated) - Would not include replies and analytics details. Would just include the count
-UserTestimonyRouter.get("/public/tag/:tag", Controller.GetPublicTestimoniesByTag);
+UserTestimonyRouter.get(
+  "/public/tag/:tag",
+  Controller.GetPublicTestimoniesByTag,
+);
 
 // Get testimonies by tag (authenticated) - Would include the details of analytics (replies, etc)
 UserTestimonyRouter.get("/tag/:tag", Controller.GetTestimoniesByTag);
@@ -241,7 +247,10 @@ UserTestimonyRouter.get(
 );
 
 // Search testimonies by keyword
-UserTestimonyRouter.get("/search/keyword", Controller.SearchTestimoniesByKeyword);
+UserTestimonyRouter.get(
+  "/search/keyword",
+  Controller.SearchTestimoniesByKeyword,
+);
 
 // Search testimonies by tag
 UserTestimonyRouter.get("/search/tag", Controller.SearchTestimoniesByTag);
