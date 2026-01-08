@@ -97,7 +97,7 @@ export const UserAuthController = () => {
       return sendCatchFeedback(res, error);
     }
   };
-  
+
   const GoogleOAuthCallback = async (req: Request, res: Response) => {
     try {
       // check for validation errors
