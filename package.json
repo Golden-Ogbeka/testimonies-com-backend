@@ -57,7 +57,7 @@
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
     "colors": "^1.4.0",
-    "company-email-validator": "^1.1.0",
+    "company-email-validator": "^1.2.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "csv-writer": "^1.6.0",

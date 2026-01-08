@@ -97,6 +97,14 @@ export const UserAuthController = () => {
       return sendCatchFeedback(res, error);
     }
   };
+  
+  const GoogleOAuthCallback = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
 
   const Logout = async (req: Request, res: Response) => {
     try {
@@ -143,6 +151,7 @@ export const UserAuthController = () => {
     ResetPassword,
     ResetPasswordUpdate,
     GoogleAuth,
+    GoogleOAuthCallback,
     Logout,
     GetSessions,
     DeleteOtherSessions,
