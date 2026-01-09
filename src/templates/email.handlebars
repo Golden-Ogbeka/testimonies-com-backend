@@ -1,0 +1,85 @@
+<html style="margin: 0;">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>{{emailTitle}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body
+    style="padding-left: 30px; padding-right: 30px; padding-top: 20px; padding-bottom: 20px; background-color: #F8FAFC;
+  font-family: 'Inter', sans-serif; font-weight: 400; font-style: normal; color: #202B3C; overflow-x: hidden; font-size: 16px;"
+  >
+
+    <img
+      src="https://res.cloudinary.com/goldenogbeka/image/upload/v1767967393/logo_v2jwxx.png"
+      alt="Logo Icon"
+      style="width: 192px; object-fit: contain; height: auto;"
+    />
+
+    <div
+      style="padding: 30px; background-color: #FFFFFF;  margin-top: 30px; margin-bottom: 30px; color: #384860;"
+    >
+      <h1
+        style="font-size: 24px; font-weight: 700; color: #17212C; margin-bottom: 30px;"
+      >{{subject}}</h1>
+      <p style="margin-bottom: 30px; font-weight: 400 !important;">Hello
+        {{name}}!</p>
+      {{! Triple curly braces used here to allow html syntax }}
+      <p
+        style="margin-bottom: 30px; font-weight: 400 !important;"
+      >{{{emailContent}}}</p>
+      <p style="margin-bottom: 30px; font-weight: 400 !important;">Thank you for
+        using Testimonies.com app!</p>
+      <p>Best regards,<br /> Testimonies.com Team</p>
+    </div>
+
+    <p style="margin-bottom: 30px; font-weight: 400 !important;">Testimonies.com
+      at the touch of a button! Download our app for Android & iOS.</p>
+
+    <div style="margin-top: 30px; margin-bottom: 30px">
+      <a
+        href="https://www.testimonies.com"
+        target="_blank"
+        rel="noreferrer"
+        style="margin-right: 10px; text-decoration: none;"
+      >
+        <img
+          alt="Google Play"
+          src="https://res.cloudinary.com/goldenogbeka/image/upload/v1739395869/Click%20N%20Schedule/images/google-play-badge_higlyt.jpg"
+          style="height: 32px; width: auto; object-fit: contain;"
+        />
+      </a>
+      <a
+        href="https://www.testimonies.com"
+        target="_blank"
+        rel="noreferrer"
+        style="text-decoration: none"
+      >
+        <img
+          alt="Apple Store"
+          src="https://res.cloudinary.com/goldenogbeka/image/upload/v1739395868/Click%20N%20Schedule/images/app-store-badge_r2xezw.jpg"
+          style="height: 32px; width: auto; object-fit: contain;"
+        />
+      </a>
+    </div>
+
+    <p style="font-weight: 400;">Questions or FAQs? Contact us at
+      <a
+        href="https://www.testimonies.com"
+        target="_blank"
+      >Testimonies.com.com</a>.<br />
+      You are receiving this email because you signed up on Testimonies.com.</p>
+
+    <p style="margin-top: 30px; font-weight: 400 !important;">©
+      {{currentYear}}
+      Testimonies.com</p>
+  </body>
+
+</html>

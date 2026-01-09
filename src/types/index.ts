@@ -7,9 +7,11 @@ export interface MailContentType {
   username: string;
   subject: string;
   email: string;
-  attachmentDetails?: {
-    fileBuffer: Buffer;
-    fileName: string;
-    mimeType: string;
-  };
+  attachmentDetails?: EmailAttachmentType;
+}
+
+export interface EmailAttachmentType {
+  fileBuffer: Buffer;
+  fileName: string;
+  mimeType: string;
 }

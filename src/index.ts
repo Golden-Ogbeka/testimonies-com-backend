@@ -109,10 +109,11 @@ socketHandler(io);
 httpServer
   .listen(PORT, async () => {
     console.log("Server running at PORT:", PORT);
-    connectMongoDB();
+    await connectMongoDB();
     await AgendaControl.start();
   })
   .on("error", (error) => {
     // gracefully handle error
+    console.error("Server failed to start:", error);
     throw new Error(error.message);
   });

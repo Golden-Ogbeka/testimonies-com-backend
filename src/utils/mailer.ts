@@ -2,13 +2,19 @@ import colors from "colors/safe";
 import { create } from "express-handlebars";
 import nodemailer from "nodemailer";
 import path from "path";
-import { EMAIL_HOST, EMAIL_PASS, EMAIL_USER } from "../functions/env";
+import {
+  EMAIL_FROM,
+  EMAIL_HOST,
+  EMAIL_PASS,
+  EMAIL_PORT,
+  EMAIL_USER,
+} from "../functions/env";
 import { MailContentType } from "../types";
 
 // Create transporter
 const transporter = nodemailer.createTransport({
   host: EMAIL_HOST,
-  port: 587,
+  port: Number(EMAIL_PORT),
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS,
@@ -57,7 +63,7 @@ const sendEmail = async ({
       template?: string;
       context?: any;
     } = {
-      from: '"Product" <noreply@product.com>',
+      from: EMAIL_FROM,
       to: recipient,
       subject: subject,
       template: "email", // Template file name (without extension)
