@@ -79,7 +79,7 @@ import UserModel from "../models/user.model";
 //   }
 // };
 
-export const isUser = async (
+export const isUserOrOrganization = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -112,6 +112,74 @@ export const isUser = async (
       }));
 
     if (!isUser)
+      return sendErrorFeedback(res, 401, "Unauthorized. Contact Admin");
+
+    next();
+  } catch (error: any) {
+    return sendErrorFeedback(res, 401, "Unauthorized");
+  }
+};
+export const isUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const value = req.headers.authorization;
+
+    if (!value)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+
+    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+
+    if (!tokenData)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+
+    if (tokenData.domain !== PRODUCT_NAME)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+
+    // Check if admin exists and is activated
+    const isUser = await UserModel.findOne({
+      email: tokenData?.email,
+      active: true,
+      isFlagged: false,
+    });
+
+    if (!isUser)
+      return sendErrorFeedback(res, 401, "Unauthorized. Contact Admin");
+
+    next();
+  } catch (error: any) {
+    return sendErrorFeedback(res, 401, "Unauthorized");
+  }
+};
+export const isOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const value = req.headers.authorization;
+
+    if (!value)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+
+    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+
+    if (!tokenData)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+
+    if (tokenData.domain !== PRODUCT_NAME)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+
+    // Check if admin exists and is activated
+    const isOrg = await OrganizationModel.findOne({
+      email: tokenData?.email,
+      active: true,
+      isFlagged: false,
+    });
+
+    if (!isOrg)
       return sendErrorFeedback(res, 401, "Unauthorized. Contact Admin");
 
     next();

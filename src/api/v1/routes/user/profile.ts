@@ -1,6 +1,13 @@
 import { Router } from "express";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
+import {
+  isOrganization,
+  isUser,
+  isUserOrOrganization,
+} from "../../../../middleware/auth";
+import { isBusinessEmail } from "../../../../middleware/field-check";
 import { isValidObjectId } from "../../../../middleware/validation";
+import { parser } from "../../../../utils/cloudinary";
 import { UserProfileController } from "../../controllers/user/profile";
 
 const UserProfileRouter = Router();
@@ -10,16 +17,169 @@ const Controller = UserProfileController();
 UserProfileRouter.get("/", Controller.GetProfile);
 
 // Update logged in user's profile details
-UserProfileRouter.put("/", Controller.UpdateProfile);
+UserProfileRouter.put(
+  "/user",
+  [
+    isUser,
+    body("username", "Username is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 3 })
+      .withMessage("Username must be at least 3 characters long"),
+    body("firstName", "First name is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("First name must be at least 2 characters long"),
+    body("lastName", "Last name is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Last name must be at least 2 characters long"),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .withMessage("Valid email is required")
+      .normalizeEmail({ all_lowercase: true })
+      .isLength({ max: 100 })
+      .withMessage("Email cannot have more than 100 characters."),
+    body("phoneNumber", "Phone number is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isMobilePhone("any", { strictMode: true })
+      .withMessage(
+        "Invalid mobile number. Please, make sure to add the preceding country or city code.",
+      ),
+    body("password", "Password is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters long")
+      .matches(/[A-Z]/)
+      .withMessage("Password must contain at least one uppercase letter")
+      .matches(/[a-z]/)
+      .withMessage("Password must contain at least one lowercase letter")
+      .matches(/[0-9]/)
+      .withMessage("Password must contain at least one number")
+      .matches(/[!@#$%^&*]/)
+      .withMessage(
+        "Password must contain at least one special character (!@#$%^&*)",
+      ),
+    body("bio")
+      .optional()
+      .isLength({ min: 2 })
+      .withMessage("Bio must be at least 2 characters long"),
+    body("address")
+      .optional()
+      .isLength({ min: 2 })
+      .withMessage("Address must be at least 2 characters long"),
+  ],
+  Controller.UpdateProfile,
+);
+
+// Update logged in organization's profile details
+UserProfileRouter.put(
+  "/organization",
+  [
+    isOrganization,
+    body("username", "Username is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 3 })
+      .withMessage("Username must be at least 3 characters long"),
+    body("businessName", "Business name is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Business name must be at least 2 characters long"),
+    body("businessEmail", "Business email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .withMessage("Valid email is required")
+      .normalizeEmail({ all_lowercase: true })
+      .custom((value) => isBusinessEmail(value))
+      .withMessage("Please enter a company email")
+      .isLength({ max: 100 })
+      .withMessage("Email cannot have more than 100 characters."),
+    body("businessPhoneNumber", "Phone number is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isMobilePhone("any", { strictMode: true })
+      .withMessage(
+        "Invalid mobile number. Please, make sure to add the preceding country or city code.",
+      ),
+    body("password", "Password is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters long")
+      .matches(/[A-Z]/)
+      .withMessage("Password must contain at least one uppercase letter")
+      .matches(/[a-z]/)
+      .withMessage("Password must contain at least one lowercase letter")
+      .matches(/[0-9]/)
+      .withMessage("Password must contain at least one number")
+      .matches(/[!@#$%^&*]/)
+      .withMessage(
+        "Password must contain at least one special character (!@#$%^&*)",
+      ),
+
+    body("businessAddress", "Business address is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Business address must be at least 2 characters long"),
+    body("businessLocationGeographicCoordinates")
+      .isArray({ min: 2, max: 2 })
+      .withMessage(
+        "Business geographic coordinates must be an array of two numbers [longitude, latitude]",
+      )
+      .custom((value) => {
+        if (
+          typeof value[0] !== "number" ||
+          typeof value[1] !== "number" ||
+          value[0] < -180 ||
+          value[0] > 180 ||
+          value[1] < -90 ||
+          value[1] > 90
+        ) {
+          throw new Error(
+            "Business geographic coordinates must be valid longitude and latitude values",
+          );
+        } else {
+          return true;
+        }
+      }),
+    body("businessWebsite")
+      .optional()
+      .isURL()
+      .withMessage("Business website must be a valid URL"),
+    body("businessBio")
+      .optional()
+      .isLength({ min: 2 })
+      .withMessage("Business bio must be at least 2 characters long"),
+  ],
+  Controller.UpdateProfile,
+);
 
 // Delete logged in user's profile
 UserProfileRouter.delete("/", Controller.DeleteProfile);
 
 // Update logged in user's profile picture
-UserProfileRouter.patch("/picture", Controller.UpdateProfilePicture);
+UserProfileRouter.patch(
+  "/picture",
+  [isUserOrOrganization, parser.single("profilePhoto")],
+  Controller.UpdateProfilePicture,
+);
 
 // Update logged in user's profile cover photo
-UserProfileRouter.patch("/cover", Controller.UpdateCoverPhoto);
+UserProfileRouter.patch(
+  "/cover",
+  [isUserOrOrganization, parser.single("coverImage")],
+  Controller.UpdateCoverPhoto,
+);
 
 // Get another user's public profile by username
 UserProfileRouter.get("/username/:username", Controller.GetProfileByUsername);

@@ -8,6 +8,7 @@ import {
   SMS_BASE_URL,
   SMS_SENDER_ID,
   TWILIO_SMS_API_KEY,
+  TWILIO_SMS_PHONE_NUMBER,
   TWILIO_SMS_SENDER_ID,
 } from "./env";
 
@@ -16,7 +17,7 @@ const client = twilio(TWILIO_SMS_SENDER_ID, TWILIO_SMS_API_KEY);
 export const sendMessageFromTwilio = async (
   to: string,
   message: string,
-  from = "+13022516742",
+  from = TWILIO_SMS_PHONE_NUMBER,
 ) => {
   try {
     const messageSent = await client.messages.create({
@@ -27,6 +28,7 @@ export const sendMessageFromTwilio = async (
 
     return messageSent;
   } catch (error: any) {
+    console.log({ error });
     throw new Error(
       "Twilio SMS error: " +
         (error?.response?.data?.message || "Could not send sms from Twilio"),
@@ -131,4 +133,11 @@ export const checkForTwilioAllowedCountry = (phoneNumber: string): boolean => {
 
   // Check if the phone number starts with any of the disallowed prefixes
   return !notAllowedCountry.some((code) => phoneNumber.startsWith(code));
+};
+
+export const checkForLocalCountry = (phoneNumber: string): boolean => {
+  const localCountry = ["+234"];
+
+  // Check if the phone number starts with any of the allowed prefixes
+  return localCountry.some((code) => phoneNumber.startsWith(code));
 };

@@ -1,7 +1,7 @@
-import { PaginateModel, Schema, model } from "mongoose";
+import { Document, PaginateModel, Schema, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-export interface IOrganization {
+export interface IOrganization extends Document {
   username: string;
   businessName: string;
   businessEmail: string;
@@ -19,7 +19,6 @@ export interface IOrganization {
   ntfToken?: string;
   smsPinId?: string;
   isFlagged: boolean;
-  creatorId: Schema.Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
   subscriptionType: "basic" | "premium";
@@ -29,6 +28,8 @@ export interface IOrganization {
   triedPasswordReset: boolean;
   lastLoginAttempt?: Date; // Date of last failed login attempt
   lastSuccessfulLogin?: Date; // Date of last successful login
+  accountType: "organization";
+  triedSignup?: boolean; // Boolean to track if user has tried to signup
 }
 
 const organizationSchema = new Schema<IOrganization>(
@@ -54,7 +55,6 @@ const organizationSchema = new Schema<IOrganization>(
     smsPinId: { type: String, default: "" },
     isFlagged: { type: Boolean, default: false },
     kycCompleted: { type: Boolean, default: false },
-    creatorId: { type: Schema.Types.ObjectId, required: true, ref: "user" },
     subscriptionType: {
       type: String,
       default: "basic",
@@ -65,6 +65,8 @@ const organizationSchema = new Schema<IOrganization>(
     triedPasswordReset: { type: Boolean, default: false },
     lastLoginAttempt: { type: Date, required: false },
     lastSuccessfulLogin: { type: Date, required: false },
+    accountType: { type: String, default: "organization", immutable: true },
+    triedSignup: { type: Boolean, default: false },
   },
 
   {

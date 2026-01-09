@@ -1,11 +1,24 @@
 import { Router } from "express";
 import { body, oneOf, param } from "express-validator";
-import { isUser } from "../../../../middleware/auth";
+import { isUserOrOrganization } from "../../../../middleware/auth";
 import { isBusinessEmail } from "../../../../middleware/field-check";
 import { UserAuthController } from "../../controllers/user/auth";
 
 const UserAuthRouter = Router();
 const Controller = UserAuthController();
+
+// check for user name availability
+UserAuthRouter.get(
+  "/username/:username",
+  [
+    param("username", "Username is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 3 })
+      .withMessage("Username must be at least 3 characters long"),
+  ],
+  Controller.CheckUsername,
+);
 
 // Sign up as organization
 UserAuthRouter.post(
@@ -59,43 +72,6 @@ UserAuthRouter.post(
       .trim()
       .isLength({ min: 2 })
       .withMessage("Business address must be at least 2 characters long"),
-    body("businessLocationGeographicCoordinates")
-      .isArray({ min: 2, max: 2 })
-      .withMessage(
-        "Business geographic coordinates must be an array of two numbers [longitude, latitude]",
-      )
-      .custom((value) => {
-        if (
-          typeof value[0] !== "number" ||
-          typeof value[1] !== "number" ||
-          value[0] < -180 ||
-          value[0] > 180 ||
-          value[1] < -90 ||
-          value[1] > 90
-        ) {
-          throw new Error(
-            "Business geographic coordinates must be valid longitude and latitude values",
-          );
-        } else {
-          return true;
-        }
-      }),
-    body("businessWebsite")
-      .optional()
-      .isURL()
-      .withMessage("Business website must be a valid URL"),
-    body("businessLogo")
-      .optional()
-      .isURL()
-      .withMessage("Business logo must be a valid URL"),
-    body("businessCoverPhoto")
-      .optional()
-      .isURL()
-      .withMessage("Business cover photo must be a valid URL"),
-    body("businessBio")
-      .optional()
-      .isLength({ min: 2 })
-      .withMessage("Business bio must be at least 2 characters long"),
   ],
   Controller.SignupOrganization,
 );
@@ -149,22 +125,6 @@ UserAuthRouter.post(
       .withMessage(
         "Password must contain at least one special character (!@#$%^&*)",
       ),
-    body("profilePhoto")
-      .optional()
-      .isURL()
-      .withMessage("Profile photo must be a valid URL"),
-    body("coverImage")
-      .optional()
-      .isURL()
-      .withMessage("Cover image must be a valid URL"),
-    body("bio")
-      .optional()
-      .isLength({ min: 2 })
-      .withMessage("Bio must be at least 2 characters long"),
-    body("address")
-      .optional()
-      .isLength({ min: 2 })
-      .withMessage("Address must be at least 2 characters long"),
   ],
   Controller.SignupIndividual,
 );
@@ -188,14 +148,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
   ],
@@ -221,14 +176,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
     body("verificationCode", "Verification code is required")
@@ -258,14 +208,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
   ],
@@ -291,14 +236,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
     body("password", "Password is required")
@@ -327,14 +267,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
   ],
@@ -360,14 +295,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
     body("verificationCode", "Verification code is required")
@@ -396,14 +326,9 @@ UserAuthRouter.post(
           .withMessage(
             "Invalid mobile number. Please, make sure to add the preceding country or city code.",
           ),
-        body("username", "Username is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isLength({ min: 3 })
-          .withMessage("Username must be at least 3 characters long"),
       ],
       {
-        message: "A valid email, username or phone number must be provided.",
+        message: "A valid email or phone number must be provided.",
       },
     ),
   ],
@@ -485,23 +410,20 @@ UserAuthRouter.post(
   Controller.GoogleOAuthCallback,
 );
 
-// Logout
-UserAuthRouter.post("/logout", Controller.Logout);
-
 // Get user sessions
-UserAuthRouter.get("/sessions", isUser, Controller.GetSessions);
+UserAuthRouter.get("/sessions", isUserOrOrganization, Controller.GetSessions);
 
 // Delete all other user sessions
 UserAuthRouter.delete(
-  "/sessions/others",
-  isUser,
-  Controller.DeleteOtherSessions,
+  "/sessions/all",
+  isUserOrOrganization,
+  Controller.DeleteAllSessions,
 );
 
 // Delete specific user session
 UserAuthRouter.delete(
   "/sessions/:sessionId",
-  isUser,
+  isUserOrOrganization,
   [
     param("sessionId", "Session ID is required").exists({
       checkFalsy: true,

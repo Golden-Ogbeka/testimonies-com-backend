@@ -1,13 +1,13 @@
-import { PaginateModel, Schema, model } from "mongoose";
+import { Document, PaginateModel, Schema, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-export interface IUser {
+export interface IUser extends Document {
   username: string;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  password: string;
+  password?: string;
   verificationCode?: string;
   coverImageURL?: string;
   profileImage?: string;
@@ -27,6 +27,8 @@ export interface IUser {
   triedPasswordReset: boolean;
   lastLoginAttempt?: Date; // Date of last failed login attempt
   lastSuccessfulLogin?: Date; // Date of last successful login
+  accountType: "user";
+  triedSignup?: boolean; // Boolean to track if user has tried to signup
 }
 
 const userSchema = new Schema<IUser>(
@@ -58,6 +60,8 @@ const userSchema = new Schema<IUser>(
     triedPasswordReset: { type: Boolean, default: false },
     lastLoginAttempt: Date,
     lastSuccessfulLogin: Date,
+    accountType: { type: String, default: "user", immutable: true },
+    triedSignup: { type: Boolean, default: false },
   },
 
   {
