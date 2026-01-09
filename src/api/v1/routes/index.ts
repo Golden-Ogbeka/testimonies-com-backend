@@ -7,6 +7,7 @@ import AdminRolePermissionRouter from "./admin/role-permission";
 import AdminSubscriptionRouter from "./admin/subscription";
 import AdminTestimonyRouter from "./admin/testimony";
 import AdminUserRouter from "./admin/user";
+import UserAddressRouter from "./user/address";
 import UserAnalyticsRouter from "./user/analytics";
 import UserAuthRouter from "./user/auth";
 import UserMessagingRouter from "./user/messaging";
@@ -39,5 +40,6 @@ V1Router.use("/user/promotion", UserPromotionRouter);
 V1Router.use("/user/analytics", UserAnalyticsRouter);
 V1Router.use("/user/messaging", UserMessagingRouter);
 V1Router.use("/user/team", UserTeamRouter);
+V1Router.use("/user/address", UserAddressRouter);
 
 export default V1Router;

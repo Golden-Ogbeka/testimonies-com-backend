@@ -2,14 +2,10 @@ import { IOrganization } from "../../../models/organization.model";
 import { IUser } from "../../../models/user.model";
 import { EmailAttachmentType } from "../../../types";
 import { NotificationType, PushNotificationType } from "../../../types/data";
-
 import { sendEmail } from "../../../utils/mailer";
 
 // --- Type definitions ---
 
-// Allow both plain objects and Mongoose documents
-
-// Base notification props
 type BaseNotifyUserProps = {
   sendInAppNotification?: boolean;
   sendPushNotification?: boolean;
@@ -30,8 +26,35 @@ type NotifyUserSingle = {
 // Multi-user variant
 type NotifyUserMultiple = {
   isMultiple: true;
-  multipleUsers: IUser[];
+  multipleUsers: IUser[] | IOrganization[];
 } & BaseNotifyUserProps;
+
+// --- Helper functions ---
+
+const getUserEmail = (user: IUser | IOrganization): string | undefined => {
+  if ("email" in user) return user.email;
+  if ("businessEmail" in user) return user.businessEmail;
+  return undefined;
+};
+
+const getUserName = (user: IUser | IOrganization): string => {
+  if ("firstName" in user) return user.firstName;
+  if ("businessName" in user) return user.businessName;
+  const emailUser = user as IUser | IOrganization;
+  if ("email" in emailUser) return emailUser.email;
+  if ("businessEmail" in emailUser) return emailUser.businessEmail;
+  return "User";
+};
+
+const getUserId = (user?: IUser | IOrganization, fallback?: string) => {
+  if (!user) return fallback;
+  return "_id" in user ? user._id : fallback;
+};
+
+const getUserNtfToken = (user?: IUser | IOrganization, fallback?: string) => {
+  if (!user) return fallback ?? "";
+  return "ntfToken" in user ? user.ntfToken || "" : (fallback ?? "");
+};
 
 // --- Main function ---
 
@@ -40,42 +63,45 @@ export const notifyUser = async (
 ): Promise<void> => {
   const {
     sendEmailNotification,
-    message,
     sendInAppNotification,
     sendPushNotification,
     title,
-    userDetails,
+    message,
     emailAttachment,
+    userDetails,
     isMultiple = false,
     multipleUsers = [],
     ...notificationProps
   } = props;
 
-  // --- Extract user info safely ---
-  const userId =
-    notificationProps?.userId ||
-    (userDetails && "_id" in userDetails ? userDetails._id : undefined);
-
-  const username =
-    (userDetails &&
-      ("firstName" in userDetails
-        ? userDetails.firstName
-        : userDetails.email)) ||
-    "User";
-
-  const ntfToken =
-    notificationProps.userNtfToken ||
-    (userDetails && "ntfToken" in userDetails ? userDetails.ntfToken : "");
-
   // --- Email Notifications ---
   if (sendEmailNotification) {
-    await sendEmail({
-      recipient: userDetails?.email ?? "",
-      subject: title,
-      email: message,
-      username,
-      attachmentDetails: emailAttachment,
-    });
+    if (isMultiple) {
+      // Multiple users
+      for (const user of multipleUsers) {
+        const email = getUserEmail(user);
+        if (!email) continue;
+
+        await sendEmail({
+          recipient: email,
+          subject: title,
+          email: message,
+          username: getUserName(user),
+          attachmentDetails: emailAttachment,
+        });
+      }
+    } else if (userDetails) {
+      const email = getUserEmail(userDetails);
+      if (email) {
+        await sendEmail({
+          recipient: email,
+          subject: title,
+          email: message,
+          username: getUserName(userDetails),
+          attachmentDetails: emailAttachment,
+        });
+      }
+    }
   }
 
   // // --- In-App Notifications ---

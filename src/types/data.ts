@@ -141,7 +141,7 @@ export interface PushNotificationType<
   adminId?: Types.ObjectId;
   data?: T;
   // adminDetails?: IAdmin;
-  userDetails?: IUser;
+  userDetails?: IUser | IOrganization;
 }
 
 export type IPushNotification = PushNotificationType &

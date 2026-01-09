@@ -11,7 +11,7 @@ export interface IOrganization extends Document {
   businessLogoURL?: string;
   coverImageURL?: string;
   businessAddress: string;
-  businessLocationGeographicCoordinates: [number, number];
+  businessLocationGeographicCoordinates?: [number, number];
   businessWebsite?: string;
   active: boolean;
   emailIsVerified: boolean;
@@ -45,7 +45,7 @@ const organizationSchema = new Schema<IOrganization>(
     businessAddress: { type: String, required: true },
     businessLocationGeographicCoordinates: {
       type: [Number],
-      required: true,
+      required: false,
     },
     businessWebsite: { type: String, default: "" },
     active: { type: Boolean, default: true },

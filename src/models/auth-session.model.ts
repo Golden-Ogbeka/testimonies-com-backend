@@ -17,13 +17,10 @@ export interface IAuthSession {
   longitude?: number;
   // device info
   deviceType?: string;
-  deviceToken?: string;
   deviceOS?: string;
   deviceOSVersion?: string;
   deviceModel?: string;
   deviceManufacturer?: string;
-  deviceScreenWidth?: number;
-  deviceScreenHeight?: number;
 }
 
 const authSessionSchema = new Schema<IAuthSession>(
@@ -48,13 +45,10 @@ const authSessionSchema = new Schema<IAuthSession>(
     latitude: Number,
     longitude: Number,
     deviceType: String,
-    deviceToken: String,
     deviceOS: String,
     deviceOSVersion: String,
     deviceModel: String,
     deviceManufacturer: String,
-    deviceScreenWidth: Number,
-    deviceScreenHeight: Number,
   },
 
   {

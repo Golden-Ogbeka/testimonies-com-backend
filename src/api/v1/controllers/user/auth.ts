@@ -3,8 +3,11 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import { generateRandomNumbers } from "../../../../functions";
-import { geocodeAddress } from "../../../../functions/address";
-import { getUserDetails } from "../../../../functions/auth";
+import {
+  getLocationFromIP,
+  getUserDetails,
+  parseUserAgent,
+} from "../../../../functions/auth";
 import {
   JWT_SECRET,
   OTP_EXPIRY,
@@ -16,13 +19,6 @@ import {
   sendSuccessFeedback,
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
-import {
-  checkForLocalCountry,
-  checkForTwilioAllowedCountry,
-  sendMessageFromTwilio,
-  sendTokenFromTermii,
-  verifySMSTokenWithTermii,
-} from "../../../../functions/text-message";
 import { UserCronSchedules } from "../../../../jobs/schedules/user";
 import AuthSessionModel from "../../../../models/auth-session.model";
 import OrganizationModel, {
@@ -104,16 +100,16 @@ export const UserAuthController = () => {
 
       // Hash password
       bcryptjs.hash(password!, 8, async function (err, hash) {
-        let geocodedAddress;
-        let geographicLocationCoordinates: number[] = [];
-        geocodedAddress = await geocodeAddress(businessAddress);
+        // let geocodedAddress;
+        // let geographicLocationCoordinates: number[] = [];
+        // geocodedAddress = await geocodeAddress(businessAddress);
 
-        if (geocodedAddress && geocodedAddress.length > 0) {
-          geographicLocationCoordinates = [
-            geocodedAddress[0].geometry.location.lat,
-            geocodedAddress[0].geometry.location.lng,
-          ];
-        }
+        // if (geocodedAddress && geocodedAddress.length > 0) {
+        //   geographicLocationCoordinates = [
+        //     geocodedAddress[0].geometry.location.lat,
+        //     geocodedAddress[0].geometry.location.lng,
+        //   ];
+        // }
         let newOrganization = await OrganizationModel.create({
           password: hash,
           businessAddress,
@@ -121,7 +117,7 @@ export const UserAuthController = () => {
           businessName,
           businessPhoneNumber,
           username,
-          businessLocationGeographicCoordinates: geographicLocationCoordinates,
+          // businessLocationGeographicCoordinates: geographicLocationCoordinates,
           triedSignup: true,
         });
 
@@ -208,7 +204,7 @@ export const UserAuthController = () => {
   };
 
   const SendSignupOTP = async (
-    req: Request<never, never, { email?: string; phoneNumber?: string }>,
+    req: Request<never, never, { email: string }>,
     res: Response,
   ) => {
     try {
@@ -216,132 +212,56 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { email, phoneNumber } = req.body;
+      const { email } = req.body;
 
-      if (email) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
+      // find user
+      const existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+        }));
+      if (!existingUser)
+        return sendErrorFeedback(res, 404, "User doesn't exist");
 
-        if (!existingUser.triedSignup) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in",
-          );
-        }
-
-        // change Token
-        const verificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        // Send OTP
-        await notifyUser({
-          sendEmailNotification: true,
-          title: "Verify Account",
-          userDetails: existingUser,
-          message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
-        });
-
-        await UserCronSchedules.resetOTP(email);
-
-        return sendSuccessFeedback(res, "Verification code sent to email");
-      } else if (phoneNumber) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            phoneNumber,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessPhoneNumber: phoneNumber,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
-
-        if (!existingUser.triedSignup) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in",
-          );
-        }
-
-        // Use Twilio for non-nigerian accounts
-        let smsPinId;
-        const verificationCode = generateRandomNumbers();
-
-        // Determine if the phone number is local (e.g., Nigerian)
-        const isLocalNumber = checkForLocalCountry(phoneNumber);
-
-        if (isLocalNumber) {
-          // Prefer Termii for local numbers
-          smsPinId = await sendTokenFromTermii(phoneNumber);
-          existingUser.smsPinId = smsPinId;
-
-          // Fallback to Twilio if Termii fails
-          if (!smsPinId) {
-            await sendMessageFromTwilio(
-              phoneNumber,
-              `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-            );
-          }
-        } else {
-          // Prefer Twilio for international numbers
-          const messageSent = await sendMessageFromTwilio(
-            phoneNumber,
-            `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-          );
-
-          // Fallback to Termii if Twilio fails
-          if (!messageSent) {
-            smsPinId = await sendTokenFromTermii(phoneNumber);
-            existingUser.smsPinId = smsPinId;
-          }
-        }
-
-        // change Token and pinID
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        await UserCronSchedules.resetOTP(existingUser.email);
-
-        return sendSuccessFeedback(
-          res,
-          "Verification code sent to phone number",
-        );
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
+      if (!existingUser.triedSignup) {
+        return sendErrorFeedback(res, 400, "An error occurred. Try logging in");
       }
+
+      if (existingUser.emailIsVerified) {
+        return sendErrorFeedback(res, 400, "Email is already verified");
+      }
+
+      // change Token
+      const verificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = verificationCode;
+
+      await existingUser.save();
+
+      // Send OTP
+      await notifyUser({
+        sendEmailNotification: true,
+        title: "Verify Account",
+        userDetails: existingUser,
+        message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+      });
+
+      await UserCronSchedules.resetOTP(email);
+
+      return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
   const VerifySignupOTP = async (
-    req: Request<
-      never,
-      never,
-      { verificationCode: string; email?: string; phoneNumber?: string }
-    >,
+    req: Request<never, never, { verificationCode: string; email: string }>,
     res: Response,
   ) => {
     try {
@@ -349,148 +269,52 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { verificationCode, email, phoneNumber } = req.body;
+      const { verificationCode, email } = req.body;
 
-      if (email) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-            verificationCode,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-            verificationCode,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 400, "Invalid or expired OTP");
+      // find user
+      const existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+          verificationCode,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+          verificationCode,
+        }));
+      if (!existingUser)
+        return sendErrorFeedback(res, 400, "Invalid or expired OTP");
 
-        if (!existingUser.triedSignup) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in",
-          );
-        }
-
-        // change Token
-        const newVerificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = newVerificationCode;
-        existingUser.emailIsVerified = true;
-        existingUser.triedSignup = false;
-
-        await existingUser.save();
-        // Generate JWT Token
-        jwt.sign(
-          {
-            email: existingUser.toJSON().email,
-            _id: existingUser.toJSON()._id,
-            domain: PRODUCT_NAME,
-          },
-          JWT_SECRET!,
-          { expiresIn: "30d" },
-          async (err, token) => {
-            await notifyUser({
-              userDetails: existingUser,
-              title: "Login Successful",
-              message: `You have successfully logged into your account. If you did not perform this action, please contact support immediately.`,
-              sendEmailNotification: true,
-              sendInAppNotification: true,
-              type: "general-notification",
-            });
-            return sendSuccessFeedback(res, "Login Successful", {
-              user: existingUser,
-              token,
-            });
-          },
-        );
-      } else if (phoneNumber) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            phoneNumber,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessPhoneNumber: phoneNumber,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 400, "Invalid phone number");
-
-        if (!existingUser.triedSignup) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in",
-          );
-        }
-
-        // Verify SMS OTP
-        if (checkForTwilioAllowedCountry(phoneNumber)) {
-          // Verify with only verification code
-          if (existingUser.verificationCode !== verificationCode)
-            return sendErrorFeedback(res, 400, "Invalid or expired OTP");
-        } else {
-          const data = await verifySMSTokenWithTermii(
-            existingUser.smsPinId!,
-            verificationCode,
-          );
-
-          if (!data.verified)
-            return sendErrorFeedback(res, 400, "Invalid or expired OTP");
-        }
-
-        // change Token and pin ID
-        const newVerificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = newVerificationCode;
-        existingUser.smsPinId = newVerificationCode;
-        existingUser.phoneNumberIsVerified = true;
-        existingUser.triedSignup = false;
-
-        await existingUser.save();
-        // Generate JWT Token
-        jwt.sign(
-          {
-            email: existingUser.email,
-            _id: existingUser._id,
-            domain: PRODUCT_NAME,
-          },
-          JWT_SECRET!,
-          { expiresIn: "30d" },
-          async (err, token) => {
-            await notifyUser({
-              userDetails: existingUser,
-              title: "Login Successful",
-              message: `You have successfully logged into your account. If you did not perform this action, please contact support immediately.`,
-              sendEmailNotification: true,
-              sendInAppNotification: true,
-              type: "general-notification",
-            });
-            return sendSuccessFeedback(res, "Login Successful", {
-              user: existingUser,
-              token,
-            });
-          },
-        );
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
+      if (!existingUser.triedSignup) {
+        return sendErrorFeedback(res, 400, "An error occurred. Try logging in");
       }
+
+      // change Token
+      const newVerificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = newVerificationCode;
+      existingUser.emailIsVerified = true;
+      existingUser.triedSignup = false;
+
+      await existingUser.save();
+      // Generate JWT Token
+      return sendSuccessFeedback(
+        res,
+        "Verification Successful. Proceed to login",
+        {
+          user: existingUser,
+        },
+      );
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
   const ResendSignupOTP = async (
-    req: Request<never, never, { email?: string; phoneNumber?: string }>,
+    req: Request<never, never, { email: string }>,
     res: Response,
   ) => {
     try {
@@ -498,132 +322,55 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { email, phoneNumber } = req.body;
+      const { email } = req.body;
 
-      if (email) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
+      // find user
+      const existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+        }));
+      if (!existingUser)
+        return sendErrorFeedback(res, 404, "User doesn't exist");
 
-        if (!existingUser.triedSignup) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in",
-          );
-        }
-
-        // change Token
-        const verificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        // Send OTP
-        await notifyUser({
-          sendEmailNotification: true,
-          title: "Verify Account",
-          userDetails: existingUser,
-          message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
-        });
-
-        await UserCronSchedules.resetOTP(email);
-
-        return sendSuccessFeedback(res, "Verification code sent to email");
-      } else if (phoneNumber) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            phoneNumber,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessPhoneNumber: phoneNumber,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
-
-        if (!existingUser.triedSignup) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in",
-          );
-        }
-
-        // Use Twilio for non-nigerian accounts
-        let smsPinId;
-        const verificationCode = generateRandomNumbers();
-
-        // Determine if the phone number is local (e.g., Nigerian)
-        const isLocalNumber = checkForLocalCountry(phoneNumber);
-
-        if (isLocalNumber) {
-          // Prefer Termii for local numbers
-          smsPinId = await sendTokenFromTermii(phoneNumber);
-          existingUser.smsPinId = smsPinId;
-
-          // Fallback to Twilio if Termii fails
-          if (!smsPinId) {
-            await sendMessageFromTwilio(
-              phoneNumber,
-              `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-            );
-          }
-        } else {
-          // Prefer Twilio for international numbers
-          const messageSent = await sendMessageFromTwilio(
-            phoneNumber,
-            `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-          );
-
-          // Fallback to Termii if Twilio fails
-          if (!messageSent) {
-            smsPinId = await sendTokenFromTermii(phoneNumber);
-            existingUser.smsPinId = smsPinId;
-          }
-        }
-
-        // change Token and pinID
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        await UserCronSchedules.resetOTP(existingUser.email);
-
-        return sendSuccessFeedback(
-          res,
-          "Verification code sent to phone number",
-        );
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
+      if (!existingUser.triedSignup) {
+        return sendErrorFeedback(res, 400, "An error occurred. Try logging in");
       }
+
+      if (existingUser.emailIsVerified)
+        return sendErrorFeedback(res, 400, "Email is already verified");
+
+      // change Token
+      const verificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = verificationCode;
+
+      await existingUser.save();
+
+      // Send OTP
+      await notifyUser({
+        sendEmailNotification: true,
+        title: "Verify Account",
+        userDetails: existingUser,
+        message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+      });
+
+      await UserCronSchedules.resetOTP(email);
+
+      return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
   const Signin = async (
-    req: Request<
-      never,
-      never,
-      { password: string; email?: string; phoneNumber?: string }
-    >,
+    req: Request<never, never, { password: string; email: string }>,
     res: Response,
   ) => {
     try {
@@ -631,38 +378,21 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { password, email, phoneNumber } = req.body;
+      const { password, email } = req.body;
       let existingUser: IUser | null = null;
 
-      if (email) {
-        // find user
-        existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-          }));
-      } else if (phoneNumber) {
-        // find user
-        existingUser =
-          (await UserModel.findOne({
-            phoneNumber,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessPhoneNumber: phoneNumber,
-            active: true,
-            isFlagged: false,
-          }));
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
-      }
+      // find user
+      existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+        }));
 
       if (!existingUser)
         return sendErrorFeedback(res, 400, "Invalid user details");
@@ -697,33 +427,16 @@ export const UserAuthController = () => {
             );
           }
 
-          existingUser.triedSignup = true;
+          existingUser.triedLogin = true;
           await existingUser.save();
 
           await UserCronSchedules.resetTriedLogin(existingUser.email);
 
-          // Generate JWT Token
-          jwt.sign(
+          return sendSuccessFeedback(
+            res,
+            "Login Successful. Verify your account to continue",
             {
-              email: existingUser.email,
-              _id: existingUser._id,
-              domain: PRODUCT_NAME,
-            },
-            JWT_SECRET!,
-            { expiresIn: "30d" },
-            async (err, token) => {
-              await notifyUser({
-                userDetails: existingUser,
-                title: "Login Successful",
-                message: `You have successfully logged into your account. If you did not perform this action, please contact support immediately.`,
-                sendEmailNotification: true,
-                sendInAppNotification: true,
-                type: "general-notification",
-              });
-              return sendSuccessFeedback(res, "Login Successful", {
-                user: existingUser,
-                token,
-              });
+              user: existingUser,
             },
           );
         },
@@ -734,7 +447,7 @@ export const UserAuthController = () => {
   };
 
   const SendSigninOTP = async (
-    req: Request<never, never, { email?: string; phoneNumber?: string }>,
+    req: Request<never, never, { email: string }>,
     res: Response,
   ) => {
     try {
@@ -742,132 +455,56 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { email, phoneNumber } = req.body;
+      const { email } = req.body;
 
-      if (email) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
+      // find user
+      const existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+        }));
+      if (!existingUser)
+        return sendErrorFeedback(res, 404, "User doesn't exist");
 
-        if (!existingUser.triedLogin) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in again",
-          );
-        }
-
-        // change Token
-        const verificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        // Send OTP
-        await notifyUser({
-          sendEmailNotification: true,
-          title: "Verify Account",
-          userDetails: existingUser,
-          message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
-        });
-
-        await UserCronSchedules.resetOTP(email);
-
-        return sendSuccessFeedback(res, "Verification code sent to email");
-      } else if (phoneNumber) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            phoneNumber,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessPhoneNumber: phoneNumber,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
-
-        if (!existingUser.triedLogin) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in again",
-          );
-        }
-
-        // Use Twilio for non-nigerian accounts
-        let smsPinId;
-        const verificationCode = generateRandomNumbers();
-
-        // Determine if the phone number is local (e.g., Nigerian)
-        const isLocalNumber = checkForLocalCountry(phoneNumber);
-
-        if (isLocalNumber) {
-          // Prefer Termii for local numbers
-          smsPinId = await sendTokenFromTermii(phoneNumber);
-          existingUser.smsPinId = smsPinId;
-
-          // Fallback to Twilio if Termii fails
-          if (!smsPinId) {
-            await sendMessageFromTwilio(
-              phoneNumber,
-              `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-            );
-          }
-        } else {
-          // Prefer Twilio for international numbers
-          const messageSent = await sendMessageFromTwilio(
-            phoneNumber,
-            `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-          );
-
-          // Fallback to Termii if Twilio fails
-          if (!messageSent) {
-            smsPinId = await sendTokenFromTermii(phoneNumber);
-            existingUser.smsPinId = smsPinId;
-          }
-        }
-
-        // change Token and pinID
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        await UserCronSchedules.resetOTP(existingUser.email);
-
-        return sendSuccessFeedback(
+      if (!existingUser.triedLogin) {
+        return sendErrorFeedback(
           res,
-          "Verification code sent to phone number",
+          400,
+          "An error occurred. Try logging in again",
         );
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
       }
+
+      // change Token
+      const verificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = verificationCode;
+
+      await existingUser.save();
+
+      // Send OTP
+      await notifyUser({
+        sendEmailNotification: true,
+        title: "Verify Account",
+        userDetails: existingUser,
+        message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+      });
+
+      await UserCronSchedules.resetOTP(email);
+
+      return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
   const VerifySigninOTP = async (
-    req: Request<
-      never,
-      never,
-      { verificationCode: string; email?: string; phoneNumber?: string }
-    >,
+    req: Request<never, never, { verificationCode: string; email: string }>,
     res: Response,
   ) => {
     try {
@@ -875,137 +512,97 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { verificationCode, email, phoneNumber } = req.body;
+      const { verificationCode, email } = req.body;
 
-      if (email) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-            verificationCode,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-            verificationCode,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 400, "Invalid or expired OTP");
+      // find user
+      const existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+          verificationCode,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+          verificationCode,
+        }));
+      if (!existingUser)
+        return sendErrorFeedback(res, 400, "Invalid or expired OTP");
 
-        if (!existingUser.triedLogin) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in again",
-          );
-        }
-
-        // change Token
-        const newVerificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = newVerificationCode;
-        existingUser.emailIsVerified = true;
-        existingUser.triedLogin = false;
-
-        await existingUser.save();
-        // Generate JWT Token
-        jwt.sign(
-          {
-            email: existingUser.toJSON().email,
-            _id: existingUser.toJSON()._id,
-            domain: PRODUCT_NAME,
-          },
-          JWT_SECRET!,
-          { expiresIn: "30d" },
-          async (err, token) => {
-            await notifyUser({
-              userDetails: existingUser,
-              title: "Login Successful",
-              message: `You have successfully logged into your account. If you did not perform this action, please contact support immediately.`,
-              sendEmailNotification: true,
-              sendInAppNotification: true,
-              type: "general-notification",
-            });
-            return sendSuccessFeedback(res, "Login Successful", {
-              user: existingUser,
-              token,
-            });
-          },
+      if (!existingUser.triedLogin) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "An error occurred. Try logging in again",
         );
-      } else if (phoneNumber) {
-        // find user
-        const existingUser = await UserModel.findOne({
-          phoneNumber,
-        });
-        if (!existingUser)
-          return sendErrorFeedback(res, 400, "Invalid phone number");
-
-        if (!existingUser.active) {
-          // Check if user is activated
-          return sendErrorFeedback(res, 400, "Access Denied. Contact support");
-        }
-
-        // Verify SMS OTP
-        if (checkForTwilioAllowedCountry(phoneNumber)) {
-          // Verify with only verification code
-          if (existingUser.verificationCode !== verificationCode)
-            return sendErrorFeedback(res, 400, "Invalid or expired OTP");
-        } else {
-          const data = await verifySMSTokenWithTermii(
-            existingUser.smsPinId!,
-            verificationCode,
-          );
-
-          if (!data.verified)
-            return sendErrorFeedback(res, 400, "Invalid or expired OTP");
-        }
-
-        // change Token and pin ID
-        const newVerificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = newVerificationCode;
-        existingUser.smsPinId = newVerificationCode;
-        existingUser.phoneNumberIsVerified = true;
-        existingUser.triedLogin = false;
-
-        await existingUser.save();
-        // Generate JWT Token
-        jwt.sign(
-          {
-            email: existingUser.email,
-            _id: existingUser._id,
-            domain: PRODUCT_NAME,
-          },
-          JWT_SECRET!,
-          { expiresIn: "30d" },
-          async (err, token) => {
-            await notifyUser({
-              userDetails: existingUser,
-              title: "Login Successful",
-              message: `You have successfully logged into your account. If you did not perform this action, please contact support immediately.`,
-              sendEmailNotification: true,
-              sendInAppNotification: true,
-              type: "general-notification",
-            });
-            return sendSuccessFeedback(res, "Login Successful", {
-              user: existingUser,
-              token,
-            });
-          },
-        );
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
       }
+
+      // change Token
+      const newVerificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = newVerificationCode;
+      existingUser.emailIsVerified = true;
+      existingUser.triedLogin = false;
+
+      await existingUser.save();
+      // Generate JWT Token
+      jwt.sign(
+        {
+          email: existingUser.toJSON().email,
+          _id: existingUser.toJSON()._id,
+          domain: PRODUCT_NAME,
+        },
+        JWT_SECRET!,
+        { expiresIn: "30d" },
+        async (err, token) => {
+          await notifyUser({
+            userDetails: existingUser,
+            title: "Login Successful",
+            message: `You have successfully logged into your account. If you did not perform this action, please contact support immediately.`,
+            sendEmailNotification: true,
+            sendInAppNotification: true,
+            type: "general-notification",
+          });
+
+          // Create a new session for user
+          const deviceInfo = req.headers["user-agent"]
+            ? parseUserAgent(req.headers["user-agent"])
+            : null;
+          const locationInfo = await getLocationFromIP(req.ip);
+
+          const session = await AuthSessionModel.create({
+            userId: existingUser._id,
+            token,
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"],
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            city: locationInfo?.city,
+            region: locationInfo?.region,
+            country: locationInfo?.country,
+            latitude: locationInfo?.latitude,
+            longitude: locationInfo?.longitude,
+            deviceType: deviceInfo?.deviceType,
+            deviceOS: deviceInfo?.os,
+            deviceOSVersion: deviceInfo?.osVersion,
+            deviceModel: deviceInfo?.model,
+            deviceManufacturer: deviceInfo?.manufacturer,
+          });
+          return sendSuccessFeedback(res, "Login Successful", {
+            user: existingUser,
+            token,
+            sessionId: session._id,
+          });
+        },
+      );
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
   const ResendSigninOTP = async (
-    req: Request<never, never, { email?: string; phoneNumber?: string }>,
+    req: Request<never, never, { email: string }>,
     res: Response,
   ) => {
     try {
@@ -1013,121 +610,49 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { email, phoneNumber } = req.body;
+      const { email } = req.body;
 
-      if (email) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            email,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessEmail: email,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
+      // find user
+      const existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+        }));
+      if (!existingUser)
+        return sendErrorFeedback(res, 404, "User doesn't exist");
 
-        if (!existingUser.triedLogin) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in again",
-          );
-        }
-
-        // change Token
-        const verificationCode = generateRandomNumbers();
-
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        // Send OTP
-        await notifyUser({
-          sendEmailNotification: true,
-          title: "Verify Account",
-          userDetails: existingUser,
-          message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
-        });
-
-        await UserCronSchedules.resetOTP(email);
-
-        return sendSuccessFeedback(res, "Verification code sent to email");
-      } else if (phoneNumber) {
-        // find user
-        const existingUser =
-          (await UserModel.findOne({
-            phoneNumber,
-            active: true,
-            isFlagged: false,
-          })) ||
-          (await OrganizationModel.findOne({
-            businessPhoneNumber: phoneNumber,
-            active: true,
-            isFlagged: false,
-          }));
-        if (!existingUser)
-          return sendErrorFeedback(res, 404, "User doesn't exist");
-
-        if (!existingUser.triedLogin) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "An error occurred. Try logging in again",
-          );
-        }
-
-        // Use Twilio for non-nigerian accounts
-        let smsPinId;
-        const verificationCode = generateRandomNumbers();
-
-        // Determine if the phone number is local (e.g., Nigerian)
-        const isLocalNumber = checkForLocalCountry(phoneNumber);
-
-        if (isLocalNumber) {
-          // Prefer Termii for local numbers
-          smsPinId = await sendTokenFromTermii(phoneNumber);
-          existingUser.smsPinId = smsPinId;
-
-          // Fallback to Twilio if Termii fails
-          if (!smsPinId) {
-            await sendMessageFromTwilio(
-              phoneNumber,
-              `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-            );
-          }
-        } else {
-          // Prefer Twilio for international numbers
-          const messageSent = await sendMessageFromTwilio(
-            phoneNumber,
-            `Your ${PRODUCT_NAME} OTP is: ${verificationCode}. Expires ${OTP_EXPIRY}`,
-          );
-
-          // Fallback to Termii if Twilio fails
-          if (!messageSent) {
-            smsPinId = await sendTokenFromTermii(phoneNumber);
-            existingUser.smsPinId = smsPinId;
-          }
-        }
-
-        // change Token and pinID
-        existingUser.verificationCode = verificationCode;
-
-        await existingUser.save();
-
-        await UserCronSchedules.resetOTP(existingUser.email);
-
-        return sendSuccessFeedback(
+      if (!existingUser.triedLogin) {
+        return sendErrorFeedback(
           res,
-          "Verification code sent to phone number",
+          400,
+          "An error occurred. Try logging in again",
         );
-      } else {
-        return sendErrorFeedback(res, 400, "Email or phone number is required");
       }
+
+      // change Token
+      const verificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = verificationCode;
+
+      await existingUser.save();
+
+      // Send OTP
+      await notifyUser({
+        sendEmailNotification: true,
+        title: "Verify Account",
+        userDetails: existingUser,
+        message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+      });
+
+      await UserCronSchedules.resetOTP(email);
+
+      return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -1182,11 +707,65 @@ export const UserAuthController = () => {
     }
   };
 
+  const ResendResetPasswordOTP = async (
+    req: Request<never, never, { email: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { email } = req.body;
+
+      // check if user exists
+      let existingUser =
+        (await UserModel.findOne({
+          email,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          active: true,
+          isFlagged: false,
+        }));
+      if (!existingUser) return sendErrorFeedback(res, 400, "Invalid Email");
+
+      if (!existingUser.triedPasswordReset) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "An error occurred. Try resetting your password again",
+        );
+      }
+
+      const verificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = verificationCode;
+
+      await existingUser.save();
+
+      await notifyUser({
+        sendEmailNotification: true,
+        title: "Reset Password",
+        userDetails: existingUser,
+        message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+      });
+
+      await UserCronSchedules.resetOTP(email);
+
+      return sendSuccessFeedback(res, "OTP resent successfully");
+    } catch (error: any) {
+      sendCatchFeedback(res, error);
+    }
+  };
+
   const ResetPasswordUpdate = async (
     req: Request<
       never,
       never,
-      { email: string; newPassword: string; otp: string }
+      { email: string; newPassword: string; verificationCode: string }
     >,
     res: Response,
   ) => {
@@ -1195,12 +774,12 @@ export const UserAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { email, newPassword, otp } = req.body;
+      const { email, newPassword, verificationCode } = req.body;
 
       // check if user exists
       let existingUser = await UserModel.findOne({
         email,
-        verificationCode: otp,
+        verificationCode,
         active: true,
         isFlagged: false,
       });
@@ -1273,9 +852,6 @@ export const UserAuthController = () => {
           return sendErrorFeedback(res, 400, "Access Denied. Contact support");
         }
 
-        // Update user details email
-        existingUser.emailIsVerified = true;
-
         // Login
         if (existingUser) {
           // Check if user is activated
@@ -1289,6 +865,7 @@ export const UserAuthController = () => {
 
           // Update user details email
           existingUser.emailIsVerified = true;
+          existingUser.triedLogin = false;
 
           await existingUser.save();
 
@@ -1310,9 +887,35 @@ export const UserAuthController = () => {
                 sendInAppNotification: true,
                 type: "general-notification",
               });
+
+              // Create a new session for user
+              const deviceInfo = req.headers["user-agent"]
+                ? parseUserAgent(req.headers["user-agent"])
+                : null;
+              const locationInfo = await getLocationFromIP(req.ip);
+
+              const session = await AuthSessionModel.create({
+                userId: existingUser._id,
+                token,
+                ipAddress: req.ip,
+                userAgent: req.headers["user-agent"],
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                city: locationInfo?.city,
+                region: locationInfo?.region,
+                country: locationInfo?.country,
+                latitude: locationInfo?.latitude,
+                longitude: locationInfo?.longitude,
+                deviceType: deviceInfo?.deviceType,
+                deviceOS: deviceInfo?.os,
+                deviceOSVersion: deviceInfo?.osVersion,
+                deviceModel: deviceInfo?.model,
+                deviceManufacturer: deviceInfo?.manufacturer,
+              });
+
               return sendSuccessFeedback(res, "Login Successful", {
                 user: existingUser,
                 token,
+                sessionId: session._id,
               });
             },
           );
@@ -1356,9 +959,34 @@ export const UserAuthController = () => {
                 sendInAppNotification: true,
                 type: "general-notification",
               });
+
+              // Create a new session for user
+              const deviceInfo = req.headers["user-agent"]
+                ? parseUserAgent(req.headers["user-agent"])
+                : null;
+              const locationInfo = await getLocationFromIP(req.ip);
+
+              const session = await AuthSessionModel.create({
+                userId: newUser._id,
+                token,
+                ipAddress: req.ip,
+                userAgent: req.headers["user-agent"],
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                city: locationInfo?.city,
+                region: locationInfo?.region,
+                country: locationInfo?.country,
+                latitude: locationInfo?.latitude,
+                longitude: locationInfo?.longitude,
+                deviceType: deviceInfo?.deviceType,
+                deviceOS: deviceInfo?.os,
+                deviceOSVersion: deviceInfo?.osVersion,
+                deviceModel: deviceInfo?.model,
+                deviceManufacturer: deviceInfo?.manufacturer,
+              });
               return sendSuccessFeedback(res, "Registration Successful", {
                 user: newUser,
                 token,
+                sessionId: session._id,
               });
             },
           );
@@ -1378,10 +1006,12 @@ export const UserAuthController = () => {
       const paginationOptions = getPaginationOptions(req as any);
 
       const userDetails = await getUserDetails(req as any);
-      const sessions = await AuthSessionModel.paginate({
-        userId: userDetails._id,
-        ...paginationOptions,
-      });
+      const sessions = await AuthSessionModel.paginate(
+        {
+          userId: userDetails._id,
+        },
+        paginationOptions,
+      );
 
       return sendSuccessFeedback(res, "Sessions retrieved", { sessions });
     } catch (error: any) {
@@ -1389,16 +1019,44 @@ export const UserAuthController = () => {
     }
   };
 
-  const DeleteAllSessions = async (req: Request, res: Response) => {
+  const GetSession = async (
+    req: Request<{ sessionId: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+      const session = await AuthSessionModel.findOne({
+        userId: userDetails._id,
+        _id: req.params.sessionId,
+      });
+
+      return sendSuccessFeedback(res, "Sessions retrieved", { session });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const DeleteAllOtherSessions = async (req: Request, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
       const userDetails = await getUserDetails(req as any);
 
-      await AuthSessionModel.deleteMany({ userId: userDetails._id });
+      const token = req.headers.authorization as string | undefined;
 
-      return sendSuccessFeedback(res, "All sessions deleted");
+      if (!token) return sendErrorFeedback(res, 400, "Unauthorized");
+
+      await AuthSessionModel.deleteMany({
+        userId: userDetails._id,
+        token: { $ne: token },
+      });
+
+      return sendSuccessFeedback(res, "All other sessions have been deleted");
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -1414,6 +1072,23 @@ export const UserAuthController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const userDetails = await getUserDetails(req as any);
+      const token = req.headers.authorization as string | undefined;
+
+      if (!token) return sendErrorFeedback(res, 400, "Unauthorized");
+
+      const { sessionId } = req.params;
+
+      const sessionDetails = await AuthSessionModel.findOne({
+        userId: userDetails._id,
+        _id: sessionId,
+      });
+
+      if (!sessionDetails)
+        return sendErrorFeedback(res, 400, "Session not found");
+
+      if (sessionDetails.token === token)
+        return sendErrorFeedback(res, 400, "Cannot delete current session");
+
       await AuthSessionModel.deleteOne({
         userId: userDetails._id,
         _id: req.params.sessionId,
@@ -1440,8 +1115,10 @@ export const UserAuthController = () => {
     GoogleAuth,
     GoogleOAuthCallback,
     GetSessions,
-    DeleteAllSessions,
+    DeleteAllOtherSessions,
     DeleteSession,
     CheckUsername,
+    GetSession,
+    ResendResetPasswordOTP,
   };
 };

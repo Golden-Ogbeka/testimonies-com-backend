@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body, oneOf, param } from "express-validator";
+import { body, param } from "express-validator";
 import { isUserOrOrganization } from "../../../../middleware/auth";
 import { isBusinessEmail } from "../../../../middleware/field-check";
 import { UserAuthController } from "../../controllers/user/auth";
@@ -133,26 +133,12 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signup/send-otp",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
   ],
   Controller.SendSignupOTP,
 );
@@ -161,26 +147,13 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signup/verify-otp",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
+
     body("verificationCode", "Verification code is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim(),
@@ -193,26 +166,12 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signup/resend-otp",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
   ],
   Controller.ResendSignupOTP,
 );
@@ -221,26 +180,12 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signin",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
     body("password", "Password is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim(),
@@ -252,26 +197,12 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signin/send-otp",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
   ],
   Controller.SendSigninOTP,
 );
@@ -280,26 +211,13 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signin/verify-otp",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
+
     body("verificationCode", "Verification code is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim(),
@@ -311,26 +229,12 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/signin/resend-otp",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
   ],
   Controller.ResendSigninOTP,
 );
@@ -339,54 +243,41 @@ UserAuthRouter.post(
 UserAuthRouter.post(
   "/reset-password",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
   ],
   Controller.ResetPassword,
+);
+
+// Resend OTP for password reset (dependent on triedPasswordReset variable)
+UserAuthRouter.post(
+  "/reset-password/resend-otp",
+  [
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
+  ],
+  Controller.ResendResetPasswordOTP,
 );
 
 // Update password during reset (dependent on triedPasswordReset variable)
 UserAuthRouter.post(
   "/reset-password/update",
   [
-    oneOf(
-      [
-        body("email", "Email is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isEmail()
-          .normalizeEmail({ all_lowercase: true })
-          .withMessage("Invalid Email format"),
-        body("phoneNumber", "Phone number is required")
-          .exists({ checkFalsy: true, checkNull: true })
-          .trim()
-          .isMobilePhone("any", { strictMode: true })
-          .withMessage(
-            "Invalid mobile number. Please, make sure to add the preceding country or city code.",
-          ),
-      ],
-      {
-        message: "A valid email or phone number must be provided.",
-      },
-    ),
+    body("email", "Email is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isEmail()
+      .normalizeEmail({ all_lowercase: true })
+      .withMessage("Invalid Email format"),
+
     body("newPassword", "New password is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim(),
@@ -398,31 +289,44 @@ UserAuthRouter.post(
 );
 
 // Sign in and sign up with google (automatic verification of email)
-UserAuthRouter.post("/google", Controller.GoogleAuth);
+// UserAuthRouter.post("/google", Controller.GoogleAuth);
 
-//Google Login callback
-UserAuthRouter.post(
-  "/auth/google/callback",
-  body("code", "OAuth Code is required").exists({
-    checkFalsy: true,
-    checkNull: true,
-  }),
-  Controller.GoogleOAuthCallback,
-);
+// //Google Login callback
+// UserAuthRouter.post(
+//   "/google/callback",
+//   body("code", "OAuth Code is required").exists({
+//     checkFalsy: true,
+//     checkNull: true,
+//   }),
+//   Controller.GoogleOAuthCallback,
+// );
 
 // Get user sessions
 UserAuthRouter.get("/sessions", isUserOrOrganization, Controller.GetSessions);
 
+// Get specific user session
+UserAuthRouter.get(
+  "/session/:sessionId",
+  isUserOrOrganization,
+  [
+    param("sessionId", "Session ID is required").exists({
+      checkFalsy: true,
+      checkNull: true,
+    }),
+  ],
+  Controller.GetSession,
+);
+
 // Delete all other user sessions
 UserAuthRouter.delete(
-  "/sessions/all",
+  "/sessions/others",
   isUserOrOrganization,
-  Controller.DeleteAllSessions,
+  Controller.DeleteAllOtherSessions,
 );
 
 // Delete specific user session
 UserAuthRouter.delete(
-  "/sessions/:sessionId",
+  "/session/:sessionId",
   isUserOrOrganization,
   [
     param("sessionId", "Session ID is required").exists({
