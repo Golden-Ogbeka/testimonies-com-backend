@@ -73,6 +73,8 @@ const userSchema = new Schema<IUser>(
 
 userSchema.index({
   username: "text",
+  firstName: "text",
+  lastName: "text",
 });
 
 // Hide Password in responses

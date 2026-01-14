@@ -1,26 +1,484 @@
+import bcryptjs from "bcryptjs";
 import { Request, Response } from "express";
-import { sendCatchFeedback } from "../../../../functions/feedback";
+import { validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
+import { escapeRegex, generateRandomNumbers } from "../../../../functions";
+import {
+  getLocationFromIP,
+  getUserDetails,
+  parseUserAgent,
+} from "../../../../functions/auth";
+import {
+  JWT_SECRET,
+  OTP_EXPIRY,
+  PRODUCT_NAME,
+} from "../../../../functions/env";
+import {
+  sendCatchFeedback,
+  sendErrorFeedback,
+  sendSuccessFeedback,
+  sendValidationErrorFeedback,
+} from "../../../../functions/feedback";
+import { UserCronSchedules } from "../../../../jobs/schedules/user";
+import AuthSessionModel from "../../../../models/auth-session.model";
+import FollowRequestModel from "../../../../models/follow-request.model";
+import OrganizationModel, {
+  IOrganization,
+} from "../../../../models/organization.model";
+import UserModel, { IUser } from "../../../../models/user.model";
+import { notifyUser } from "../../services/notification";
 
 export const UserProfileController = () => {
   const GetProfile = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req);
+
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
+
+      return sendSuccessFeedback(res, "Profile retrieved", { userDetails });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const UpdateProfile = async (req: Request, res: Response) => {
+  const UpdateProfile = async (
+    req: Request<never, never, IUser>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = (await getUserDetails(req as any)) as IUser;
+
+      const { firstName, lastName, bio, address } = req.body;
+
+      userDetails.firstName = firstName || userDetails.firstName;
+      userDetails.lastName = lastName || userDetails.lastName;
+      userDetails.bio = bio || userDetails.bio;
+      userDetails.address = address || userDetails.address;
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Profile updated", { user: userDetails });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const DeleteProfile = async (req: Request, res: Response) => {
+  const UpdateUserEmail = async (
+    req: Request<never, never, { email: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const { email } = req.body;
+
+      if (
+        (userDetails.accountType === "user" && email === userDetails?.email) ||
+        (userDetails.accountType === "organization" &&
+          email === userDetails?.businessEmail)
+      )
+        return sendErrorFeedback(res, 400, "Enter a different email to update");
+
+      const user =
+        (await UserModel.findOne({
+          email,
+          _id: { $ne: userDetails?._id },
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          _id: { $ne: userDetails?._id },
+        }));
+
+      if (user) {
+        return sendErrorFeedback(res, 400, "Email is already in use");
+      }
+
+      const existingUser: IUser | IOrganization | null =
+        (await UserModel.findById(userDetails?._id)) ||
+        (await OrganizationModel.findById(userDetails?._id));
+      if (!existingUser)
+        return sendErrorFeedback(res, 400, "Profile not found");
+
+      if (existingUser.accountType === "user") {
+        existingUser.email = email;
+      } else {
+        existingUser.businessEmail = email;
+      }
+
+      existingUser.emailIsVerified = false;
+      existingUser.triedLogin = true; // use login variable for new email verification flow
+      const verificationCode = generateRandomNumbers();
+
+      existingUser.verificationCode = verificationCode;
+
+      await existingUser.save();
+
+      await UserCronSchedules.resetOTP(email);
+      await UserCronSchedules.resetTriedLogin(email);
+
+      jwt.sign(
+        {
+          email:
+            existingUser.toJSON().email || existingUser.toJSON().businessEmail,
+          _id: existingUser.toJSON()._id,
+          domain: PRODUCT_NAME,
+        },
+        JWT_SECRET!,
+        { expiresIn: "30d" },
+        async (err, token) => {
+          // Create a new session for user
+          const deviceInfo = req.headers["user-agent"]
+            ? parseUserAgent(req.headers["user-agent"])
+            : null;
+          const locationInfo = await getLocationFromIP(req.ip);
+
+          const session = await AuthSessionModel.create({
+            userId: existingUser._id,
+            token,
+            ipAddress: req.ip,
+            userAgent: req.headers["user-agent"],
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            city: locationInfo?.city,
+            region: locationInfo?.region,
+            country: locationInfo?.country,
+            latitude: locationInfo?.latitude,
+            longitude: locationInfo?.longitude,
+            deviceType: deviceInfo?.deviceType,
+            deviceOS: deviceInfo?.os,
+            deviceOSVersion: deviceInfo?.osVersion,
+            deviceModel: deviceInfo?.model,
+            deviceManufacturer: deviceInfo?.manufacturer,
+          });
+
+          await notifyUser({
+            sendEmailNotification: true,
+            title: "Email Change Verification",
+            userDetails: existingUser,
+            message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+          });
+
+          return sendSuccessFeedback(
+            res,
+            "Email updated successfully.Verification code sent",
+            {
+              user: existingUser,
+              token,
+              sessionId: session._id,
+            },
+          );
+        },
+      );
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const ResendUpdateEmailOTP = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      if (!userDetails.triedLogin) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "An error occurred. Try logging in again",
+        );
+      }
+
+      // change Token
+      const verificationCode = generateRandomNumbers();
+
+      userDetails.verificationCode = verificationCode;
+
+      await userDetails.save();
+
+      // Send OTP
+      await notifyUser({
+        sendEmailNotification: true,
+        title: "Email Change Verification",
+        userDetails: userDetails,
+        message: `Use <b>${userDetails.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
+      });
+
+      await UserCronSchedules.resetOTP(
+        (userDetails as IUser).email ||
+          (userDetails as IOrganization).businessEmail,
+      );
+
+      return sendSuccessFeedback(res, "Verification code sent to email");
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const VerifyUpdateEmail = async (
+    req: Request<never, never, { verificationCode: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { verificationCode } = req.body;
+
+      const userDetails = await getUserDetails(req as any);
+
+      if (!userDetails.triedLogin) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "An error occurred. Try logging in again",
+        );
+      }
+
+      if (verificationCode !== userDetails.verificationCode) {
+        return sendErrorFeedback(res, 400, "Invalid OTP");
+      }
+
+      // change Token
+      const newVerificationCode = generateRandomNumbers();
+
+      userDetails.verificationCode = newVerificationCode;
+      userDetails.emailIsVerified = true;
+      userDetails.triedLogin = false;
+
+      await userDetails.save();
+
+      await notifyUser({
+        userDetails,
+        title: "Email Change Successful",
+        message: `Your email has been successfully changed to ${(userDetails as IUser).email || (userDetails as IOrganization).businessEmail}.`,
+        sendEmailNotification: true,
+        sendInAppNotification: true,
+        type: "general-notification",
+      });
+
+      return sendSuccessFeedback(res, "Email verified successfully", {
+        user: userDetails,
+      });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const UpdateUserUsername = async (
+    req: Request<never, never, { username: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const { username } = req.body;
+
+      if (userDetails.username === username) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "Enter a different username to update",
+        );
+      }
+
+      const existingUser =
+        (await UserModel.findOne({
+          username,
+          _id: { $ne: userDetails?._id },
+        })) ||
+        (await OrganizationModel.findOne({
+          username,
+          _id: { $ne: userDetails?._id },
+        }));
+
+      if (existingUser) {
+        return sendErrorFeedback(res, 400, "Username already exists");
+      }
+
+      userDetails.username = username;
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Username updated successfully", {
+        user: userDetails,
+      });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+  const UpdateUserPhoneNumber = async (
+    req: Request<never, never, { phoneNumber: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const { phoneNumber } = req.body;
+
+      if (
+        (userDetails as IUser).phoneNumber === phoneNumber ||
+        (userDetails as IOrganization).businessPhoneNumber === phoneNumber
+      ) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "Enter a different phone number to update",
+        );
+      }
+
+      const existingUser =
+        (await UserModel.findOne({
+          phoneNumber,
+          _id: { $ne: userDetails?._id },
+        })) ||
+        (await OrganizationModel.findOne({
+          businessPhoneNumber: phoneNumber,
+          _id: { $ne: userDetails?._id },
+        }));
+
+      if (existingUser) {
+        return sendErrorFeedback(res, 400, "Phone number already exists");
+      }
+
+      if (userDetails.accountType === "user") {
+        userDetails.phoneNumber = phoneNumber;
+      } else {
+        userDetails.businessPhoneNumber = phoneNumber;
+      }
+
+      userDetails.phoneNumberIsVerified = false;
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Phone number updated successfully", {
+        user: userDetails,
+      });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const UpdateOrganizationProfile = async (
+    req: Request<never, never, IOrganization>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = (await getUserDetails(req as any)) as IOrganization;
+
+      const { businessName, businessAddress, businessWebsite, businessBio } =
+        req.body;
+
+      userDetails.businessName = businessName || userDetails.businessName;
+      userDetails.businessWebsite =
+        businessWebsite || userDetails.businessWebsite;
+      userDetails.businessBio = businessBio || userDetails.businessBio;
+      userDetails.businessAddress =
+        businessAddress || userDetails.businessAddress;
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Profile updated", { user: userDetails });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const UpdatePassword = async (
+    req: Request<
+      never,
+      never,
+      {
+        oldPassword: string;
+        newPassword: string;
+      }
+    >,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const { oldPassword, newPassword } = req.body;
+
+      if (!(await bcryptjs.compare(oldPassword, userDetails.password!))) {
+        return sendErrorFeedback(res, 400, "Old password is incorrect");
+      }
+
+      const hashedNewPassword = await bcryptjs.hash(newPassword, 10);
+
+      userDetails.password = hashedNewPassword;
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Password updated successfully", {
+        user: userDetails,
+      });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const DeleteProfile = async (
+    req: Request<never, never, { password: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { password } = req.body;
+
+      const userDetails = await getUserDetails(req as any);
+
+      const dbUserDetails =
+        (await UserModel.findById(userDetails._id)) ||
+        (await OrganizationModel.findById(userDetails._id));
+
+      if (!dbUserDetails)
+        return sendErrorFeedback(res, 400, "Profile not found");
+
+      if (!(await bcryptjs.compare(password, dbUserDetails.password!))) {
+        return sendErrorFeedback(res, 400, "Password is incorrect");
+      }
+
+      if (dbUserDetails.accountType === "user") {
+        await UserModel.findByIdAndDelete(userDetails._id);
+      } else {
+        await OrganizationModel.findByIdAndDelete(userDetails._id);
+      }
+
+      return sendSuccessFeedback(res, "Profile deleted successfully", {
+        user: dbUserDetails,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -29,6 +487,28 @@ export const UserProfileController = () => {
   const UpdateProfilePicture = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const profilePhoto: Express.Multer.File | undefined = req.file;
+
+      if (!profilePhoto || profilePhoto.fieldname !== "profilePhoto")
+        return sendErrorFeedback(res, 400, "Please upload a profile photo");
+
+      const userDetails = await getUserDetails(req as any);
+
+      if (userDetails.accountType === "user") {
+        userDetails.profileImage = profilePhoto.path;
+      }
+      if (userDetails.accountType === "organization") {
+        userDetails.businessLogoURL = profilePhoto.path;
+      }
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Profile image updated", {
+        user: userDetails,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -37,46 +517,312 @@ export const UserProfileController = () => {
   const UpdateCoverPhoto = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const coverImage: Express.Multer.File | undefined = req.file;
+
+      if (!coverImage || coverImage.fieldname !== "coverImage")
+        return sendErrorFeedback(res, 400, "Please upload a cover image");
+
+      const userDetails = await getUserDetails(req as any);
+
+      userDetails.coverImageURL = coverImage.path; // both users and organizations use the same cover image field
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Cover image updated", {
+        user: userDetails,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const GetProfileByUsername = async (req: Request, res: Response) => {
+  const GetProfileByUsername = async (
+    req: Request<
+      never,
+      never,
+      never,
+      {
+        username: string;
+      }
+    >,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { username } = req.query;
+
+      const userDetails =
+        (await UserModel.findOne({ username, active: true, isFlagged: false })
+          .select(
+            "username firstName lastName profileImage coverImageURL accountType bio -_id",
+          )
+          .lean()) ||
+        (await OrganizationModel.findOne({
+          username,
+          active: true,
+          isFlagged: false,
+        })
+          .select(
+            "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType -_id",
+          )
+          .lean());
+
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
+
+      return sendSuccessFeedback(res, "Profile found", {
+        user: userDetails,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const GetProfileById = async (req: Request, res: Response) => {
+  const GetProfileById = async (
+    req: Request<{
+      id: string;
+    }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+
+      const userDetails =
+        (await UserModel.findOne({
+          _id: id,
+          active: true,
+          isFlagged: false,
+        }).select(
+          "-emailIsVerified -phoneNumberIsVerified -ntfToken -subscriptionType -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
+        )) ||
+        (await OrganizationModel.findOne({
+          _id: id,
+          active: true,
+          isFlagged: false,
+        }).select(
+          "-emailIsVerified -phoneNumberIsVerified -ntfToken -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
+        ));
+
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
+
+      return sendSuccessFeedback(res, "Profile found", {
+        user: userDetails,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const SearchUsers = async (req: Request, res: Response) => {
+  const SearchUsers = async (
+    req: Request<never, never, never, { name: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { name } = req.query;
+
+      const safeName = escapeRegex(String(name || ""));
+
+      const users = await UserModel.find({
+        $or: [
+          // Use mongo DB atlas when dataset is large
+          { firstName: { $regex: `^${safeName}`, $options: "i" } },
+          { lastName: { $regex: `^${safeName}`, $options: "i" } },
+          { username: { $regex: `^${safeName}`, $options: "i" } },
+        ],
+        active: true,
+        isFlagged: false,
+      })
+        .select(
+          "username firstName lastName profileImage coverImageURL accountType bio -_id",
+        )
+        .limit(10)
+        .lean();
+
+      const organizations = await OrganizationModel.find({
+        $or: [
+          // Use mongo DB atlas when dataset is large
+          { businessName: { $regex: `^${safeName}`, $options: "i" } },
+          { username: { $regex: `^${safeName}`, $options: "i" } },
+        ],
+        active: true,
+        isFlagged: false,
+      })
+        .select(
+          "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType -_id",
+        )
+        .limit(10)
+        .lean();
+
+      return sendSuccessFeedback(res, "Users found", {
+        users,
+        organizations,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const FollowUser = async (req: Request, res: Response) => {
+  const FollowUser = async (
+    req: Request<{
+      id: string;
+    }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+      const userDetails = await getUserDetails(req as any);
+
+      const userToFollow =
+        (await UserModel.findOne({
+          _id: id,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          _id: id,
+          active: true,
+          isFlagged: false,
+        }));
+
+      if (!userToFollow) return sendErrorFeedback(res, 400, "User not found");
+
+      const existingFollowRequest = await FollowRequestModel.findOne({
+        leaderId: userToFollow._id,
+        followerId: userDetails._id,
+      });
+
+      if (existingFollowRequest)
+        return sendErrorFeedback(
+          res,
+          400,
+          "You have already sent a follow request to this user",
+        );
+
+      const newFollowRequest = await FollowRequestModel.create({
+        leaderId: userToFollow._id,
+        followerId: userDetails._id,
+        status: "accepted", // to be subject to review in future if user has a private account
+        leaderType: userToFollow.accountType,
+        followerType: userDetails.accountType,
+      });
+
+      return sendSuccessFeedback(
+        res,
+        "You have successfully followed this user",
+        {
+          followRequest: newFollowRequest,
+        },
+      );
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const UnfollowUser = async (req: Request, res: Response) => {
+  const UnfollowUser = async (
+    req: Request<{
+      id: string;
+    }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+      const userDetails = await getUserDetails(req as any);
+
+      const userToFollow =
+        (await UserModel.findOne({
+          _id: id,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          _id: id,
+          active: true,
+          isFlagged: false,
+        }));
+
+      if (!userToFollow) return sendErrorFeedback(res, 400, "User not found");
+
+      const followRequest = await FollowRequestModel.findOneAndDelete({
+        leaderId: userToFollow._id,
+        followerId: userDetails._id,
+      });
+
+      if (!followRequest)
+        return sendErrorFeedback(res, 400, "Follow request not found");
+
+      return sendSuccessFeedback(
+        res,
+        "You have successfully unfollowed this user",
+      );
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const GetFollowers = async (
+    req: Request<{ id: string }, never, never, { followingUserId?: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+      const { followingUserId } = req.query;
+
+      const followers = await FollowRequestModel.find({
+        leaderId: id,
+        status: "accepted",
+        ...(followingUserId && { followerId: followingUserId }),
+      }).populate("followerDetails");
+
+      return sendSuccessFeedback(res, "Followers retrieved", { followers });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const GetFollowing = async (
+    req: Request<{ id: string }, never, never, { leadingUserId?: string }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+      const { leadingUserId } = req.query;
+
+      const following = await FollowRequestModel.find({
+        followerId: id,
+        status: "accepted",
+        ...(leadingUserId && { leaderId: leadingUserId }),
+      }).populate("leaderDetails");
+
+      return sendSuccessFeedback(res, "Following retrieved", { following });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -85,6 +831,8 @@ export const UserProfileController = () => {
   const BlockUser = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -93,22 +841,8 @@ export const UserProfileController = () => {
   const UnblockUser = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const GetFollowers = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const GetFollowing = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -117,14 +851,8 @@ export const UserProfileController = () => {
   const GetBlockedUsers = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const CheckFollowStatus = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -133,6 +861,8 @@ export const UserProfileController = () => {
   const CheckBlockStatus = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -141,6 +871,8 @@ export const UserProfileController = () => {
   const GetProfileShareUrl = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -149,6 +881,8 @@ export const UserProfileController = () => {
   const GetProfileShareUrlByUsername = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -157,6 +891,8 @@ export const UserProfileController = () => {
   const GetProfileStats = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -165,6 +901,8 @@ export const UserProfileController = () => {
   const GetBroadcastRequests = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -173,6 +911,8 @@ export const UserProfileController = () => {
   const GetBroadcastRequest = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -181,6 +921,8 @@ export const UserProfileController = () => {
   const ApproveBroadcastRequest = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -189,6 +931,8 @@ export const UserProfileController = () => {
   const RejectBroadcastRequest = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -197,6 +941,8 @@ export const UserProfileController = () => {
   const GetKYCStatus = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -205,6 +951,8 @@ export const UserProfileController = () => {
   const UploadKYCDocuments = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -213,6 +961,8 @@ export const UserProfileController = () => {
   const SubmitKYCApplication = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -221,6 +971,8 @@ export const UserProfileController = () => {
   const GetKYCHistory = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -229,6 +981,8 @@ export const UserProfileController = () => {
   const GetKYCApplication = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -237,6 +991,8 @@ export const UserProfileController = () => {
   const DeleteKYCApplication = async (req: Request, res: Response) => {
     try {
       // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -258,7 +1014,6 @@ export const UserProfileController = () => {
     GetFollowers,
     GetFollowing,
     GetBlockedUsers,
-    CheckFollowStatus,
     CheckBlockStatus,
     GetProfileShareUrl,
     GetProfileShareUrlByUsername,
@@ -273,5 +1028,12 @@ export const UserProfileController = () => {
     GetKYCHistory,
     GetKYCApplication,
     DeleteKYCApplication,
+    UpdateOrganizationProfile,
+    UpdatePassword,
+    ResendUpdateEmailOTP,
+    UpdateUserEmail,
+    UpdateUserUsername,
+    UpdateUserPhoneNumber,
+    VerifyUpdateEmail,
   };
 };

@@ -3,3 +3,7 @@ export const generateRandomNumbers = (length: number = 6): string => {
   crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte % 10).join("");
 };
+
+export function escapeRegex(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

@@ -106,7 +106,7 @@ export const isUserOrOrganization = async (
         isFlagged: false,
       })) ||
       (await OrganizationModel.findOne({
-        email: tokenData?.email,
+        businessEmail: tokenData?.email,
         active: true,
         isFlagged: false,
       }));
@@ -174,7 +174,7 @@ export const isOrganization = async (
 
     // Check if admin exists and is activated
     const isOrg = await OrganizationModel.findOne({
-      email: tokenData?.email,
+      businessEmail: tokenData?.email,
       active: true,
       isFlagged: false,
     });

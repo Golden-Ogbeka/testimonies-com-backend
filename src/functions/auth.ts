@@ -2,6 +2,7 @@ import { Request } from "express";
 import jwt from "jsonwebtoken";
 // import AdminModel from "../models/admin.model";
 import { UAParser } from "ua-parser-js";
+import OrganizationModel, { IOrganization } from "../models/organization.model";
 import UserModel, { IUser } from "../models/user.model";
 
 export const getUserDetails = async (req: Request) => {
@@ -16,13 +17,17 @@ export const getUserDetails = async (req: Request) => {
 
   if (!tokenData) throw new Error("Unauthorized");
 
-  const details = await UserModel.findOne({
-    email: tokenData?.email,
-  });
+  const details =
+    (await UserModel.findOne({
+      email: tokenData?.email,
+    })) ||
+    (await OrganizationModel.findOne({
+      businessEmail: tokenData?.email,
+    }));
 
   if (!details) throw new Error("Unauthorized!");
 
-  return details;
+  return details as IUser | IOrganization;
 };
 
 export const getTokenData = (req: Request) => {
