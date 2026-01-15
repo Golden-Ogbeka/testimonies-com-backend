@@ -285,7 +285,7 @@ UserProfileRouter.post(
 );
 
 // Unfollow a user
-UserProfileRouter.post(
+UserProfileRouter.delete(
   "/unfollow/:id",
   [
     isUserOrOrganization,
@@ -331,6 +331,7 @@ UserProfileRouter.post(
   "/block/:id",
   [
     isUserOrOrganization,
+    // This is the ID of the user that is to be blocked
     param("id", "User ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -343,6 +344,7 @@ UserProfileRouter.delete(
   "/block/:id",
   [
     isUserOrOrganization,
+    // This is the ID of the user that is to be unblocked
     param("id", "User ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -351,18 +353,15 @@ UserProfileRouter.delete(
 );
 
 // Get blocked users
-UserProfileRouter.get("/blocked", Controller.GetBlockedUsers);
-
-// Get whether logged in user has blocked another user
 UserProfileRouter.get(
-  "/blocked/:id",
+  "/blocked",
   [
     isUserOrOrganization,
-    param("id", "User ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
+    query("blockedUserId")
+      .optional()
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.CheckBlockStatus,
+  Controller.GetBlockedUsers,
 );
 
 // Get logged in user's profile share url

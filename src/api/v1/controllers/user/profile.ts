@@ -25,6 +25,7 @@ import FollowRequestModel from "../../../../models/follow-request.model";
 import OrganizationModel, {
   IOrganization,
 } from "../../../../models/organization.model";
+import UserBlockModel from "../../../../models/user-block.model";
 import UserModel, { IUser } from "../../../../models/user.model";
 import { notifyUser } from "../../services/notification";
 
@@ -596,6 +597,22 @@ export const UserProfileController = () => {
 
       const { id } = req.params;
 
+      // check if user is blocked
+      const loggedInUser = await getUserDetails(req as any);
+
+      const isBlocked = await UserBlockModel.findOne({
+        userBlockingId: id,
+        userToBlockId: loggedInUser._id,
+      });
+
+      if (isBlocked) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You are not allowed to view this profile",
+        );
+      }
+
       const userDetails =
         (await UserModel.findOne({
           _id: id,
@@ -688,6 +705,20 @@ export const UserProfileController = () => {
 
       const { id } = req.params;
       const userDetails = await getUserDetails(req as any);
+
+      // check if user is blocked
+      const isBlocked = await UserBlockModel.findOne({
+        userBlockingId: id,
+        userToBlockId: userDetails._id,
+      });
+
+      if (isBlocked) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You are not allowed to follow this profile",
+        );
+      }
 
       const userToFollow =
         (await UserModel.findOne({
@@ -792,6 +823,22 @@ export const UserProfileController = () => {
       const { id } = req.params;
       const { followingUserId } = req.query;
 
+      // check if user is blocked
+      const loggedInUser = await getUserDetails(req as any);
+
+      const isBlocked = await UserBlockModel.findOne({
+        userBlockingId: id,
+        userToBlockId: loggedInUser._id,
+      });
+
+      if (isBlocked) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You are not allowed to view this profile followers",
+        );
+      }
+
       const followers = await FollowRequestModel.find({
         leaderId: id,
         status: "accepted",
@@ -816,6 +863,22 @@ export const UserProfileController = () => {
       const { id } = req.params;
       const { leadingUserId } = req.query;
 
+      // check if user is blocked
+      const loggedInUser = await getUserDetails(req as any);
+
+      const isBlocked = await UserBlockModel.findOne({
+        userBlockingId: id,
+        userToBlockId: loggedInUser._id,
+      });
+
+      if (isBlocked) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You are not allowed to view this profile's following",
+        );
+      }
+
       const following = await FollowRequestModel.find({
         followerId: id,
         status: "accepted",
@@ -828,41 +891,124 @@ export const UserProfileController = () => {
     }
   };
 
-  const BlockUser = async (req: Request, res: Response) => {
+  const BlockUser = async (
+    req: Request<{
+      id: string;
+    }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+
+      const userDetails = await getUserDetails(req as any);
+
+      const userToBlock =
+        (await UserModel.findById(id)) ||
+        (await OrganizationModel.findById(id));
+
+      if (!userToBlock) return sendErrorFeedback(res, 400, "User not found");
+
+      const existingBlock = await UserBlockModel.findOne({
+        userToBlockId: id,
+        userBlockingId: userDetails._id,
+      });
+
+      if (existingBlock)
+        return sendErrorFeedback(
+          res,
+          400,
+          "You have already blocked this user",
+        );
+
+      const newBlock = await UserBlockModel.create({
+        userToBlockId: id,
+        userBlockingId: userDetails._id,
+        userBlockingType: userDetails.accountType,
+        userToBlockType: userToBlock.accountType,
+      });
+
+      return sendSuccessFeedback(
+        res,
+        "You have successfully blocked this user",
+        {
+          blockAction: newBlock,
+        },
+      );
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const UnblockUser = async (req: Request, res: Response) => {
+  const UnblockUser = async (req: Request<{ id: string }>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { id } = req.params;
+
+      const userDetails = await getUserDetails(req as any);
+
+      const userToBlock =
+        (await UserModel.findById(id)) ||
+        (await OrganizationModel.findById(id));
+
+      if (!userToBlock) return sendErrorFeedback(res, 400, "User not found");
+
+      const existingBlock = await UserBlockModel.findOneAndDelete({
+        userToBlockId: id,
+        userBlockingId: userDetails._id,
+      });
+
+      if (!existingBlock)
+        return sendErrorFeedback(res, 400, "You have not blocked this user");
+
+      return sendSuccessFeedback(
+        res,
+        "You have successfully unblocked this user",
+        {
+          blockAction: existingBlock,
+        },
+      );
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
   };
 
-  const GetBlockedUsers = async (req: Request, res: Response) => {
+  const GetBlockedUsers = async (
+    req: Request<
+      never,
+      never,
+      never,
+      {
+        blockedUserId?: string;
+      }
+    >,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
 
-  const CheckBlockStatus = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+      const userDetails = await getUserDetails(req as any);
+
+      const { blockedUserId } = req.query;
+
+      const blockedUsers = await UserBlockModel.find({
+        userBlockingId: userDetails._id,
+        ...(blockedUserId && {
+          userToBlockId: blockedUserId,
+        }),
+      }).populate("userToBlockDetails");
+
+      return sendSuccessFeedback(res, "Blocked users retrieved", {
+        blockedUsers,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -1014,7 +1160,6 @@ export const UserProfileController = () => {
     GetFollowers,
     GetFollowing,
     GetBlockedUsers,
-    CheckBlockStatus,
     GetProfileShareUrl,
     GetProfileShareUrlByUsername,
     GetProfileStats,
