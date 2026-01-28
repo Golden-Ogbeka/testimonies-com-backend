@@ -12,6 +12,7 @@ import {
   JWT_SECRET,
   OTP_EXPIRY,
   PRODUCT_NAME,
+  WEBSITE_URL,
 } from "../../../../functions/env";
 import {
   sendCatchFeedback,
@@ -27,6 +28,7 @@ import OrganizationModel, {
 } from "../../../../models/organization.model";
 import UserBlockModel from "../../../../models/user-block.model";
 import UserModel, { IUser } from "../../../../models/user.model";
+import { getPaginationOptions } from "../../../../utils/pagination";
 import { notifyUser } from "../../services/notification";
 
 export const UserProfileController = () => {
@@ -540,6 +542,7 @@ export const UserProfileController = () => {
     }
   };
 
+  // ⚠️ PUBLIC ENDPOINT
   const GetProfileByUsername = async (
     req: Request<
       never,
@@ -559,7 +562,13 @@ export const UserProfileController = () => {
       const { username } = req.query;
 
       const userDetails =
-        (await UserModel.findOne({ username, active: true, isFlagged: false })
+        (await UserModel.findOne({
+          username,
+          active: true,
+          isFlagged: false,
+          profileVisibility: { $in: ["public", "private"] },
+          // since this endpoint is public, only public and private profiles to be fetched
+        })
           .select(
             "username firstName lastName profileImage coverImageURL accountType bio -_id",
           )
@@ -568,6 +577,8 @@ export const UserProfileController = () => {
           username,
           active: true,
           isFlagged: false,
+          profileVisibility: { $in: ["public", "private"] },
+          // since this endpoint is public, only public and private profiles to be fetched
         })
           .select(
             "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType -_id",
@@ -613,11 +624,22 @@ export const UserProfileController = () => {
         );
       }
 
+      const isFollowing = await FollowRequestModel.findOne({
+        leaderId: id,
+        followerId: loggedInUser._id,
+        status: "accepted",
+      });
+
       const userDetails =
         (await UserModel.findOne({
           _id: id,
           active: true,
           isFlagged: false,
+          ...(isFollowing
+            ? { profileVisibility: { $in: ["public", "private"] } }
+            : {
+                profileVisibility: "public", // if user is not following, only public profiles to be fetched
+              }),
         }).select(
           "-emailIsVerified -phoneNumberIsVerified -ntfToken -subscriptionType -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
         )) ||
@@ -625,6 +647,11 @@ export const UserProfileController = () => {
           _id: id,
           active: true,
           isFlagged: false,
+          ...(isFollowing
+            ? { profileVisibility: { $in: ["public", "private"] } }
+            : {
+                profileVisibility: "public", // if user is not following, only public profiles to be fetched
+              }),
         }).select(
           "-emailIsVerified -phoneNumberIsVerified -ntfToken -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
         ));
@@ -661,6 +688,7 @@ export const UserProfileController = () => {
         ],
         active: true,
         isFlagged: false,
+        profileVisibility: { $in: ["public", "private"] },
       })
         .select(
           "username firstName lastName profileImage coverImageURL accountType bio -_id",
@@ -676,6 +704,7 @@ export const UserProfileController = () => {
         ],
         active: true,
         isFlagged: false,
+        profileVisibility: { $in: ["public", "private"] },
       })
         .select(
           "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType -_id",
@@ -725,11 +754,13 @@ export const UserProfileController = () => {
           _id: id,
           active: true,
           isFlagged: false,
+          profileVisibility: { $in: ["public", "private"] },
         })) ||
         (await OrganizationModel.findOne({
           _id: id,
           active: true,
           isFlagged: false,
+          profileVisibility: { $in: ["public", "private"] },
         }));
 
       if (!userToFollow) return sendErrorFeedback(res, 400, "User not found");
@@ -749,17 +780,118 @@ export const UserProfileController = () => {
       const newFollowRequest = await FollowRequestModel.create({
         leaderId: userToFollow._id,
         followerId: userDetails._id,
-        status: "accepted", // to be subject to review in future if user has a private account
+        status:
+          userToFollow.profileVisibility === "private" ? "pending" : "accepted",
         leaderType: userToFollow.accountType,
         followerType: userDetails.accountType,
       });
 
       return sendSuccessFeedback(
         res,
-        "You have successfully followed this user",
+        "You have successfully initiated a follow request to this user",
         {
           followRequest: newFollowRequest,
         },
+      );
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const ViewFollowRequests = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const paginationOptions = getPaginationOptions(req as any);
+
+      const followRequests = await FollowRequestModel.paginate(
+        {
+          leaderId: userDetails._id,
+          status: "pending",
+        },
+        {
+          ...paginationOptions,
+          populate: "followerDetails",
+        },
+      );
+
+      return sendSuccessFeedback(res, "Follow requests retrieved", {
+        followRequests,
+      });
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const AcceptFollowRequest = async (
+    req: Request<{
+      id: string;
+    }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+      const { id } = req.params;
+      const userDetails = await getUserDetails(req as any);
+
+      const followRequest = await FollowRequestModel.findOneAndUpdate(
+        {
+          _id: id,
+          leaderId: userDetails._id,
+          status: "pending",
+        },
+        {
+          status: "accepted",
+        },
+        {
+          new: true,
+          populate: "followerDetails",
+        },
+      );
+
+      if (!followRequest)
+        return sendErrorFeedback(res, 400, "Follow request not found");
+
+      return sendSuccessFeedback(
+        res,
+        "You have successfully accepted this follow request",
+      );
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const RejectFollowRequest = async (
+    req: Request<{
+      id: string;
+    }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+      const { id } = req.params;
+      const userDetails = await getUserDetails(req as any);
+
+      const followRequest = await FollowRequestModel.findOneAndDelete({
+        _id: id,
+        leaderId: userDetails._id,
+        status: "pending",
+      });
+
+      if (!followRequest)
+        return sendErrorFeedback(res, 400, "Follow request not found");
+
+      return sendSuccessFeedback(
+        res,
+        "You have successfully declined this follow request",
       );
     } catch (error: any) {
       return sendCatchFeedback(res, error);
@@ -785,11 +917,13 @@ export const UserProfileController = () => {
           _id: id,
           active: true,
           isFlagged: false,
+          profileVisibility: { $in: ["public", "private"] },
         })) ||
         (await OrganizationModel.findOne({
           _id: id,
           active: true,
           isFlagged: false,
+          profileVisibility: { $in: ["public", "private"] },
         }));
 
       if (!userToFollow) return sendErrorFeedback(res, 400, "User not found");
@@ -1019,6 +1153,14 @@ export const UserProfileController = () => {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const profileURL = `${WEBSITE_URL}/${userDetails.username}`;
+
+      return sendSuccessFeedback(res, "Profile URL retrieved successfully", {
+        profileURL,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -1029,6 +1171,37 @@ export const UserProfileController = () => {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const UpdateProfileVisibility = async (
+    req: Request<
+      never,
+      never,
+      {
+        profileVisibility: "private" | "public" | "secret";
+      }
+    >,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const userDetails = await getUserDetails(req as any);
+
+      const { profileVisibility } = req.body;
+
+      userDetails.profileVisibility = profileVisibility;
+
+      await userDetails.save();
+
+      return sendSuccessFeedback(res, "Profile visibility updated", {
+        user: userDetails,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -1180,5 +1353,9 @@ export const UserProfileController = () => {
     UpdateUserUsername,
     UpdateUserPhoneNumber,
     VerifyUpdateEmail,
+    UpdateProfileVisibility,
+    ViewFollowRequests,
+    AcceptFollowRequest,
+    RejectFollowRequest,
   };
 };

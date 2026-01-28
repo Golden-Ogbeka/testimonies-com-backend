@@ -415,6 +415,8 @@ export const UserAuthController = () => {
               message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
             });
             existingUser.triedLogin = true;
+            existingUser.lastLoginAttempt = new Date();
+
             await existingUser.save();
 
             await UserCronSchedules.resetTriedLogin(existingUser.email);
@@ -594,6 +596,12 @@ export const UserAuthController = () => {
             deviceModel: deviceInfo?.model,
             deviceManufacturer: deviceInfo?.manufacturer,
           });
+
+          // Set login time variables
+          existingUser.lastSuccessfulLogin = new Date();
+          existingUser.lastLoginAttempt = new Date();
+
+          await existingUser.save();
           return sendSuccessFeedback(res, "Login Successful", {
             user: existingUser,
             token,

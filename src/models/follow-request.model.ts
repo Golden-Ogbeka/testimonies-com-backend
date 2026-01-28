@@ -4,7 +4,7 @@ import mongoosePaginate from "mongoose-paginate-v2";
 export interface IFollowRequest extends Document {
   leaderId: Schema.Types.ObjectId;
   followerId: Schema.Types.ObjectId;
-  status: "pending" | "accepted" | "rejected";
+  status: "pending" | "accepted";
   createdAt?: Date;
   updatedAt?: Date;
   leaderType: "user" | "organization";
@@ -17,7 +17,7 @@ const followRequestSchema = new Schema<IFollowRequest>(
     followerId: { type: Schema.Types.ObjectId, required: true },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "accepted"],
       default: "pending",
     },
     leaderType: {

@@ -326,6 +326,37 @@ UserProfileRouter.get(
   Controller.GetFollowing,
 );
 
+// View follow requests
+UserProfileRouter.get(
+  "/follow-requests",
+  isUserOrOrganization,
+  Controller.ViewFollowRequests,
+);
+
+// Accept follow request
+UserProfileRouter.post(
+  "/follow-requests/:id/accept",
+  [
+    isUserOrOrganization,
+    param("id", "Follow Request ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.AcceptFollowRequest,
+);
+
+// Reject follow request
+UserProfileRouter.post(
+  "/follow-requests/:id/reject",
+  [
+    isUserOrOrganization,
+    param("id", "Follow Request ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.RejectFollowRequest,
+);
+
 // Block a user
 UserProfileRouter.post(
   "/block/:id",
@@ -365,12 +396,30 @@ UserProfileRouter.get(
 );
 
 // Get logged in user's profile share url
-UserProfileRouter.get("/share-url", Controller.GetProfileShareUrl);
+UserProfileRouter.get(
+  "/share-url",
+  isUserOrOrganization,
+  Controller.GetProfileShareUrl,
+);
 
 // Get another user's profile share url by username
 UserProfileRouter.get(
   "/share-url/:username",
+  isUserOrOrganization,
   Controller.GetProfileShareUrlByUsername,
+);
+
+// Update user's profile visibility
+UserProfileRouter.patch(
+  "/visibility",
+  [
+    isUserOrOrganization,
+    body("profileVisibility", "Profile visibility is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .isIn(["public", "private", "secret"])
+      .withMessage("Invalid profile visibility option"),
+  ],
+  Controller.UpdateProfileVisibility,
 );
 
 // Get user profile statistics (number of followers, following, testimonies, replies, likes received, views received)
