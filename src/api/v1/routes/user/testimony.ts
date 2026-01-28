@@ -267,4 +267,34 @@ UserTestimonyRouter.get("/stats/popular-tags", Controller.GetPopularTags);
 // Get testimony length statistics (average, min, max lengths)
 UserTestimonyRouter.get("/stats/length", Controller.GetTestimonyLengthStats);
 
+// View broadcast testimony requests
+UserTestimonyRouter.get("/broadcast-requests", Controller.GetBroadcastRequests);
+
+// View broadcast testimony request by id
+UserTestimonyRouter.get(
+  "/broadcast-requests/:id",
+  param("id", "Request ID is required")
+    .exists({ checkFalsy: true, checkNull: true })
+    .custom((value) => isValidObjectId(value)),
+  Controller.GetBroadcastRequest,
+);
+
+// Approve broadcast testimony request
+UserTestimonyRouter.post(
+  "/broadcast-requests/:id/approve",
+  param("id", "Request ID is required")
+    .exists({ checkFalsy: true, checkNull: true })
+    .custom((value) => isValidObjectId(value)),
+  Controller.ApproveBroadcastRequest,
+);
+
+// Reject broadcast testimony request
+UserTestimonyRouter.post(
+  "/broadcast-requests/:id/reject",
+  param("id", "Request ID is required")
+    .exists({ checkFalsy: true, checkNull: true })
+    .custom((value) => isValidObjectId(value)),
+  Controller.RejectBroadcastRequest,
+);
+
 export default UserTestimonyRouter;

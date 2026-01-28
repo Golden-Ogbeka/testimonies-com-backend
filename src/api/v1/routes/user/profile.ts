@@ -422,67 +422,34 @@ UserProfileRouter.patch(
   Controller.UpdateProfileVisibility,
 );
 
-// Get user profile statistics (number of followers, following, testimonies, replies, likes received, views received)
-UserProfileRouter.get("/stats", Controller.GetProfileStats);
+// // Get user's kyc status
+// UserProfileRouter.get("/kyc/status", Controller.GetKYCStatus);
 
-// View broadcast testimony requests
-UserProfileRouter.get("/broadcast-requests", Controller.GetBroadcastRequests);
+// // Upload user's kyc documents
+// UserProfileRouter.post("/kyc/upload", Controller.UploadKYCDocuments);
 
-// View broadcast testimony request by id
-UserProfileRouter.get(
-  "/broadcast-requests/:id",
-  param("id", "Request ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetBroadcastRequest,
-);
+// // Submit user's kyc application
+// UserProfileRouter.post("/kyc/submit", Controller.SubmitKYCApplication);
 
-// Approve broadcast testimony request
-UserProfileRouter.post(
-  "/broadcast-requests/:id/approve",
-  param("id", "Request ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.ApproveBroadcastRequest,
-);
+// // Get user's kyc application history
+// UserProfileRouter.get("/kyc/history", Controller.GetKYCHistory);
 
-// Reject broadcast testimony request
-UserProfileRouter.post(
-  "/broadcast-requests/:id/reject",
-  param("id", "Request ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.RejectBroadcastRequest,
-);
+// // Get user's kyc application by id which includes status and admin feedback
+// UserProfileRouter.get(
+//   "/kyc/:id",
+//   param("id", "KYC ID is required")
+//     .exists({ checkFalsy: true, checkNull: true })
+//     .custom((value) => isValidObjectId(value)),
+//   Controller.GetKYCApplication,
+// );
 
-// Get user's kyc status
-UserProfileRouter.get("/kyc/status", Controller.GetKYCStatus);
-
-// Upload user's kyc documents
-UserProfileRouter.post("/kyc/upload", Controller.UploadKYCDocuments);
-
-// Submit user's kyc application
-UserProfileRouter.post("/kyc/submit", Controller.SubmitKYCApplication);
-
-// Get user's kyc application history
-UserProfileRouter.get("/kyc/history", Controller.GetKYCHistory);
-
-// Get user's kyc application by id which includes status and admin feedback
-UserProfileRouter.get(
-  "/kyc/:id",
-  param("id", "KYC ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetKYCApplication,
-);
-
-// Delete user's kyc application by id
-UserProfileRouter.delete(
-  "/kyc/:id",
-  param("id", "KYC ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeleteKYCApplication,
-);
+// // Delete user's kyc application by id
+// UserProfileRouter.delete(
+//   "/kyc/:id",
+//   param("id", "KYC ID is required")
+//     .exists({ checkFalsy: true, checkNull: true })
+//     .custom((value) => isValidObjectId(value)),
+//   Controller.DeleteKYCApplication,
+// );
 
 export default UserProfileRouter;

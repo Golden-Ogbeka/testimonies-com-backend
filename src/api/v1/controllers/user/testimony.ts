@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { sendCatchFeedback } from "../../../../functions/feedback";
+import { validationResult } from "express-validator";
+import {
+  sendCatchFeedback,
+  sendValidationErrorFeedback,
+} from "../../../../functions/feedback";
 
 export const UserTestimonyController = () => {
   const GetPublicTestimonies = async (req: Request, res: Response) => {
@@ -322,6 +326,46 @@ export const UserTestimonyController = () => {
     }
   };
 
+  const GetBroadcastRequests = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const GetBroadcastRequest = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const ApproveBroadcastRequest = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
+  const RejectBroadcastRequest = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+    } catch (error: any) {
+      return sendCatchFeedback(res, error);
+    }
+  };
+
   return {
     GetPublicTestimonies,
     GetPublicTestimony,
@@ -363,5 +407,9 @@ export const UserTestimonyController = () => {
     GetUserTestimonyStats,
     GetPopularTags,
     GetTestimonyLengthStats,
+    GetBroadcastRequests,
+    GetBroadcastRequest,
+    ApproveBroadcastRequest,
+    RejectBroadcastRequest,
   };
 };

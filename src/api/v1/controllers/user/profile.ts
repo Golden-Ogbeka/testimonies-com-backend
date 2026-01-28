@@ -1166,11 +1166,24 @@ export const UserProfileController = () => {
     }
   };
 
-  const GetProfileShareUrlByUsername = async (req: Request, res: Response) => {
+  const GetProfileShareUrlByUsername = async (
+    req: Request<{
+      username: string;
+    }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const { username } = req.params;
+
+      const profileURL = `${WEBSITE_URL}/${username}`;
+
+      return sendSuccessFeedback(res, "Profile URL retrieved successfully", {
+        profileURL,
+      });
     } catch (error: any) {
       return sendCatchFeedback(res, error);
     }
@@ -1207,115 +1220,65 @@ export const UserProfileController = () => {
     }
   };
 
-  const GetProfileStats = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
+  // const GetKYCStatus = async (req: Request, res: Response) => {
+  //   try {
+  //     // check for validation errors
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+  //   } catch (error: any) {
+  //     return sendCatchFeedback(res, error);
+  //   }
+  // };
 
-  const GetBroadcastRequests = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
+  // const UploadKYCDocuments = async (req: Request, res: Response) => {
+  //   try {
+  //     // check for validation errors
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+  //   } catch (error: any) {
+  //     return sendCatchFeedback(res, error);
+  //   }
+  // };
 
-  const GetBroadcastRequest = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
+  // const SubmitKYCApplication = async (req: Request, res: Response) => {
+  //   try {
+  //     // check for validation errors
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+  //   } catch (error: any) {
+  //     return sendCatchFeedback(res, error);
+  //   }
+  // };
 
-  const ApproveBroadcastRequest = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
+  // const GetKYCHistory = async (req: Request, res: Response) => {
+  //   try {
+  //     // check for validation errors
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+  //   } catch (error: any) {
+  //     return sendCatchFeedback(res, error);
+  //   }
+  // };
 
-  const RejectBroadcastRequest = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
+  // const GetKYCApplication = async (req: Request, res: Response) => {
+  //   try {
+  //     // check for validation errors
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+  //   } catch (error: any) {
+  //     return sendCatchFeedback(res, error);
+  //   }
+  // };
 
-  const GetKYCStatus = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const UploadKYCDocuments = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const SubmitKYCApplication = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const GetKYCHistory = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const GetKYCApplication = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
-
-  const DeleteKYCApplication = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
-    }
-  };
+  // const DeleteKYCApplication = async (req: Request, res: Response) => {
+  //   try {
+  //     // check for validation errors
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+  //   } catch (error: any) {
+  //     return sendCatchFeedback(res, error);
+  //   }
+  // };
 
   return {
     GetProfile,
@@ -1335,17 +1298,12 @@ export const UserProfileController = () => {
     GetBlockedUsers,
     GetProfileShareUrl,
     GetProfileShareUrlByUsername,
-    GetProfileStats,
-    GetBroadcastRequests,
-    GetBroadcastRequest,
-    ApproveBroadcastRequest,
-    RejectBroadcastRequest,
-    GetKYCStatus,
-    UploadKYCDocuments,
-    SubmitKYCApplication,
-    GetKYCHistory,
-    GetKYCApplication,
-    DeleteKYCApplication,
+    // GetKYCStatus,
+    // UploadKYCDocuments,
+    // SubmitKYCApplication,
+    // GetKYCHistory,
+    // GetKYCApplication,
+    // DeleteKYCApplication,
     UpdateOrganizationProfile,
     UpdatePassword,
     ResendUpdateEmailOTP,
