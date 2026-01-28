@@ -30,6 +30,7 @@ export interface IOrganization extends Document {
   lastSuccessfulLogin?: Date; // Date of last successful login
   accountType: "organization";
   triedSignup?: boolean; // Boolean to track if user has tried to signup
+  profileVisibility: "public" | "private" | "secret";
 }
 
 const organizationSchema = new Schema<IOrganization>(
@@ -67,6 +68,11 @@ const organizationSchema = new Schema<IOrganization>(
     lastSuccessfulLogin: { type: Date, required: false },
     accountType: { type: String, default: "organization", immutable: true },
     triedSignup: { type: Boolean, default: false },
+    profileVisibility: {
+      type: String,
+      enum: ["public", "private", "secret"],
+      default: "public",
+    },
   },
 
   {

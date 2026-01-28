@@ -414,6 +414,12 @@ export const UserAuthController = () => {
               userDetails: existingUser,
               message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
             });
+            existingUser.triedLogin = true;
+            existingUser.lastLoginAttempt = new Date();
+
+            await existingUser.save();
+
+            await UserCronSchedules.resetTriedLogin(existingUser.email);
 
             await UserCronSchedules.resetOTP(existingUser.email);
 
@@ -434,7 +440,7 @@ export const UserAuthController = () => {
 
           return sendSuccessFeedback(
             res,
-            "Login Successful. Verify your account to continue",
+            "Login Successful. Enter the OTP sent to your email to continue",
             {
               user: existingUser,
             },
@@ -515,7 +521,7 @@ export const UserAuthController = () => {
       const { verificationCode, email } = req.body;
 
       // find user
-      const existingUser =
+      const existingUser: IUser | IOrganization | null =
         (await UserModel.findOne({
           email,
           active: true,
@@ -550,7 +556,8 @@ export const UserAuthController = () => {
       // Generate JWT Token
       jwt.sign(
         {
-          email: existingUser.toJSON().email,
+          email:
+            existingUser.toJSON().email || existingUser.toJSON().businessEmail,
           _id: existingUser.toJSON()._id,
           domain: PRODUCT_NAME,
         },
@@ -589,6 +596,12 @@ export const UserAuthController = () => {
             deviceModel: deviceInfo?.model,
             deviceManufacturer: deviceInfo?.manufacturer,
           });
+
+          // Set login time variables
+          existingUser.lastSuccessfulLogin = new Date();
+          existingUser.lastLoginAttempt = new Date();
+
+          await existingUser.save();
           return sendSuccessFeedback(res, "Login Successful", {
             user: existingUser,
             token,
@@ -777,12 +790,19 @@ export const UserAuthController = () => {
       const { email, newPassword, verificationCode } = req.body;
 
       // check if user exists
-      let existingUser = await UserModel.findOne({
-        email,
-        verificationCode,
-        active: true,
-        isFlagged: false,
-      });
+      let existingUser =
+        (await UserModel.findOne({
+          email,
+          verificationCode,
+          active: true,
+          isFlagged: false,
+        })) ||
+        (await OrganizationModel.findOne({
+          businessEmail: email,
+          verificationCode,
+          active: true,
+          isFlagged: false,
+        }));
 
       if (!existingUser)
         return sendErrorFeedback(res, 400, "Invalid email or OTP");
@@ -841,7 +861,7 @@ export const UserAuthController = () => {
           "Could not retrieve email from google account. Please authenticate manually",
         );
 
-      const existingUser =
+      const existingUser: IUser | IOrganization | null =
         (await UserModel.findOne({ email })) ||
         (await OrganizationModel.findOne({ businessEmail: email }));
 
@@ -872,7 +892,9 @@ export const UserAuthController = () => {
           // If user already exists
           jwt.sign(
             {
-              email: existingUser.email,
+              email:
+                (existingUser as IUser).email ||
+                (existingUser as IOrganization).businessEmail,
               _id: existingUser._id,
               domain: PRODUCT_NAME,
             },

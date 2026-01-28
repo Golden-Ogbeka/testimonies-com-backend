@@ -29,6 +29,7 @@ export interface IUser extends Document {
   lastSuccessfulLogin?: Date; // Date of last successful login
   accountType: "user";
   triedSignup?: boolean; // Boolean to track if user has tried to signup
+  profileVisibility: "public" | "private" | "secret";
 }
 
 const userSchema = new Schema<IUser>(
@@ -62,6 +63,11 @@ const userSchema = new Schema<IUser>(
     lastSuccessfulLogin: Date,
     accountType: { type: String, default: "user", immutable: true },
     triedSignup: { type: Boolean, default: false },
+    profileVisibility: {
+      type: String,
+      enum: ["public", "private", "secret"],
+      default: "public",
+    },
   },
 
   {
@@ -73,6 +79,8 @@ const userSchema = new Schema<IUser>(
 
 userSchema.index({
   username: "text",
+  firstName: "text",
+  lastName: "text",
 });
 
 // Hide Password in responses
