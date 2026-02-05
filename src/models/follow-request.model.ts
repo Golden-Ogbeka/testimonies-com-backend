@@ -41,6 +41,8 @@ const followRequestSchema = new Schema<IFollowRequest>(
 
 followRequestSchema.plugin(mongoosePaginate);
 
+followRequestSchema.index({ leaderId: 1, followerId: 1, status: 1 });
+
 // Virtuals
 followRequestSchema.virtual("leaderDetails", {
   refPath: "leaderType",

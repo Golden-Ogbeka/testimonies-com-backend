@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { param } from "express-validator";
+import { param, query } from "express-validator";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminUserController } from "../../controllers/admin/user";
 
@@ -7,7 +7,20 @@ const AdminUserRouter = Router();
 const Controller = AdminUserController();
 
 // Get all users
-AdminUserRouter.get("/", Controller.GetAllUsers);
+AdminUserRouter.get(
+  "/",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
+  Controller.GetAllUsers,
+);
 
 // Get user by ID
 AdminUserRouter.get(
@@ -46,7 +59,20 @@ AdminUserRouter.post(
 );
 
 // Get user kyc applications
-AdminUserRouter.get("/kyc", Controller.GetAllUserKYCApplications);
+AdminUserRouter.get(
+  "/kyc",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
+  Controller.GetAllUserKYCApplications,
+);
 
 // Get user kyc application by ID
 AdminUserRouter.get(
@@ -76,7 +102,20 @@ AdminUserRouter.post(
 );
 
 // Get users' profile statistics (such as number of testimonies submitted, average ratings, etc.)
-AdminUserRouter.get("/profile-stats", Controller.GetAllUsersProfileStats);
+AdminUserRouter.get(
+  "/profile-stats",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
+  Controller.GetAllUsersProfileStats,
+);
 
 // Get profile statistics of a particular user by ID
 AdminUserRouter.get(
@@ -88,7 +127,20 @@ AdminUserRouter.get(
 );
 
 // Get user message statistics (such as number of messages sent, received, etc.)
-AdminUserRouter.get("/message-stats", Controller.GetAllUserMessageStats);
+AdminUserRouter.get(
+  "/message-stats",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
+  Controller.GetAllUserMessageStats,
+);
 
 // Get message statistics of a particular user by ID
 AdminUserRouter.get(

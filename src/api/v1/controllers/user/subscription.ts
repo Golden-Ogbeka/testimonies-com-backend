@@ -5,64 +5,88 @@ export const UserSubscriptionController = () => {
   const GetSubscriptionPlans = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const GetSubscriptionPlan = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const Subscribe = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const PayForSubscription = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const VerifyPayment = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const CancelSubscription = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const GetSubscriptionStatus = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
   const GetSubscriptionHistory = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 

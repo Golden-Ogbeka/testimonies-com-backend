@@ -6,7 +6,7 @@ import {
   isUserOrOrganization,
 } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
-import { parser } from "../../../../utils/cloudinary";
+import { imageParser } from "../../../../utils/cloudinary";
 import { UserProfileController } from "../../controllers/user/profile";
 
 const UserProfileRouter = Router();
@@ -221,14 +221,14 @@ UserProfileRouter.delete(
 // Update logged in user's profile picture
 UserProfileRouter.patch(
   "/picture",
-  [isUserOrOrganization, parser.single("profilePhoto")],
+  [isUserOrOrganization, imageParser.single("profilePhoto")],
   Controller.UpdateProfilePicture,
 );
 
 // Update logged in user's profile cover photo
 UserProfileRouter.patch(
   "/cover-picture",
-  [isUserOrOrganization, parser.single("coverImage")],
+  [isUserOrOrganization, imageParser.single("coverImage")],
   Controller.UpdateCoverPhoto,
 );
 

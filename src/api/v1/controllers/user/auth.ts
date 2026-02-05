@@ -40,8 +40,8 @@ export const UserAuthController = () => {
     try {
       const { username } = req.params;
       const existingUser =
-        (await UserModel.findOne({ username })) ||
-        (await OrganizationModel.findOne({ username }));
+        (await UserModel.findOne({ username }).lean()) ||
+        (await OrganizationModel.findOne({ username }).lean());
       if (existingUser) {
         return sendErrorFeedback(res, 409, "Username already exists.");
       }
@@ -49,8 +49,11 @@ export const UserAuthController = () => {
         available: true,
         username,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -132,8 +135,11 @@ export const UserAuthController = () => {
           201,
         );
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -198,8 +204,11 @@ export const UserAuthController = () => {
           201,
         );
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -255,8 +264,11 @@ export const UserAuthController = () => {
       await UserCronSchedules.resetOTP(email);
 
       return sendSuccessFeedback(res, "Verification code sent to email");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -308,8 +320,11 @@ export const UserAuthController = () => {
           user: existingUser,
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -364,8 +379,11 @@ export const UserAuthController = () => {
       await UserCronSchedules.resetOTP(email);
 
       return sendSuccessFeedback(res, "Verification code sent to email");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -447,8 +465,11 @@ export const UserAuthController = () => {
           );
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -504,8 +525,11 @@ export const UserAuthController = () => {
       await UserCronSchedules.resetOTP(email);
 
       return sendSuccessFeedback(res, "Verification code sent to email");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -609,8 +633,11 @@ export const UserAuthController = () => {
           });
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -666,8 +693,11 @@ export const UserAuthController = () => {
       await UserCronSchedules.resetOTP(email);
 
       return sendSuccessFeedback(res, "Verification code sent to email");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -832,8 +862,11 @@ export const UserAuthController = () => {
 
         return sendSuccessFeedback(res, "Password updated successfully");
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -841,8 +874,11 @@ export const UserAuthController = () => {
     try {
       const URL = getGoogleAuthURL();
       return sendSuccessFeedback(res, "OAuth URL Retrieved", { URL });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1014,8 +1050,11 @@ export const UserAuthController = () => {
           );
         }
       }
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1036,8 +1075,11 @@ export const UserAuthController = () => {
       );
 
       return sendSuccessFeedback(res, "Sessions retrieved", { sessions });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1054,11 +1096,14 @@ export const UserAuthController = () => {
       const session = await AuthSessionModel.findOne({
         userId: userDetails._id,
         _id: req.params.sessionId,
-      });
+      }).lean();
 
       return sendSuccessFeedback(res, "Sessions retrieved", { session });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1079,8 +1124,11 @@ export const UserAuthController = () => {
       });
 
       return sendSuccessFeedback(res, "All other sessions have been deleted");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1103,7 +1151,7 @@ export const UserAuthController = () => {
       const sessionDetails = await AuthSessionModel.findOne({
         userId: userDetails._id,
         _id: sessionId,
-      });
+      }).lean();
 
       if (!sessionDetails)
         return sendErrorFeedback(res, 400, "Session not found");
@@ -1117,8 +1165,11 @@ export const UserAuthController = () => {
       });
 
       return sendSuccessFeedback(res, "Session deleted");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
