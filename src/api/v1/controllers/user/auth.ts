@@ -50,7 +50,10 @@ export const UserAuthController = () => {
         username,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -133,7 +136,10 @@ export const UserAuthController = () => {
         );
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -199,7 +205,10 @@ export const UserAuthController = () => {
         );
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -256,7 +265,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -309,7 +321,10 @@ export const UserAuthController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -365,7 +380,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -448,7 +466,10 @@ export const UserAuthController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -505,7 +526,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -610,7 +634,10 @@ export const UserAuthController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -667,7 +694,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -833,7 +863,10 @@ export const UserAuthController = () => {
         return sendSuccessFeedback(res, "Password updated successfully");
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -842,7 +875,10 @@ export const UserAuthController = () => {
       const URL = getGoogleAuthURL();
       return sendSuccessFeedback(res, "OAuth URL Retrieved", { URL });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1015,7 +1051,10 @@ export const UserAuthController = () => {
         }
       }
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1037,7 +1076,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Sessions retrieved", { sessions });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1058,7 +1100,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Sessions retrieved", { session });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1080,7 +1125,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "All other sessions have been deleted");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1118,7 +1166,10 @@ export const UserAuthController = () => {
 
       return sendSuccessFeedback(res, "Session deleted");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 

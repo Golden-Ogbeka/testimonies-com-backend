@@ -6,14 +6,20 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
   const GetSinglePermission = async (req: Request, res: Response) => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -21,7 +27,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -29,7 +38,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -37,7 +49,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -45,14 +60,20 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
   const GetSingleRole = async (req: Request, res: Response) => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -60,7 +81,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -68,7 +92,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -76,7 +103,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -84,7 +114,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -92,7 +125,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -100,7 +136,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -108,7 +147,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -116,7 +158,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -124,7 +169,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -132,7 +180,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -140,7 +191,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -148,7 +202,10 @@ export const AdminRolePromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
   return {

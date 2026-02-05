@@ -44,7 +44,10 @@ export const UserProfileController = () => {
 
       return sendSuccessFeedback(res, "Profile retrieved", { userDetails });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -70,7 +73,10 @@ export const UserProfileController = () => {
 
       return sendSuccessFeedback(res, "Profile updated", { user: userDetails });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -184,7 +190,10 @@ export const UserProfileController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -226,7 +235,10 @@ export const UserProfileController = () => {
 
       return sendSuccessFeedback(res, "Verification code sent to email");
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -277,7 +289,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -324,7 +339,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
   const UpdateUserPhoneNumber = async (
@@ -378,7 +396,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -407,7 +428,10 @@ export const UserProfileController = () => {
 
       return sendSuccessFeedback(res, "Profile updated", { user: userDetails });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -445,7 +469,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -483,7 +510,10 @@ export const UserProfileController = () => {
         user: dbUserDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -513,7 +543,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -538,7 +571,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -591,7 +627,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -662,7 +701,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -717,7 +759,10 @@ export const UserProfileController = () => {
         organizations,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -794,7 +839,10 @@ export const UserProfileController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -823,7 +871,10 @@ export const UserProfileController = () => {
         followRequests,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -863,7 +914,10 @@ export const UserProfileController = () => {
         "You have successfully accepted this follow request",
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -894,7 +948,10 @@ export const UserProfileController = () => {
         "You have successfully declined this follow request",
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -941,7 +998,10 @@ export const UserProfileController = () => {
         "You have successfully unfollowed this user",
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -981,7 +1041,10 @@ export const UserProfileController = () => {
 
       return sendSuccessFeedback(res, "Followers retrieved", { followers });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1021,7 +1084,10 @@ export const UserProfileController = () => {
 
       return sendSuccessFeedback(res, "Following retrieved", { following });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1073,7 +1139,10 @@ export const UserProfileController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1109,7 +1178,10 @@ export const UserProfileController = () => {
         },
       );
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1144,7 +1216,10 @@ export const UserProfileController = () => {
         blockedUsers,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1162,7 +1237,10 @@ export const UserProfileController = () => {
         profileURL,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1185,7 +1263,10 @@ export const UserProfileController = () => {
         profileURL,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -1216,7 +1297,10 @@ export const UserProfileController = () => {
         user: userDetails,
       });
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 

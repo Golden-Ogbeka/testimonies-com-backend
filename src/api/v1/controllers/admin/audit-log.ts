@@ -6,7 +6,10 @@ export const AdminAuditLogController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -14,7 +17,10 @@ export const AdminAuditLogController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -22,7 +28,10 @@ export const AdminAuditLogController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -30,7 +39,10 @@ export const AdminAuditLogController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -38,7 +50,10 @@ export const AdminAuditLogController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -46,7 +61,10 @@ export const AdminAuditLogController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 

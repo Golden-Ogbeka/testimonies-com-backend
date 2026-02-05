@@ -104,15 +104,15 @@ const testimonyMediaFileFilter = (
 ) => {
   // Initialize file count if not exists
   if (!req.fileCount) req.fileCount = 0;
-  
+
   // Increment count for each file
   req.fileCount++;
-  
+
   // Check if exceeds limit
   if (req.fileCount > 4) {
     return cb(new Error("Maximum 4 files allowed"));
   }
-  
+
   // Check file type
   const allowedMimeTypes = [
     // Images
@@ -125,7 +125,7 @@ const testimonyMediaFileFilter = (
     "video/x-msvideo",
     "video/x-matroska",
   ];
-  
+
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -269,4 +269,3 @@ export {
   testimonyMediaParser,
   videoParser,
 };
-

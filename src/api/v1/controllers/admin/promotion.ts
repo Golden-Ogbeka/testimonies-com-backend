@@ -6,7 +6,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -14,7 +17,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -22,7 +28,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -30,7 +39,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -38,7 +50,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -46,7 +61,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -54,7 +72,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -62,7 +83,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -70,7 +94,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -78,7 +105,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -86,7 +116,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -94,7 +127,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -102,14 +138,20 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
   const GetAllPromotionRequests = async (req: Request, res: Response) => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -117,7 +159,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -125,7 +170,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
 
@@ -133,7 +181,10 @@ export const AdminPromotionController = () => {
     try {
       // check for validation errors
     } catch (error) {
-      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
   };
   return {

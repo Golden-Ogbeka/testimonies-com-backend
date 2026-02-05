@@ -6,12 +6,14 @@ module.exports = {
    */
   async up(db, client) {
     // Add isSecret: false to all existing testimonies that don't have this field
-    await db.collection('testimonies').updateMany(
-      { isSecret: { $exists: false } },
-      { $set: { isSecret: false } }
-    );
-    
-    console.log('Added isSecret: false to existing testimonies');
+    await db
+      .collection("testimonies")
+      .updateMany(
+        { isSecret: { $exists: false } },
+        { $set: { isSecret: false } },
+      );
+
+    console.log("Added isSecret: false to existing testimonies");
   },
 
   /**
@@ -21,11 +23,10 @@ module.exports = {
    */
   async down(db, client) {
     // Remove isSecret field from all testimonies
-    await db.collection('testimonies').updateMany(
-      {},
-      { $unset: { isSecret: "" } }
-    );
-    
-    console.log('Removed isSecret field from testimonies');
-  }
+    await db
+      .collection("testimonies")
+      .updateMany({}, { $unset: { isSecret: "" } });
+
+    console.log("Removed isSecret field from testimonies");
+  },
 };
