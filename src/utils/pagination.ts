@@ -12,6 +12,24 @@ export interface PaginationCustomLabels {
   meta: string;
 }
 
+export interface CustomPaginateResult<T> {
+  results: T[];
+  totalResults: number;
+  resultsPerPage: number;
+  currentPage: number;
+  nextPage: number | null;
+  prevPage: number | null;
+  totalPages: number;
+  pagination: {
+    totalResults: number;
+    resultsPerPage: number;
+    currentPage: number;
+    nextPage: number | null;
+    prevPage: number | null;
+    totalPages: number;
+  };
+}
+
 export const paginationCustomLabels: PaginationCustomLabels = {
   totalDocs: "totalResults",
   docs: "results",

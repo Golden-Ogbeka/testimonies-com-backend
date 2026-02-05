@@ -33,8 +33,8 @@ export const AddressController = () => {
           id: item.place_id,
         })),
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 

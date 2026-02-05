@@ -19,7 +19,11 @@
     "dev": "tsx watch src",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "type:check": "tsc --noEmit",
+    "prepare": "husky",
+    "migrate:up": "migrate-mongo up",
+    "migrate:down": "migrate-mongo down",
+    "migrate:status": "migrate-mongo status"
   },
   "husky": {
     "hooks": {

@@ -68,6 +68,75 @@ const documentFileFilter = (
   }
 };
 
+// File Filter for Media (Images and Videos)
+const mediaFileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+) => {
+  const allowedMimeTypes = [
+    // Images
+    "image/png",
+    "image/jpg",
+    "image/jpeg",
+    // Videos
+    "video/mp4",
+    "video/mpeg",
+    "video/x-msvideo",
+    "video/x-matroska",
+  ];
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        `Invalid file type. Only images (JPG, PNG, JPEG) and videos (MP4, MPEG, AVI, MKV) are allowed. Your file type is ${file.mimetype}`,
+      ),
+    );
+  }
+};
+
+// File Filter for Media with count limit
+const testimonyMediaFileFilter = (
+  req: Request & { fileCount?: number },
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+) => {
+  // Initialize file count if not exists
+  if (!req.fileCount) req.fileCount = 0;
+  
+  // Increment count for each file
+  req.fileCount++;
+  
+  // Check if exceeds limit
+  if (req.fileCount > 4) {
+    return cb(new Error("Maximum 4 files allowed"));
+  }
+  
+  // Check file type
+  const allowedMimeTypes = [
+    // Images
+    "image/png",
+    "image/jpg",
+    "image/jpeg",
+    // Videos
+    "video/mp4",
+    "video/mpeg",
+    "video/x-msvideo",
+    "video/x-matroska",
+  ];
+  
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        `Invalid file type. Only images (JPG, PNG, JPEG) and videos (MP4, MPEG, AVI, MKV) are allowed. Your file type is ${file.mimetype}`,
+      ),
+    );
+  }
+};
+
 // File Filter for Videos
 const videoFileFilter = (
   req: Request,
@@ -135,7 +204,7 @@ const cloudStorage = new CloudinaryStorage({
   },
 });
 
-const parser = multer({
+const imageParser = multer({
   storage: cloudStorage,
   limits: {
     fileSize: 1024 * 1024 * 5, // 5mb limit
@@ -149,6 +218,22 @@ const documentParser = multer({
     fileSize: 1024 * 1024 * 20, // 20mb limit
   },
   fileFilter: documentFileFilter,
+});
+
+const mediaParser = multer({
+  storage: cloudStorage,
+  limits: {
+    fileSize: 1024 * 1024 * 50, // 50mb limit for media files
+  },
+  fileFilter: mediaFileFilter,
+});
+
+const testimonyMediaParser = multer({
+  storage: cloudStorage,
+  limits: {
+    fileSize: 1024 * 1024 * 50, // 50mb limit for media files
+  },
+  fileFilter: testimonyMediaFileFilter,
 });
 
 const videoParser = multer({
@@ -176,4 +261,12 @@ const multerErrorHandler = (
   }
 };
 
-export { documentParser, multerErrorHandler, parser, videoParser };
+export {
+  documentParser,
+  imageParser,
+  mediaParser,
+  multerErrorHandler,
+  testimonyMediaParser,
+  videoParser,
+};
+

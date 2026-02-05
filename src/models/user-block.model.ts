@@ -35,6 +35,8 @@ const userBlockSchema = new Schema<IUserBlock>(
 
 userBlockSchema.plugin(mongoosePaginate);
 
+userBlockSchema.index({ userToBlockId: 1, userBlockingId: 1 });
+
 // Virtuals
 userBlockSchema.virtual("userToBlockDetails", {
   refPath: "userToBlockType",

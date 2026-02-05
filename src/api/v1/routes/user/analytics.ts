@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { param } from "express-validator";
+import { param, query } from "express-validator";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { UserAnalyticsController } from "../../controllers/user/analytics";
 
@@ -27,18 +27,48 @@ UserAnalyticsRouter.get("/team/summary", Controller.GetTeamAnalyticsSummary);
 // Get top testimonies by views
 UserAnalyticsRouter.get(
   "/top-testimonies/views",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
   Controller.GetTopTestimoniesByViews,
 );
 
 // Get top testimonies by likes
 UserAnalyticsRouter.get(
   "/top-testimonies/likes",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
   Controller.GetTopTestimoniesByLikes,
 );
 
 // Get top testimonies by replies
 UserAnalyticsRouter.get(
   "/top-testimonies/replies",
+  [
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
   Controller.GetTopTestimoniesByReplies,
 );
 

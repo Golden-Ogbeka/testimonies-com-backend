@@ -5,48 +5,48 @@ export const AdminAuditLogController = () => {
   const ViewAuditLogs = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
   const ViewAuditLog = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
   const LogAuditEvent = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
   const ExportAudiLogs = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
   const ViewAdminAuditLogs = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
   const ExportAdminAudiLogs = async (req: Request, res: Response) => {
     try {
       // check for validation errors
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 

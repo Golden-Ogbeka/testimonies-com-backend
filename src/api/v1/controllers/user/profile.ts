@@ -43,8 +43,8 @@ export const UserProfileController = () => {
       if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       return sendSuccessFeedback(res, "Profile retrieved", { userDetails });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -69,8 +69,8 @@ export const UserProfileController = () => {
       await userDetails.save();
 
       return sendSuccessFeedback(res, "Profile updated", { user: userDetails });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -183,8 +183,8 @@ export const UserProfileController = () => {
           );
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -225,8 +225,8 @@ export const UserProfileController = () => {
       );
 
       return sendSuccessFeedback(res, "Verification code sent to email");
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -276,8 +276,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Email verified successfully", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -323,8 +323,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Username updated successfully", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
   const UpdateUserPhoneNumber = async (
@@ -377,8 +377,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Phone number updated successfully", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -406,8 +406,8 @@ export const UserProfileController = () => {
       await userDetails.save();
 
       return sendSuccessFeedback(res, "Profile updated", { user: userDetails });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -444,8 +444,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Password updated successfully", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -482,8 +482,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile deleted successfully", {
         user: dbUserDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -512,8 +512,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile image updated", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -537,8 +537,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Cover image updated", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -590,8 +590,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile found", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -661,8 +661,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile found", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -716,8 +716,8 @@ export const UserProfileController = () => {
         users,
         organizations,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -793,8 +793,8 @@ export const UserProfileController = () => {
           followRequest: newFollowRequest,
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -822,8 +822,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Follow requests retrieved", {
         followRequests,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -862,8 +862,8 @@ export const UserProfileController = () => {
         res,
         "You have successfully accepted this follow request",
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -893,8 +893,8 @@ export const UserProfileController = () => {
         res,
         "You have successfully declined this follow request",
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -940,8 +940,8 @@ export const UserProfileController = () => {
         res,
         "You have successfully unfollowed this user",
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -980,8 +980,8 @@ export const UserProfileController = () => {
       }).populate("followerDetails");
 
       return sendSuccessFeedback(res, "Followers retrieved", { followers });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1020,8 +1020,8 @@ export const UserProfileController = () => {
       }).populate("leaderDetails");
 
       return sendSuccessFeedback(res, "Following retrieved", { following });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1072,8 +1072,8 @@ export const UserProfileController = () => {
           blockAction: newBlock,
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1108,8 +1108,8 @@ export const UserProfileController = () => {
           blockAction: existingBlock,
         },
       );
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1143,8 +1143,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Blocked users retrieved", {
         blockedUsers,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1161,8 +1161,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile URL retrieved successfully", {
         profileURL,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1184,8 +1184,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile URL retrieved successfully", {
         profileURL,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -1215,8 +1215,8 @@ export const UserProfileController = () => {
       return sendSuccessFeedback(res, "Profile visibility updated", {
         user: userDetails,
       });
-    } catch (error: any) {
-      return sendCatchFeedback(res, error);
+    } catch (error) {
+      return sendCatchFeedback(res, error instanceof Error ? error : new Error(String(error)));
     }
   };
 
