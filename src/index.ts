@@ -15,7 +15,6 @@ import { PRODUCT_NAME } from "./functions/env";
 import { sendCatchFeedback, sendErrorFeedback } from "./functions/feedback";
 import { AgendaControl } from "./jobs";
 import logger from "./middleware/logger";
-import { isValidAPI } from "./middleware/shared";
 import { multerErrorHandler } from "./utils/cloudinary";
 import { corsList } from "./utils/constants";
 process.env.DOTENV_LOG = "false";
@@ -87,7 +86,7 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
-app.use("/api", isValidAPI, AppRouter);
+app.use("/api", AppRouter);
 
 // Not found route
 app.use((req, res) => {

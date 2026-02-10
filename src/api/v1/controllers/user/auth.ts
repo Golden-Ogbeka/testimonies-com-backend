@@ -21,8 +21,9 @@ import {
 } from "../../../../functions/feedback";
 import { UserCronSchedules } from "../../../../jobs/schedules/user";
 import AuthSessionModel from "../../../../models/auth-session.model";
-import OrganizationModel, {
+import {
   IOrganization,
+  OrganizationModel,
 } from "../../../../models/organization.model";
 import UserModel, { IUser } from "../../../../models/user.model";
 import {
@@ -1172,6 +1173,28 @@ export const UserAuthController = () => {
       );
     }
   };
+  const Logout = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const authorization = req.headers.authorization;
+      if (!authorization) {
+        return sendErrorFeedback(res, 401, "No token provided");
+      }
+
+      // Remove token from blacklist or invalidate session
+      await AuthSessionModel.deleteMany({ token: authorization });
+
+      return sendSuccessFeedback(res, "Logged out successfully");
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+  };
 
   return {
     SignupOrganization,
@@ -1193,5 +1216,6 @@ export const UserAuthController = () => {
     CheckUsername,
     GetSession,
     ResendResetPasswordOTP,
+    Logout,
   };
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { param, query } from "express-validator";
+import { body, param, query } from "express-validator";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminTestimonyController } from "../../controllers/admin/testimony";
 
@@ -137,9 +137,16 @@ AdminTestimonyRouter.get(
 // Flag testimony
 AdminTestimonyRouter.post(
   "/flag/:id",
-  param("id", "Testimony ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("id", "Testimony ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("reason", "Flag reason is required")
+      .optional()
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Flag reason must be at least 5 characters long"),
+  ],
   Controller.FlagTestimony,
 );
 
@@ -189,6 +196,10 @@ AdminTestimonyRouter.get(
       .optional()
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
+    query("isFlagged", "isFlagged must be boolean").optional().isBoolean(),
+    query("userId", "User ID is required")
+      .optional()
+      .custom((value) => isValidObjectId(value)),
   ],
   Controller.GetAllTestimonies,
 );

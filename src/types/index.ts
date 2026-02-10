@@ -15,3 +15,6 @@ export interface EmailAttachmentType {
   fileName: string;
   mimeType: string;
 }
+
+// Export all request types
+export * from "./requests";

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { param } from "express-validator";
+import { body, param, query } from "express-validator";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminSubscriptionController } from "../../controllers/admin/subscription";
 
@@ -7,17 +7,90 @@ const AdminSubscriptionRouter = Router();
 const Controller = AdminSubscriptionController();
 
 // Get all subscription plans
-AdminSubscriptionRouter.get("/", Controller.GetAllPlans);
+AdminSubscriptionRouter.get(
+  "/",
+  [
+    query("page", "Page must be a number").optional().isNumeric(),
+    query("limit", "Limit must be a number").optional().isNumeric(),
+    query("isActive", "isActive must be boolean").optional().isBoolean(),
+    query("billingCycle", "Billing cycle is required")
+      .optional()
+      .isIn(["monthly", "yearly", "quarterly"]),
+  ],
+  Controller.GetAllPlans,
+);
 
 // Create a new subscription plan (contains app constraints like text limits, media limits, etc.)
-AdminSubscriptionRouter.post("/", Controller.CreatePlan);
+AdminSubscriptionRouter.post(
+  "/",
+  [
+    body("name", "Plan name is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Plan name must be at least 2 characters long"),
+    body("description", "Description is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Description must be at least 5 characters long"),
+    body("price", "Price is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .isNumeric()
+      .withMessage("Price must be a number"),
+    body("currency", "Currency is required")
+      .optional()
+      .isLength({ min: 3, max: 3 })
+      .withMessage("Currency must be a 3-letter code"),
+    body("billingCycle", "Billing cycle is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .isIn(["monthly", "yearly", "quarterly"]),
+    body("features", "Features must be an array").optional().isArray(),
+    body("trialDays", "Trial days must be a number").optional().isNumeric(),
+    body("maxUsers", "Max users must be a number").optional().isNumeric(),
+    body("maxTestimonies", "Max testimonies must be a number")
+      .optional()
+      .isNumeric(),
+  ],
+  Controller.CreatePlan,
+);
 
 // Update an existing subscription plan
 AdminSubscriptionRouter.put(
   "/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("name", "Plan name is required")
+      .optional()
+      .trim()
+      .isLength({ min: 2 })
+      .withMessage("Plan name must be at least 2 characters long"),
+    body("description", "Description is required")
+      .optional()
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Description must be at least 5 characters long"),
+    body("price", "Price is required")
+      .optional()
+      .isNumeric()
+      .withMessage("Price must be a number"),
+    body("currency", "Currency is required")
+      .optional()
+      .isLength({ min: 3, max: 3 })
+      .withMessage("Currency must be a 3-letter code"),
+    body("billingCycle", "Billing cycle is required")
+      .optional()
+      .isIn(["monthly", "yearly", "quarterly"]),
+    body("features", "Features must be an array").optional().isArray(),
+    body("isActive", "isActive must be boolean").optional().isBoolean(),
+    body("trialDays", "Trial days must be a number").optional().isNumeric(),
+    body("maxUsers", "Max users must be a number").optional().isNumeric(),
+    body("maxTestimonies", "Max testimonies must be a number")
+      .optional()
+      .isNumeric(),
+  ],
   Controller.UpdatePlan,
 );
 
@@ -40,7 +113,7 @@ AdminSubscriptionRouter.post(
 );
 
 // Get subscription plan by ID
-AdminSubscriptionRouter.put(
+AdminSubscriptionRouter.get(
   "/details/:id",
   param("id", "Subscription plan ID is required")
     .exists({ checkFalsy: true, checkNull: true })
@@ -60,9 +133,13 @@ AdminSubscriptionRouter.delete(
 // Get all users subscribed to a specific plan
 AdminSubscriptionRouter.get(
   "/subscribed-users/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    query("page", "Page must be a number").optional().isNumeric(),
+    query("limit", "Limit must be a number").optional().isNumeric(),
+  ],
   Controller.GetPlanSubscribedUsers,
 );
 
@@ -78,9 +155,13 @@ AdminSubscriptionRouter.get(
 // Get subscription transactions
 AdminSubscriptionRouter.get(
   "/transactions/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    query("page", "Page must be a number").optional().isNumeric(),
+    query("limit", "Limit must be a number").optional().isNumeric(),
+  ],
   Controller.GetPlanTransactions,
 );
 
@@ -94,29 +175,58 @@ AdminSubscriptionRouter.get(
 );
 
 // Refund a subscription transaction
-AdminSubscriptionRouter.get(
+AdminSubscriptionRouter.post(
   "/refund-transaction/:transactionId",
-  param("transactionId", "Transaction ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("transactionId", "Transaction ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("reason", "Refund reason is required")
+      .optional()
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Refund reason must be at least 5 characters long"),
+    body("amount", "Refund amount is required")
+      .optional()
+      .isNumeric()
+      .withMessage("Refund amount must be a number"),
+  ],
   Controller.RefundTransaction,
 );
 
 // Cancel a user's subscription
-AdminSubscriptionRouter.get(
+AdminSubscriptionRouter.post(
   "/cancel-transaction/:transactionId",
-  param("transactionId", "Transaction ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("transactionId", "Transaction ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("reason", "Cancellation reason is required")
+      .optional()
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Cancellation reason must be at least 5 characters long"),
+  ],
   Controller.CancelTransaction,
 );
 
 // Extend a user's subscription
-AdminSubscriptionRouter.get(
+AdminSubscriptionRouter.post(
   "/extend-subscription/:subscriptionId",
-  param("subscriptionId", "Subscription ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    param("subscriptionId", "Subscription ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("days", "Days to extend is required")
+      .optional()
+      .isNumeric()
+      .withMessage("Days must be a number"),
+    body("reason", "Extension reason is required")
+      .optional()
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Extension reason must be at least 5 characters long"),
+  ],
   Controller.ExtendSubscription,
 );
 
@@ -132,18 +242,30 @@ AdminSubscriptionRouter.get(
 // Get all users with active subscriptions
 AdminSubscriptionRouter.get(
   "/active-subscriptions",
+  [
+    query("page", "Page must be a number").optional().isNumeric(),
+    query("limit", "Limit must be a number").optional().isNumeric(),
+  ],
   Controller.GetActiveSubscriptions,
 );
 
 // Get all users with cancelled subscriptions
 AdminSubscriptionRouter.get(
   "/cancelled-subscriptions",
+  [
+    query("page", "Page must be a number").optional().isNumeric(),
+    query("limit", "Limit must be a number").optional().isNumeric(),
+  ],
   Controller.GetCancelledSubscriptions,
 );
 
 // Get all users without any subscriptions
 AdminSubscriptionRouter.get(
   "/unsubscribed-users",
+  [
+    query("page", "Page must be a number").optional().isNumeric(),
+    query("limit", "Limit must be a number").optional().isNumeric(),
+  ],
   Controller.GetUnsubscribedUsers,
 );
 

@@ -21,6 +21,8 @@ export interface IAuthSession {
   deviceOSVersion?: string;
   deviceModel?: string;
   deviceManufacturer?: string;
+
+  userType?: "user" | "organization" | "admin";
 }
 
 const authSessionSchema = new Schema<IAuthSession>(
@@ -49,6 +51,11 @@ const authSessionSchema = new Schema<IAuthSession>(
     deviceOSVersion: String,
     deviceModel: String,
     deviceManufacturer: String,
+    userType: {
+      type: String,
+      enum: ["user", "organization", "admin"],
+      default: "user",
+    },
   },
 
   {

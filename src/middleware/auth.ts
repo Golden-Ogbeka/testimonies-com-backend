@@ -3,81 +3,82 @@ import jwt from "jsonwebtoken";
 import { PRODUCT_NAME } from "../functions/env";
 import { sendErrorFeedback } from "../functions/feedback";
 // import AdminModel from "../models/admin.model";
+import AdminModel from "../models/admin.model";
 import OrganizationModel from "../models/organization.model";
 import UserModel from "../models/user.model";
 
-// export const isAdmin = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction,
-// ) => {
-//   try {
-//     const value = req.headers.authorization;
+export const isAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const value = req.headers.authorization;
 
-//     if (!value)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+    if (!value)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-//     const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
 
-//     if (!tokenData)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+    if (!tokenData)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-//     if (tokenData.domain !== PRODUCT_NAME)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+    if (tokenData.domain !== PRODUCT_NAME)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-//     // Check if admin exists and is activated
-//     const isAdmin = await AdminModel.findOne({
-//       email: tokenData?.email,
-//       active: true,
-//     });
+    // Check if admin exists and is activated
+    const isAdmin = await AdminModel.findOne({
+      email: tokenData?.email,
+      active: true,
+    });
 
-//     if (!isAdmin)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Contact Admin");
+    if (!isAdmin)
+      return sendErrorFeedback(res, 401, "Unauthorized. Contact Admin");
 
-//     next();
-//   } catch (error: any) {
-//     return sendErrorFeedback(res, 401, "Unauthorized");
-//   }
-// };
+    next();
+  } catch (error: any) {
+    return sendErrorFeedback(res, 401, "Unauthorized");
+  }
+};
 
-// export const isSuperAdmin = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction,
-// ) => {
-//   try {
-//     const value = req.headers.authorization;
+export const isSuperAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const value = req.headers.authorization;
 
-//     if (!value)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+    if (!value)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-//     const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
 
-//     if (!tokenData)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+    if (!tokenData)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-//     if (tokenData.domain !== PRODUCT_NAME)
-//       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
+    if (tokenData.domain !== PRODUCT_NAME)
+      return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-//     // Check if admin exists, is super admin and is activated
-//     const isSuperAdmin = await AdminModel.findOne({
-//       email: tokenData?.email,
-//       active: true,
-//       role: "superAdmin",
-//     });
+    // Check if admin exists, is super admin and is activated
+    const isSuperAdmin = await AdminModel.findOne({
+      email: tokenData?.email,
+      active: true,
+      role: "super-admin",
+    });
 
-//     if (!isSuperAdmin)
-//       return sendErrorFeedback(
-//         res,
-//         401,
-//         "You don't have permission to access this resource",
-//       );
+    if (!isSuperAdmin)
+      return sendErrorFeedback(
+        res,
+        401,
+        "You don't have permission to access this resource",
+      );
 
-//     next();
-//   } catch (error: any) {
-//     return sendErrorFeedback(res, 401, "Unauthorized");
-//   }
-// };
+    next();
+  } catch (error: any) {
+    return sendErrorFeedback(res, 401, "Unauthorized");
+  }
+};
 
 export const isUserOrOrganization = async (
   req: Request,
