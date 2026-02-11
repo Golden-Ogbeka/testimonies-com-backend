@@ -21,9 +21,8 @@ import {
 } from "../../../../functions/feedback";
 import { UserCronSchedules } from "../../../../jobs/schedules/user";
 import AuthSessionModel from "../../../../models/auth-session.model";
-import {
+import OrganizationModel, {
   IOrganization,
-  OrganizationModel,
 } from "../../../../models/organization.model";
 import UserModel, { IUser } from "../../../../models/user.model";
 import {

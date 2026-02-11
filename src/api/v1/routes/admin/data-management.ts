@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, param, query } from "express-validator";
+import { isAdmin } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminDataManagementController } from "../../controllers/admin/data-management";
 
@@ -10,6 +11,7 @@ const Controller = AdminDataManagementController();
 AdminDataManagementRouter.post(
   "/faq",
   [
+    isAdmin,
     body("question", "Question is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -20,18 +22,16 @@ AdminDataManagementRouter.post(
       .trim()
       .isLength({ min: 10 })
       .withMessage("Answer must be at least 10 characters long"),
-    body("category", "Category is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .trim(),
     body("order", "Order must be a number").optional().isNumeric(),
   ],
   Controller.AddFAQ,
 );
 
 // Update FAQ
-AdminDataManagementRouter.put(
+AdminDataManagementRouter.put<any>(
   "/faq/:id",
   [
+    isAdmin,
     param("id", "FAQ ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -45,19 +45,24 @@ AdminDataManagementRouter.put(
       .trim()
       .isLength({ min: 10 })
       .withMessage("Answer must be at least 10 characters long"),
-    body("category", "Category is required").optional().trim(),
     body("order", "Order must be a number").optional().isNumeric(),
-    body("isActive", "isActive must be boolean").optional().isBoolean(),
+    body("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
   ],
   Controller.UpdateFAQ,
 );
 
 // Delete FAQ
-AdminDataManagementRouter.delete(
+AdminDataManagementRouter.delete<any>(
   "/faq/:id",
-  param("id", "FAQ ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    isAdmin,
+    param("id", "FAQ ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
   Controller.DeleteFAQ,
 );
 
@@ -65,10 +70,13 @@ AdminDataManagementRouter.delete(
 AdminDataManagementRouter.get(
   "/faq",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
-    query("category", "Category is required").optional().trim(),
-    query("isActive", "isActive must be boolean").optional().isBoolean(),
+    query("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
   ],
   Controller.GetAllFAQs,
 );
@@ -76,24 +84,33 @@ AdminDataManagementRouter.get(
 // Get Single FAQ
 AdminDataManagementRouter.get(
   "/faq/details/:id",
-  param("id", "FAQ ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetSingleFAQ,
+  [
+    isAdmin,
+    param("id", "FAQ ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetSingleFAQ as any,
 );
 
 // Get Privacy Policy
-AdminDataManagementRouter.get("/privacy-policy", Controller.GetPrivacyPolicy);
+AdminDataManagementRouter.get(
+  "/privacy-policy",
+  isAdmin,
+  Controller.GetPrivacyPolicy,
+);
 
 // Get Terms of Service
 AdminDataManagementRouter.get(
   "/terms-of-service",
+  isAdmin,
   Controller.GetTermsOfService,
 );
 
 // Get Community Guidelines
 AdminDataManagementRouter.get(
   "/community-guidelines",
+  isAdmin,
   Controller.GetCommunityGuidelines,
 );
 
@@ -101,6 +118,7 @@ AdminDataManagementRouter.get(
 AdminDataManagementRouter.put(
   "/privacy-policy",
   [
+    isAdmin,
     body("title", "Title is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -111,7 +129,7 @@ AdminDataManagementRouter.put(
       .trim()
       .isLength({ min: 50 })
       .withMessage("Content must be at least 50 characters long"),
-    body("version", "Version is required").optional().trim(),
+    body("version").optional().trim(),
   ],
   Controller.UpdatePrivacyPolicy,
 );
@@ -120,6 +138,7 @@ AdminDataManagementRouter.put(
 AdminDataManagementRouter.put(
   "/terms-of-service",
   [
+    isAdmin,
     body("title", "Title is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -130,7 +149,7 @@ AdminDataManagementRouter.put(
       .trim()
       .isLength({ min: 50 })
       .withMessage("Content must be at least 50 characters long"),
-    body("version", "Version is required").optional().trim(),
+    body("version").optional().trim(),
   ],
   Controller.UpdateTermsOfService,
 );
@@ -139,6 +158,7 @@ AdminDataManagementRouter.put(
 AdminDataManagementRouter.put(
   "/community-guidelines",
   [
+    isAdmin,
     body("title", "Title is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -149,75 +169,80 @@ AdminDataManagementRouter.put(
       .trim()
       .isLength({ min: 50 })
       .withMessage("Content must be at least 50 characters long"),
-    body("version", "Version is required").optional().trim(),
+    body("version").optional().trim(),
   ],
   Controller.UpdateCommunityGuidelines,
 );
 
-// Create organizations' team member permissions
+// Create organizations' team permission
 AdminDataManagementRouter.post(
-  "/team-permissions",
+  "/team-permission",
   [
-    body("teamName", "Team name is required")
+    isAdmin,
+    body("permission", "Permission name is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
       .isLength({ min: 2 })
-      .withMessage("Team name must be at least 2 characters long"),
-    body("permissions", "Permissions are required")
+      .withMessage("Permission name must be at least 2 characters long"),
+    body("description", "Description is required")
       .exists({ checkFalsy: true, checkNull: true })
-      .isArray()
-      .withMessage("Permissions must be an array"),
-    body("description", "Description is required").optional().trim(),
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage("Description must be at least 5 characters long"),
   ],
-  Controller.CreateTeamPermissions,
+  Controller.CreateTeamPermission,
 );
 
-// Update organizations' team member permissions
+// Update organizations' team member permission
 AdminDataManagementRouter.put(
-  "/team-permissions/:id",
+  "/team-permission/:id",
   [
+    isAdmin,
     param("id", "Team Permission ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
-    body("teamName", "Team name is required")
+    body("permission")
       .optional()
       .trim()
       .isLength({ min: 2 })
-      .withMessage("Team name must be at least 2 characters long"),
-    body("permissions", "Permissions are required")
-      .optional()
-      .isArray()
-      .withMessage("Permissions must be an array"),
-    body("description", "Description is required").optional().trim(),
+      .withMessage("Permission name must be at least 2 characters long"),
+    body("description").optional().trim(),
   ],
-  Controller.UpdateTeamPermissions,
+  Controller.UpdateTeamPermission as any,
 );
 
-// Delete organizations' team member permissions
+// Delete organizations' team member permission
 AdminDataManagementRouter.delete(
-  "/team-permissions/:id",
-  param("id", "Team Permission ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeleteTeamPermissions,
+  "/team-permission/:id",
+  [
+    isAdmin,
+    param("id", "Team Permission ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.DeleteTeamPermission,
 );
 
-// Get organizations' team member permissions
+// Get organizations' team member permission
 AdminDataManagementRouter.get(
-  "/team-permissions",
+  "/team-permission",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],
   Controller.GetAllTeamPermissions,
 );
 
-// Get single organization team member permissions by ID
+// Get single organization team member permission by ID
 AdminDataManagementRouter.get(
-  "/team-permissions/details/:id",
-  param("id", "Team Permission ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  "/team-permission/details/:id",
+  [
+    isAdmin,
+    param("id", "Team Permission ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
   Controller.GetSingleTeamPermission,
 );
 

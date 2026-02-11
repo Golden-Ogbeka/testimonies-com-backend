@@ -2,7 +2,7 @@ import { Request } from "express";
 import jwt from "jsonwebtoken";
 // import AdminModel from "../models/admin.model";
 import { UAParser } from "ua-parser-js";
-import AdminModel from "../models/admin.model";
+import AdminModel, { IAdmin } from "../models/admin.model";
 import OrganizationModel, { IOrganization } from "../models/organization.model";
 import UserModel, { IUser } from "../models/user.model";
 
@@ -62,7 +62,7 @@ export const getAdminUserDetails = async (req: Request) => {
 
   if (!details) throw new Error("Unauthorized!");
 
-  return details;
+  return details as IAdmin;
 };
 
 export const extractSensitiveUserInfo = (user: IUser) => {

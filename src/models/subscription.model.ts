@@ -1,4 +1,4 @@
-import { Document, PaginateModel, Schema, model } from "mongoose";
+import { Document, PaginateModel, Schema, Types, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
 export interface ISubscription extends Document {
@@ -11,23 +11,31 @@ export interface ISubscription extends Document {
   trialEndDate?: Date;
   cancelledAt?: Date;
   createdAt?: Date;
+  userType: "user" | "organization";
   updatedAt?: Date;
+  updatedBy?: Types.ObjectId;
 }
 
 const subscriptionSchema = new Schema<ISubscription>(
   {
-    userId: { type: String, required: true, ref: "User" },
-    planId: { type: String, required: true, ref: "SubscriptionPlan" },
+    userId: { type: String, required: true, unique: true },
+    planId: { type: String, required: true },
     status: {
       type: String,
       enum: ["active", "cancelled", "expired", "trial"],
       default: "trial",
+    },
+    userType: {
+      type: String,
+      enum: ["user", "organization"],
+      default: "user",
     },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     autoRenew: { type: Boolean, default: true },
     trialEndDate: { type: Date },
     cancelledAt: { type: Date },
+    updatedBy: { type: Schema.Types.ObjectId },
   },
   {
     timestamps: true,
@@ -36,19 +44,29 @@ const subscriptionSchema = new Schema<ISubscription>(
   },
 );
 
-// Virtual for user details
 subscriptionSchema.virtual("userDetails", {
-  ref: "User",
+  refPath: "userType",
   localField: "userId",
   foreignField: "_id",
-  select: "firstName lastName username email profileImage",
+  options: {
+    select:
+      "username firstName lastName email businessLogoURL profileImage businessName accountType",
+  },
   justOne: true,
 });
 
 // Virtual for plan details
 subscriptionSchema.virtual("planDetails", {
-  ref: "SubscriptionPlan",
+  ref: "subscription-plan",
   localField: "planId",
+  foreignField: "_id",
+  justOne: true,
+});
+
+// Virtual for updated by details
+subscriptionSchema.virtual("updatedByDetails", {
+  ref: "admin",
+  localField: "updatedBy",
   foreignField: "_id",
   justOne: true,
 });

@@ -1,4 +1,4 @@
-import { Document, PaginateModel, Schema, model } from "mongoose";
+import { Document, PaginateModel, Schema, Types, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
 export interface IPromotion extends Document {
@@ -10,8 +10,10 @@ export interface IPromotion extends Document {
   endDate?: Date;
   isActive: boolean;
   isFlagged: boolean;
+  flaggedBy: Types.ObjectId;
   flagReason?: string;
-  createdBy: string;
+  createdBy: Types.ObjectId;
+  updatedBy: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -35,7 +37,9 @@ const promotionSchema = new Schema<IPromotion>(
     isActive: { type: Boolean, default: true },
     isFlagged: { type: Boolean, default: false },
     flagReason: { type: String },
-    createdBy: { type: String, required: true },
+    createdBy: { type: Schema.Types.ObjectId, required: true },
+    updatedBy: { type: Schema.Types.ObjectId, required: false },
+    flaggedBy: { type: Schema.Types.ObjectId },
   },
   {
     timestamps: true,
@@ -52,6 +56,26 @@ promotionSchema.virtual("createdBy", {
   select: "firstName lastName email",
   justOne: true,
 });
+
+// Virtual for admin who updated the promotion
+promotionSchema.virtual("updatedBy", {
+  ref: "admin",
+  localField: "updatedBy",
+  foreignField: "_id",
+  select: "firstName lastName email",
+  justOne: true,
+});
+
+// Virtual for admin who flagged the promotion
+promotionSchema.virtual("flaggedBy", {
+  ref: "admin",
+  localField: "flaggedBy",
+  foreignField: "_id",
+  select: "firstName lastName email",
+  justOne: true,
+});
+
+promotionSchema.index({ title: 1, description: 1 });
 
 promotionSchema.plugin(mongoosePaginate);
 

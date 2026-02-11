@@ -1,6 +1,7 @@
+import bcryptjs from "bcryptjs";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
-import bcryptjs from "bcryptjs";
+import { getAdminUserDetails } from "../../../../functions/auth";
 import {
   sendCatchFeedback,
   sendErrorFeedback,
@@ -9,67 +10,36 @@ import {
 } from "../../../../functions/feedback";
 import AdminModel from "../../../../models/admin.model";
 import PermissionModel from "../../../../models/permission.model";
-import RoleModel from "../../../../models/role.model";
-import { getPaginationOptions } from "../../../../utils/pagination";
 import {
+  AdminCreateRequestBody,
+  AdminFilterQuery,
+  AdminProfileUpdateRequestBody,
+  AdminUpdateRequestBody,
   IdParams,
   PermissionCreateRequestBody,
   PermissionUpdateRequestBody,
-  RoleCreateRequestBody,
-  RoleUpdateRequestBody,
-  AssignPermissionRequestBody,
-  AdminCreateRequestBody,
-  AdminUpdateRequestBody,
-  AdminProfileUpdateRequestBody,
-  PaginationQuery,
-  PermissionFilterQuery,
-  RoleFilterQuery,
-  AdminFilterQuery,
 } from "../../../../types/requests";
+import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminRolePermissionController = () => {
-  const GetAllPermissions = async (
-    req: Request<never, never, never, PermissionFilterQuery>,
-    res: Response,
-  ) => {
+  const GetAllPermissions = async (req: Request, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const {
-        page = 1,
-        limit = 20,
-        resource,
-        action,
-        isActive,
-      } = req.query as any;
+      const paginationOptions = getPaginationOptions(req as any);
 
-      // Build filter
-      const filter: any = {};
-      if (resource) filter.resource = resource;
-      if (action) filter.action = action;
-      if (isActive !== undefined) filter.isActive = isActive === "true";
-
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
-
-      const permissions = await PermissionModel.paginate(filter, {
-        ...paginationOptions,
-        sort: { resource: 1, action: 1 },
-      });
+      const permissions = await PermissionModel.paginate(
+        {},
+        {
+          ...paginationOptions,
+          sort: { createdAt: 1 },
+        },
+      );
 
       return sendSuccessFeedback(res, "Permissions retrieved", {
-        permissions: permissions.docs,
-        pagination: {
-          currentPage: permissions.page,
-          totalPages: permissions.totalPages,
-          totalDocs: permissions.totalDocs,
-          hasNextPage: permissions.hasNextPage,
-          hasPrevPage: permissions.hasPrevPage,
-        },
+        permissions,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -109,7 +79,9 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { name, description, resource, action } = req.body;
+      const { name, description } = req.body;
+
+      const adminDetails = await getAdminUserDetails(req as any);
 
       // Check if permission with same name already exists
       const existingPermission = await PermissionModel.findOne({ name });
@@ -124,8 +96,7 @@ export const AdminRolePermissionController = () => {
       const permission = await PermissionModel.create({
         name,
         description,
-        resource,
-        action,
+        createdBy: adminDetails._id,
       });
 
       return sendSuccessFeedback(res, "Permission created successfully", {
@@ -149,8 +120,9 @@ export const AdminRolePermissionController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const { name, description, resource, action, isActive } = req.body;
+      const { name, description } = req.body;
 
+      const adminDetails = await getAdminUserDetails(req as any);
       const permission = await PermissionModel.findById(id);
       if (!permission) {
         return sendErrorFeedback(res, 404, "Permission not found");
@@ -174,9 +146,7 @@ export const AdminRolePermissionController = () => {
       const updateData: any = {};
       if (name) updateData.name = name;
       if (description) updateData.description = description;
-      if (resource) updateData.resource = resource;
-      if (action) updateData.action = action;
-      if (isActive !== undefined) updateData.isActive = isActive;
+      updateData.updatedBy = adminDetails._id;
 
       const updatedPermission = await PermissionModel.findByIdAndUpdate(
         id,
@@ -203,347 +173,12 @@ export const AdminRolePermissionController = () => {
 
       const { id } = req.params;
 
-      const permission = await PermissionModel.findById(id);
+      const permission = await PermissionModel.findByIdAndDelete(id);
       if (!permission) {
         return sendErrorFeedback(res, 404, "Permission not found");
       }
-
-      // Check if permission is being used by any roles
-      const rolesUsingPermission = await RoleModel.find({ permissions: id });
-      if (rolesUsingPermission.length > 0) {
-        return sendErrorFeedback(
-          res,
-          400,
-          "Cannot delete permission that is being used by roles",
-        );
-      }
-
-      await PermissionModel.findByIdAndDelete(id);
 
       return sendSuccessFeedback(res, "Permission deleted successfully");
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const GetAllRoles = async (
-    req: Request<never, never, never, RoleFilterQuery>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { page = 1, limit = 20, isActive } = req.query as any;
-
-      // Build filter
-      const filter: any = {};
-      if (isActive !== undefined) filter.isActive = isActive === "true";
-
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
-
-      const roles = await RoleModel.paginate(filter, {
-        ...paginationOptions,
-        sort: { level: -1, name: 1 },
-        populate: [
-          { path: "permissions", select: "name description resource action" },
-        ],
-      });
-
-      return sendSuccessFeedback(res, "Roles retrieved", {
-        roles: roles.docs,
-        pagination: {
-          currentPage: roles.page,
-          totalPages: roles.totalPages,
-          totalDocs: roles.totalDocs,
-          hasNextPage: roles.hasNextPage,
-          hasPrevPage: roles.hasPrevPage,
-        },
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-  const GetSingleRole = async (req: Request<IdParams>, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      const role = await RoleModel.findById(id).populate([
-        { path: "permissions", select: "name description resource action" },
-      ]);
-
-      if (!role) {
-        return sendErrorFeedback(res, 404, "Role not found");
-      }
-
-      return sendSuccessFeedback(res, "Role retrieved", { role });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const CreateRole = async (
-    req: Request<never, never, RoleCreateRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { name, description, permissions, level } = req.body;
-
-      // Check if role with same name already exists
-      const existingRole = await RoleModel.findOne({ name });
-      if (existingRole) {
-        return sendErrorFeedback(
-          res,
-          409,
-          "Role with this name already exists",
-        );
-      }
-
-      // Verify all permissions exist
-      if (permissions && permissions.length > 0) {
-        const permissionCount = await PermissionModel.countDocuments({
-          _id: { $in: permissions },
-        });
-        if (permissionCount !== permissions.length) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "One or more permissions are invalid",
-          );
-        }
-      }
-
-      const role = await RoleModel.create({
-        name,
-        description,
-        permissions: permissions || [],
-        level: level || 1,
-      });
-
-      const populatedRole = await RoleModel.findById(role._id).populate([
-        { path: "permissions", select: "name description resource action" },
-      ]);
-
-      return sendSuccessFeedback(res, "Role created successfully", {
-        role: populatedRole,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const UpdateRole = async (
-    req: Request<IdParams, never, RoleUpdateRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-      const { name, description, permissions, level, isActive } = req.body;
-
-      const role = await RoleModel.findById(id);
-      if (!role) {
-        return sendErrorFeedback(res, 404, "Role not found");
-      }
-
-      // Check if another role with same name exists
-      if (name && name !== role.name) {
-        const existingRole = await RoleModel.findOne({
-          name,
-          _id: { $ne: id },
-        });
-        if (existingRole) {
-          return sendErrorFeedback(
-            res,
-            409,
-            "Role with this name already exists",
-          );
-        }
-      }
-
-      // Verify all permissions exist
-      if (permissions && permissions.length > 0) {
-        const permissionCount = await PermissionModel.countDocuments({
-          _id: { $in: permissions },
-        });
-        if (permissionCount !== permissions.length) {
-          return sendErrorFeedback(
-            res,
-            400,
-            "One or more permissions are invalid",
-          );
-        }
-      }
-
-      const updateData: any = {};
-      if (name) updateData.name = name;
-      if (description) updateData.description = description;
-      if (permissions !== undefined) updateData.permissions = permissions;
-      if (level !== undefined) updateData.level = level;
-      if (isActive !== undefined) updateData.isActive = isActive;
-
-      const updatedRole = await RoleModel.findByIdAndUpdate(id, updateData, {
-        new: true,
-      }).populate([
-        { path: "permissions", select: "name description resource action" },
-      ]);
-
-      return sendSuccessFeedback(res, "Role updated successfully", {
-        role: updatedRole,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const DeleteRole = async (req: Request<IdParams>, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      const role = await RoleModel.findById(id);
-      if (!role) {
-        return sendErrorFeedback(res, 404, "Role not found");
-      }
-
-      // Check if role is being used by any admins
-      const adminsUsingRole = await AdminModel.find({ role: id });
-      if (adminsUsingRole.length > 0) {
-        return sendErrorFeedback(
-          res,
-          400,
-          "Cannot delete role that is being used by admins",
-        );
-      }
-
-      await RoleModel.findByIdAndDelete(id);
-
-      return sendSuccessFeedback(res, "Role deleted successfully");
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const AssignPermissionToRole = async (
-    req: Request<IdParams, never, AssignPermissionRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { roleId, permissionId } = req.body;
-
-      const role = await RoleModel.findById(roleId);
-      if (!role) {
-        return sendErrorFeedback(res, 404, "Role not found");
-      }
-
-      const permission = await PermissionModel.findById(permissionId);
-      if (!permission) {
-        return sendErrorFeedback(res, 404, "Permission not found");
-      }
-
-      // Check if permission is already assigned to role
-      if (role.permissions.includes(permissionId)) {
-        return sendErrorFeedback(
-          res,
-          400,
-          "Permission is already assigned to this role",
-        );
-      }
-
-      await RoleModel.findByIdAndUpdate(roleId, {
-        $push: { permissions: permissionId },
-      });
-
-      return sendSuccessFeedback(
-        res,
-        "Permission assigned to role successfully",
-      );
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const RemovePermissionFromRole = async (
-    req: Request<IdParams, never, AssignPermissionRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { roleId, permissionId } = req.body;
-
-      const role = await RoleModel.findById(roleId);
-      if (!role) {
-        return sendErrorFeedback(res, 404, "Role not found");
-      }
-
-      const permission = await PermissionModel.findById(permissionId);
-      if (!permission) {
-        return sendErrorFeedback(res, 404, "Permission not found");
-      }
-
-      // Check if permission is assigned to role
-      if (!role.permissions.includes(permissionId)) {
-        return sendErrorFeedback(
-          res,
-          400,
-          "Permission is not assigned to this role",
-        );
-      }
-
-      await RoleModel.findByIdAndUpdate(roleId, {
-        $pull: { permissions: permissionId },
-      });
-
-      return sendSuccessFeedback(
-        res,
-        "Permission removed from role successfully",
-      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -565,6 +200,8 @@ export const AdminRolePermissionController = () => {
       const { firstName, lastName, email, phoneNumber, role, permissions } =
         adminData;
 
+      const adminDetails = await getAdminUserDetails(req as any);
+
       // Check if admin with same email already exists
       const existingAdmin = await AdminModel.findOne({ email });
       if (existingAdmin) {
@@ -573,6 +210,16 @@ export const AdminRolePermissionController = () => {
           409,
           "Admin with this email already exists",
         );
+      }
+
+      // confirm permissions
+      if (permissions) {
+        const existingPermissions = await PermissionModel.find({
+          _id: { $in: permissions },
+        });
+        if (existingPermissions.length !== permissions.length) {
+          return sendErrorFeedback(res, 400, "Invalid permissions");
+        }
       }
 
       // Hash password
@@ -585,15 +232,12 @@ export const AdminRolePermissionController = () => {
         password: hashedPassword,
         phoneNumber,
         role: role || "admin",
+        createdBy: adminDetails._id,
         permissions: permissions || [],
       });
 
-      // Remove password from response
-      const adminResponse: any = admin.toObject();
-      const { password: _, ...adminWithoutPassword } = adminResponse;
-
       return sendSuccessFeedback(res, "Admin created successfully", {
-        admin: adminWithoutPassword,
+        admin,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -612,17 +256,55 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
+      const adminDetails = await getAdminUserDetails(req as any);
       const { id } = req.params;
-      const { role, permissions } = req.body;
+      const { role } = req.body;
 
       const updateData: any = {};
-      if (role) updateData.role = role;
-      if (permissions !== undefined) updateData.permissions = permissions;
+      updateData.role = role;
+      updateData.updatedBy = adminDetails._id;
 
       const updatedAdmin = await AdminModel.findByIdAndUpdate(id, updateData, {
         new: true,
-      }).select("-password");
+      });
+      return sendSuccessFeedback(res, "Admin role updated successfully", {
+        admin: updatedAdmin,
+      });
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+  };
 
+  const UpdateAdminPermissions = async (
+    req: Request<IdParams, never, { permissions: string[] }>,
+    res: Response,
+  ) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const adminDetails = await getAdminUserDetails(req as any);
+      const { id } = req.params;
+      const { permissions } = req.body;
+
+      // Confirm permissions
+      const existingPermissions = await PermissionModel.find({
+        _id: { $in: permissions },
+      });
+      if (existingPermissions.length !== permissions.length) {
+        return sendErrorFeedback(res, 400, "Invalid permissions");
+      }
+      const updateData: any = {};
+      updateData.permissions = permissions;
+      updateData.updatedBy = adminDetails._id;
+
+      const updatedAdmin = await AdminModel.findByIdAndUpdate(id, updateData, {
+        new: true,
+      });
       return sendSuccessFeedback(res, "Admin role updated successfully", {
         admin: updatedAdmin,
       });
@@ -641,15 +323,22 @@ export const AdminRolePermissionController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
+      const adminDetails = await getAdminUserDetails(req as any);
 
-      const admin = await AdminModel.findById(id);
-      if (!admin) {
+      const updatedAdmin = await AdminModel.findByIdAndUpdate(
+        id,
+        {
+          active: false,
+          updatedBy: adminDetails._id,
+        },
+        { new: true },
+      );
+      if (!updatedAdmin) {
         return sendErrorFeedback(res, 404, "Admin not found");
       }
-
-      await AdminModel.findByIdAndUpdate(id, { active: false });
-
-      return sendSuccessFeedback(res, "Admin deactivated successfully");
+      return sendSuccessFeedback(res, "Admin deactivated successfully", {
+        admin: updatedAdmin,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -665,15 +354,23 @@ export const AdminRolePermissionController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
+      const adminDetails = await getAdminUserDetails(req as any);
 
-      const admin = await AdminModel.findById(id);
-      if (!admin) {
+      const updatedAdmin = await AdminModel.findByIdAndUpdate(
+        id,
+        {
+          active: true,
+          updatedBy: adminDetails._id,
+        },
+        { new: true },
+      );
+
+      if (!updatedAdmin) {
         return sendErrorFeedback(res, 404, "Admin not found");
       }
-
-      await AdminModel.findByIdAndUpdate(id, { active: true });
-
-      return sendSuccessFeedback(res, "Admin activated successfully");
+      return sendSuccessFeedback(res, "Admin activated successfully", {
+        admin: updatedAdmin,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -691,36 +388,27 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { page = 1, limit = 20, role, isActive } = req.query as any;
+      const adminDetails = await getAdminUserDetails(req as any);
+      const { role, isActive } = req.query as any;
 
       // Build filter
       const filter: any = {};
       if (role) filter.role = role;
       if (isActive !== undefined) filter.isActive = isActive === "true";
 
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
+      if (adminDetails.role !== "super-admin") {
+        filter.role = "admin";
+      }
+
+      const paginationOptions = getPaginationOptions(req as any);
 
       const admins = await AdminModel.paginate(filter, {
         ...paginationOptions,
         sort: { createdAt: -1 },
-        select: "-password -verificationCode -resetPasswordToken",
-        populate: [
-          { path: "permissions", select: "name description resource action" },
-        ],
       });
 
       return sendSuccessFeedback(res, "Admins retrieved", {
-        admins: admins.docs,
-        pagination: {
-          currentPage: admins.page,
-          totalPages: admins.totalPages,
-          totalDocs: admins.totalDocs,
-          hasNextPage: admins.hasNextPage,
-          hasPrevPage: admins.hasPrevPage,
-        },
+        admins,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -736,15 +424,22 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
+      const adminDetails = await getAdminUserDetails(req as any);
+
       const { id } = req.params;
 
-      const admin = await AdminModel.findById(id)
-        .select("-password -verificationCode -resetPasswordToken")
-        .populate([
-          { path: "permissions", select: "name description resource action" },
-        ]);
+      const admin = await AdminModel.findById(id);
+
       if (!admin) {
         return sendErrorFeedback(res, 404, "Admin not found");
+      }
+
+      if (adminDetails.role !== "super-admin" && admin.role === "super-admin") {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You do not have permission to view this admin",
+        );
       }
 
       return sendSuccessFeedback(res, "Admin retrieved", { admin });
@@ -766,27 +461,23 @@ export const AdminRolePermissionController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const { firstName, lastName, phoneNumber, profileImage } = req.body;
+      const { firstName, lastName, phoneNumber } = req.body;
 
-      const admin = await AdminModel.findById(id);
-      if (!admin) {
-        return sendErrorFeedback(res, 404, "Admin not found");
-      }
+      const adminDetails = await getAdminUserDetails(req as any);
 
       const updateData: any = {};
       if (firstName) updateData.firstName = firstName;
       if (lastName) updateData.lastName = lastName;
       if (phoneNumber) updateData.phoneNumber = phoneNumber;
-      if (profileImage) updateData.profileImage = profileImage;
+      updateData.updatedBy = adminDetails._id;
 
       const updatedAdmin = await AdminModel.findByIdAndUpdate(id, updateData, {
         new: true,
-      })
-        .select("-password -verificationCode -resetPasswordToken")
-        .populate([
-          { path: "permissions", select: "name description resource action" },
-        ]);
+      });
 
+      if (!updatedAdmin) {
+        return sendErrorFeedback(res, 404, "Admin not found");
+      }
       return sendSuccessFeedback(res, "Admin updated successfully", {
         admin: updatedAdmin,
       });
@@ -803,13 +494,6 @@ export const AdminRolePermissionController = () => {
     CreatePermission,
     UpdatePermission,
     DeletePermission,
-    GetSingleRole,
-    GetAllRoles,
-    CreateRole,
-    UpdateRole,
-    DeleteRole,
-    AssignPermissionToRole,
-    RemovePermissionFromRole,
     CreateAdmin,
     UpdateAdminRole,
     DeactivateAdmin,
@@ -817,5 +501,6 @@ export const AdminRolePermissionController = () => {
     GetAllAdmins,
     GetSingleAdmin,
     UpdateAdmin,
+    UpdateAdminPermissions,
   };
 };

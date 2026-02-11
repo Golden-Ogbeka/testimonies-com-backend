@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, param, query } from "express-validator";
+import { isAdmin, isSuperAdmin } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminPromotionController } from "../../controllers/admin/promotion";
 
@@ -10,6 +11,7 @@ const Controller = AdminPromotionController();
 AdminPromotionRouter.get(
   "/",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
     query("type", "Type is required")
@@ -18,8 +20,14 @@ AdminPromotionRouter.get(
     query("targetAudience", "Target audience is required")
       .optional()
       .isIn(["all", "premium", "basic", "organizations"]),
-    query("isActive", "isActive must be boolean").optional().isBoolean(),
-    query("isFlagged", "isFlagged must be boolean").optional().isBoolean(),
+    query("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
+    query("isFlagged", "isFlagged must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
   ],
   Controller.GetAllPromotions,
 );
@@ -27,16 +35,20 @@ AdminPromotionRouter.get(
 // Get a single promotion by ID
 AdminPromotionRouter.get(
   "/details/:id",
-  param("id", "ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetSinglePromotion,
+  [
+    isAdmin,
+    param("id", "ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetSinglePromotion as any,
 );
 
 // Create a new promotion (this creates a promotion request for another admin's approval)
 AdminPromotionRouter.post(
   "/",
   [
+    isAdmin,
     body("title", "Title is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -69,6 +81,7 @@ AdminPromotionRouter.post(
 AdminPromotionRouter.put(
   "/:id",
   [
+    isAdmin,
     param("id", "ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -96,143 +109,76 @@ AdminPromotionRouter.put(
       .optional()
       .isISO8601()
       .withMessage("Please provide a valid end date"),
-    body("isActive", "isActive must be boolean").optional().isBoolean(),
+    body("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
   ],
-  Controller.UpdatePromotion,
+  Controller.UpdatePromotion as any,
 );
 
 // Deactivate a promotion
 AdminPromotionRouter.post(
   "/deactivate/:id",
-  param("id", "ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeactivatePromotion,
+  [
+    isSuperAdmin,
+    param("id", "ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.DeactivatePromotion as any,
 );
 
 // Activate a promotion
 AdminPromotionRouter.post(
   "/activate/:id",
-  param("id", "ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.ActivatePromotion,
-);
-
-// Delete a promotion that was created by admin (admin cannot delete user's promotion)
-AdminPromotionRouter.delete(
-  "/:id",
-  param("id", "ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeleteAdminPromotion,
+  [
+    isSuperAdmin,
+    param("id", "ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.ActivatePromotion as any,
 );
 
 // Flag promotion
 AdminPromotionRouter.post(
   "/flag/:id",
   [
+    isAdmin,
     param("id", "ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
-    body("flagReason", "Flag reason is required")
+    body("reason", "Flag reason is required")
       .optional()
       .trim()
       .isLength({ min: 5 })
       .withMessage("Flag reason must be at least 5 characters long"),
   ],
-  Controller.FlagPromotion,
+  Controller.FlagPromotion as any,
 );
 
 // Unflag promotion
 AdminPromotionRouter.post(
   "/unflag/:id",
-  param("id", "ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.UnflagPromotion,
+  [
+    isSuperAdmin,
+    param("id", "ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.UnflagPromotion as any,
 );
 
 // Get all flagged promotions
 AdminPromotionRouter.get(
   "/flagged",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],
   Controller.GetAllFlaggedPromotions,
-);
-
-// Get promotion statistics (view, clicks, conversions, etc.)
-AdminPromotionRouter.get("/statistics", Controller.GetPromotionStatistics);
-
-// Get all promotions created by users
-AdminPromotionRouter.get(
-  "/user-promotions",
-  [
-    query("page", "Page must be a number").optional().isNumeric(),
-    query("limit", "Limit must be a number").optional().isNumeric(),
-  ],
-  Controller.GetUsersPromotions,
-);
-
-// Get all promotions created by a specific user
-AdminPromotionRouter.get(
-  "/user-promotions/user/:id",
-  [
-    param("id", "User ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    query("page", "Page must be a number").optional().isNumeric(),
-    query("limit", "Limit must be a number").optional().isNumeric(),
-  ],
-  Controller.GetSingleUserPromotions,
-);
-
-// Get all promotion requests
-AdminPromotionRouter.get(
-  "/requests",
-  [
-    query("page", "Page must be a number").optional().isNumeric(),
-    query("limit", "Limit must be a number").optional().isNumeric(),
-  ],
-  Controller.GetAllPromotionRequests,
-);
-
-// Approve promotion request
-AdminPromotionRouter.post(
-  "/requests/approve/:id",
-  [
-    param("id", "Request ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-  ],
-  Controller.ApprovePromotionRequest,
-);
-
-// Reject promotion request
-AdminPromotionRouter.post(
-  "/requests/reject/:id",
-  [
-    param("id", "Request ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    body("rejectionReason", "Rejection reason is required")
-      .optional()
-      .trim()
-      .isLength({ min: 5 })
-      .withMessage("Rejection reason must be at least 5 characters long"),
-  ],
-  Controller.RejectPromotionRequest,
-);
-
-// Get single promotion request by ID
-AdminPromotionRouter.get(
-  "/requests/details/:id",
-  param("id", "Request ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetPromotionRequestDetails,
 );
 
 export default AdminPromotionRouter;

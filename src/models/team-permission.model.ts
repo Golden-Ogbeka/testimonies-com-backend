@@ -1,16 +1,16 @@
 import { Document, PaginateModel, Schema, Types, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-export interface IPermission extends Document {
+export interface ITeamPermission extends Document {
   name: string;
   description: string;
   createdBy: Types.ObjectId;
-  updatedBy?: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
+  updatedBy?: Types.ObjectId;
 }
 
-const permissionSchema = new Schema<IPermission>(
+const teamPermissionSchema = new Schema<ITeamPermission>(
   {
     name: { type: String, required: true, unique: true },
     description: { type: String, required: true },
@@ -24,25 +24,25 @@ const permissionSchema = new Schema<IPermission>(
   },
 );
 
-permissionSchema.plugin(mongoosePaginate);
+teamPermissionSchema.plugin(mongoosePaginate);
 
-permissionSchema.virtual("createdByDetails", {
+teamPermissionSchema.virtual("createdByDetails", {
   ref: "admin",
   localField: "createdBy",
   foreignField: "_id",
   justOne: true,
 });
 
-permissionSchema.virtual("updatedByDetails", {
+teamPermissionSchema.virtual("updatedByDetails", {
   ref: "admin",
   localField: "updatedBy",
   foreignField: "_id",
   justOne: true,
 });
 
-const PermissionModel = model<IPermission, PaginateModel<IPermission>>(
-  "permission",
-  permissionSchema,
-);
+const TeamPermissionModel = model<
+  ITeamPermission,
+  PaginateModel<ITeamPermission>
+>("permission", teamPermissionSchema);
 
-export default PermissionModel;
+export default TeamPermissionModel;

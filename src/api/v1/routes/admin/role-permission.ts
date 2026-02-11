@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, param, query } from "express-validator";
+import { isAdmin, isSuperAdmin } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminRolePermissionController } from "../../controllers/admin/role-permission";
 
@@ -10,11 +11,9 @@ const Controller = AdminRolePermissionController();
 AdminRolePermissionRouter.get(
   "/permission",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
-    query("resource", "Resource is required").optional().trim(),
-    query("action", "Action is required").optional().trim(),
-    query("isActive", "isActive must be boolean").optional().isBoolean(),
   ],
   Controller.GetAllPermissions,
 );
@@ -22,16 +21,20 @@ AdminRolePermissionRouter.get(
 // Get single permission
 AdminRolePermissionRouter.get(
   "/permission/:id",
-  param("id", "Permission ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetSinglePermission,
+  [
+    isAdmin,
+    param("id", "Permission ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetSinglePermission as any,
 );
 
 // Create permission
 AdminRolePermissionRouter.post(
   "/permission",
   [
+    isSuperAdmin,
     body("name", "Permission name is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -42,12 +45,6 @@ AdminRolePermissionRouter.post(
       .trim()
       .isLength({ min: 5 })
       .withMessage("Description must be at least 5 characters long"),
-    body("resource", "Resource is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .trim(),
-    body("action", "Action is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .trim(),
   ],
   Controller.CreatePermission,
 );
@@ -56,6 +53,7 @@ AdminRolePermissionRouter.post(
 AdminRolePermissionRouter.put(
   "/permission/:id",
   [
+    isSuperAdmin,
     param("id", "Permission ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -69,127 +67,27 @@ AdminRolePermissionRouter.put(
       .trim()
       .isLength({ min: 5 })
       .withMessage("Description must be at least 5 characters long"),
-    body("resource", "Resource is required").optional().trim(),
-    body("action", "Action is required").optional().trim(),
-    body("isActive", "isActive must be boolean").optional().isBoolean(),
   ],
-  Controller.UpdatePermission,
+  Controller.UpdatePermission as any,
 );
 
 // Delete permission
 AdminRolePermissionRouter.delete(
   "/permission/:id",
-  param("id", "Permission ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeletePermission,
-);
-
-// Create role
-AdminRolePermissionRouter.post(
-  "/role",
   [
-    body("name", "Role name is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .trim()
-      .isLength({ min: 2 })
-      .withMessage("Role name must be at least 2 characters long"),
-    body("description", "Description is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .trim()
-      .isLength({ min: 5 })
-      .withMessage("Description must be at least 5 characters long"),
-    body("permissions", "Permissions must be an array").optional().isArray(),
-    body("level", "Level must be a number").optional().isNumeric(),
-  ],
-  Controller.CreateRole,
-);
-
-// Get all roles
-AdminRolePermissionRouter.get(
-  "/role",
-  [
-    query("page", "Page must be a number").optional().isNumeric(),
-    query("limit", "Limit must be a number").optional().isNumeric(),
-    query("isActive", "isActive must be boolean").optional().isBoolean(),
-  ],
-  Controller.GetAllRoles,
-);
-
-// Get single role
-AdminRolePermissionRouter.get(
-  "/role/:id",
-  param("id", "Role ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetSingleRole,
-);
-
-// Update role
-AdminRolePermissionRouter.put(
-  "/role/:id",
-  [
-    param("id", "Role ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    body("name", "Role name is required")
-      .optional()
-      .trim()
-      .isLength({ min: 2 })
-      .withMessage("Role name must be at least 2 characters long"),
-    body("description", "Description is required")
-      .optional()
-      .trim()
-      .isLength({ min: 5 })
-      .withMessage("Description must be at least 5 characters long"),
-    body("permissions", "Permissions must be an array").optional().isArray(),
-    body("level", "Level must be a number").optional().isNumeric(),
-    body("isActive", "isActive must be boolean").optional().isBoolean(),
-  ],
-  Controller.UpdateRole,
-);
-
-// Delete role
-AdminRolePermissionRouter.delete(
-  "/role/:id",
-  param("id", "Role ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeleteRole,
-);
-
-// Assign permission to role
-AdminRolePermissionRouter.post(
-  "/assign-permission",
-  [
-    body("roleId", "Role ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    body("permissionId", "Permission ID is required")
+    isSuperAdmin,
+    param("id", "Permission ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.AssignPermissionToRole,
-);
-
-// Remove permission from role
-AdminRolePermissionRouter.post(
-  "/remove-permission",
-  [
-    body("roleId", "Role ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    body("permissionId", "Permission ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-  ],
-  Controller.RemovePermissionFromRole,
+  Controller.DeletePermission as any,
 );
 
 // Create admin
 AdminRolePermissionRouter.post(
   "/admin",
   [
+    isSuperAdmin,
     body("firstName", "First name is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -221,11 +119,9 @@ AdminRolePermissionRouter.post(
       ),
     body("phoneNumber", "Phone number is required")
       .optional()
-      .isMobilePhone()
+      .isMobilePhone("any")
       .withMessage("Please provide a valid phone number"),
-    body("role", "Role is required")
-      .optional()
-      .isIn(["super-admin", "admin", "moderator"]),
+    body("role", "Role is required").optional().isIn(["super-admin", "admin"]),
     body("permissions", "Permissions must be an array").optional().isArray(),
   ],
   Controller.CreateAdmin,
@@ -235,44 +131,64 @@ AdminRolePermissionRouter.post(
 AdminRolePermissionRouter.post(
   "/admin/update-role/:id",
   [
+    isSuperAdmin,
     param("id", "Admin ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
     body("role", "Role is required")
-      .optional()
-      .isIn(["super-admin", "admin", "moderator"]),
-    body("permissions", "Permissions must be an array").optional().isArray(),
+      .exists({ checkFalsy: true, checkNull: true })
+      .isIn(["super-admin", "admin"]),
   ],
-  Controller.UpdateAdminRole,
+  Controller.UpdateAdminRole as any,
+);
+
+// Update admin permissions
+AdminRolePermissionRouter.post(
+  "/admin/update-permissions/:id",
+  [
+    isSuperAdmin,
+    param("id", "Admin ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("permissions", "Permissions must be an array")
+      .exists({ checkFalsy: true, checkNull: true })
+      .isArray(),
+  ],
+  Controller.UpdateAdminPermissions as any,
 );
 
 // Deactivate admin
 AdminRolePermissionRouter.post(
   "/admin/deactivate/:id",
-  param("id", "Admin ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeactivateAdmin,
+  [
+    isSuperAdmin,
+    param("id", "Admin ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.DeactivateAdmin as any,
 );
 
 // Reactivate admin
 AdminRolePermissionRouter.post(
   "/admin/activate/:id",
-  param("id", "Admin ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.ActivateAdmin,
+  [
+    isSuperAdmin,
+    param("id", "Admin ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.ActivateAdmin as any,
 );
 
 // Get all admins
 AdminRolePermissionRouter.get(
   "/admin",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
-    query("role", "Role is required")
-      .optional()
-      .isIn(["super-admin", "admin", "moderator"]),
+    query("role", "Role is required").optional().isIn(["super-admin", "admin"]),
     query("isActive", "isActive must be boolean").optional().isBoolean(),
   ],
   Controller.GetAllAdmins,
@@ -281,16 +197,20 @@ AdminRolePermissionRouter.get(
 // Get admin by ID
 AdminRolePermissionRouter.get(
   "/admin/details/:id",
-  param("id", "Admin ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetSingleAdmin,
+  [
+    isAdmin,
+    param("id", "Admin ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetSingleAdmin as any,
 );
 
 // Update admin details by admin ID
 AdminRolePermissionRouter.put(
   "/admin/:id",
   [
+    isSuperAdmin,
     param("id", "Admin ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -306,14 +226,10 @@ AdminRolePermissionRouter.put(
       .withMessage("Last name must be at least 2 characters long"),
     body("phoneNumber", "Phone number is required")
       .optional()
-      .isMobilePhone()
+      .isMobilePhone("any")
       .withMessage("Please provide a valid phone number"),
-    body("profileImage", "Profile image is required")
-      .optional()
-      .isURL()
-      .withMessage("Please provide a valid URL"),
   ],
-  Controller.UpdateAdmin,
+  Controller.UpdateAdmin as any,
 );
 
 export default AdminRolePermissionRouter;

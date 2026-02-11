@@ -2,6 +2,7 @@ import bcryptjs from "bcryptjs";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
+import { Types } from "mongoose";
 import { generateRandomNumbers } from "../../../../functions";
 import {
   getAdminUserDetails,
@@ -59,6 +60,7 @@ export const AdminAuthController = () => {
           lastName: "Admin",
           role: "super-admin",
           permissions: ["*"],
+          createdBy: new Types.ObjectId("000000000000000000000000"),
         });
 
         return sendSuccessFeedback(res, "Admin account created", {
@@ -200,7 +202,7 @@ export const AdminAuthController = () => {
       // Clear OTP
       await AdminModel.updateOne(
         { _id: admin._id },
-        { verificationCode: undefined },
+        { verificationCode: undefined, emailIsVerified: true },
       );
 
       // Generate JWT token
@@ -459,6 +461,7 @@ export const AdminAuthController = () => {
       admin.firstName = firstName || admin.firstName;
       admin.lastName = lastName || admin.lastName;
       admin.phoneNumber = phoneNumber || admin.phoneNumber;
+      admin.updatedBy = admin._id as Types.ObjectId;
 
       await admin.save();
 

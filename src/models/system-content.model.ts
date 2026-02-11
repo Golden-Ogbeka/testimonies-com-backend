@@ -1,13 +1,15 @@
-import { Document, Schema, model } from "mongoose";
+import { Document, Schema, Types, model } from "mongoose";
 
 export interface ISystemContent extends Document {
   type: "privacy_policy" | "terms_of_service" | "community_guidelines";
   title: string;
   content: string;
-  version: string;
+  version?: string;
   isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  createdBy: Types.ObjectId;
+  updatedBy: Types.ObjectId;
 }
 
 const systemContentSchema = new Schema<ISystemContent>(
@@ -20,8 +22,10 @@ const systemContentSchema = new Schema<ISystemContent>(
     },
     title: { type: String, required: true },
     content: { type: String, required: true },
-    version: { type: String, required: true, default: "1.0" },
+    version: { type: String, required: false, default: "1.0" },
     isActive: { type: Boolean, default: true },
+    createdBy: { type: Schema.Types.ObjectId, required: true },
+    updatedBy: { type: Schema.Types.ObjectId, required: true },
   },
   {
     timestamps: true,
@@ -29,6 +33,21 @@ const systemContentSchema = new Schema<ISystemContent>(
     toObject: { virtuals: true },
   },
 );
+
+// Virtuals
+systemContentSchema.virtual("createdByDetails", {
+  ref: "admin",
+  localField: "createdBy",
+  foreignField: "_id",
+  justOne: true,
+});
+
+systemContentSchema.virtual("updatedByDetails", {
+  ref: "admin",
+  localField: "updatedBy",
+  foreignField: "_id",
+  justOne: true,
+});
 
 const SystemContentModel = model<ISystemContent>(
   "system-content",

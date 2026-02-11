@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, param, query } from "express-validator";
+import { isAdmin, isSuperAdmin } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminSubscriptionController } from "../../controllers/admin/subscription";
 
@@ -10,6 +11,7 @@ const Controller = AdminSubscriptionController();
 AdminSubscriptionRouter.get(
   "/",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
     query("isActive", "isActive must be boolean").optional().isBoolean(),
@@ -24,6 +26,7 @@ AdminSubscriptionRouter.get(
 AdminSubscriptionRouter.post(
   "/",
   [
+    isSuperAdmin,
     body("name", "Plan name is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
@@ -59,6 +62,7 @@ AdminSubscriptionRouter.post(
 AdminSubscriptionRouter.put(
   "/:id",
   [
+    isSuperAdmin,
     param("id", "Subscription plan ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -91,129 +95,88 @@ AdminSubscriptionRouter.put(
       .optional()
       .isNumeric(),
   ],
-  Controller.UpdatePlan,
+  Controller.UpdatePlan as any,
 );
 
 // Deactivate a subscription plan
 AdminSubscriptionRouter.post(
   "/deactivate/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeactivatePlan,
+  [
+    isSuperAdmin,
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.DeactivatePlan as any,
 );
 
 // Activate a subscription plan
 AdminSubscriptionRouter.post(
   "/activate/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.ActivatePlan,
+  [
+    isSuperAdmin,
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.ActivatePlan as any,
 );
 
 // Get subscription plan by ID
 AdminSubscriptionRouter.get(
   "/details/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetSinglePlan,
+  [
+    isAdmin,
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetSinglePlan as any,
 );
 
 // Delete a subscription plan (only if no users are subscribed)
 AdminSubscriptionRouter.delete(
   "/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.DeletePlan,
+  [
+    isSuperAdmin,
+    param("id", "Subscription plan ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.DeletePlan as any,
 );
 
 // Get all users subscribed to a specific plan
 AdminSubscriptionRouter.get(
   "/subscribed-users/:id",
   [
+    isAdmin,
     param("id", "Subscription plan ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],
-  Controller.GetPlanSubscribedUsers,
+  Controller.GetPlanSubscribedUsers as any,
 );
 
 // Get subscription statistics (total revenue, active subscriptions, cancellations, etc.)
 AdminSubscriptionRouter.get(
   "/statistics/:id",
-  param("id", "Subscription plan ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetPlanStatistics,
-);
-
-// Get subscription transactions
-AdminSubscriptionRouter.get(
-  "/transactions/:id",
   [
+    isAdmin,
     param("id", "Subscription plan ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
-    query("page", "Page must be a number").optional().isNumeric(),
-    query("limit", "Limit must be a number").optional().isNumeric(),
   ],
-  Controller.GetPlanTransactions,
-);
-
-// Get single subscription transaction by ID
-AdminSubscriptionRouter.get(
-  "/transaction/:transactionId",
-  param("transactionId", "Transaction ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetPlanTransactionDetails,
-);
-
-// Refund a subscription transaction
-AdminSubscriptionRouter.post(
-  "/refund-transaction/:transactionId",
-  [
-    param("transactionId", "Transaction ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    body("reason", "Refund reason is required")
-      .optional()
-      .trim()
-      .isLength({ min: 5 })
-      .withMessage("Refund reason must be at least 5 characters long"),
-    body("amount", "Refund amount is required")
-      .optional()
-      .isNumeric()
-      .withMessage("Refund amount must be a number"),
-  ],
-  Controller.RefundTransaction,
-);
-
-// Cancel a user's subscription
-AdminSubscriptionRouter.post(
-  "/cancel-transaction/:transactionId",
-  [
-    param("transactionId", "Transaction ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    body("reason", "Cancellation reason is required")
-      .optional()
-      .trim()
-      .isLength({ min: 5 })
-      .withMessage("Cancellation reason must be at least 5 characters long"),
-  ],
-  Controller.CancelTransaction,
+  Controller.GetPlanStatistics as any,
 );
 
 // Extend a user's subscription
 AdminSubscriptionRouter.post(
   "/extend-subscription/:subscriptionId",
   [
+    isSuperAdmin,
     param("subscriptionId", "Subscription ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -221,28 +184,27 @@ AdminSubscriptionRouter.post(
       .optional()
       .isNumeric()
       .withMessage("Days must be a number"),
-    body("reason", "Extension reason is required")
-      .optional()
-      .trim()
-      .isLength({ min: 5 })
-      .withMessage("Extension reason must be at least 5 characters long"),
   ],
-  Controller.ExtendSubscription,
+  Controller.ExtendSubscription as any,
 );
 
 // Get user's subscription details by user ID
 AdminSubscriptionRouter.get(
   "/user-subscription/:userId",
-  param("userId", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetUserSubscription,
+  [
+    isAdmin,
+    param("userId", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetUserSubscription as any,
 );
 
 // Get all users with active subscriptions
 AdminSubscriptionRouter.get(
   "/active-subscriptions",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],
@@ -253,6 +215,7 @@ AdminSubscriptionRouter.get(
 AdminSubscriptionRouter.get(
   "/cancelled-subscriptions",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],
@@ -263,6 +226,7 @@ AdminSubscriptionRouter.get(
 AdminSubscriptionRouter.get(
   "/unsubscribed-users",
   [
+    isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],

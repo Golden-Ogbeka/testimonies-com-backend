@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, param, query } from "express-validator";
+import { isAdmin } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminTestimonyController } from "../../controllers/admin/testimony";
 
@@ -10,6 +11,7 @@ const Controller = AdminTestimonyController();
 AdminTestimonyRouter.get(
   "/highest-engagement",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -26,6 +28,7 @@ AdminTestimonyRouter.get(
 AdminTestimonyRouter.get(
   "/highest-likes",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -35,13 +38,14 @@ AdminTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetTestimonyWithHighestLikes,
+  Controller.GetTestimoniesWithHighestLikes,
 );
 
 // Get testimonies with highest replies
 AdminTestimonyRouter.get(
   "/highest-replies",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -51,13 +55,14 @@ AdminTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetTestimonyWithHighestReplies,
+  Controller.GetTestimoniesWithHighestReplies,
 );
 
 // Get testimonies with highest views
 AdminTestimonyRouter.get(
   "/highest-views",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -67,13 +72,14 @@ AdminTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetTestimonyWithHighestViews,
+  Controller.GetTestimoniesWithHighestViews,
 );
 
 // Get most active users (users with most testimonies created)
 AdminTestimonyRouter.get(
   "/most-active-users",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -90,6 +96,7 @@ AdminTestimonyRouter.get(
 AdminTestimonyRouter.get(
   "/most-engaged-users",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -106,6 +113,7 @@ AdminTestimonyRouter.get(
 AdminTestimonyRouter.get(
   "/most-liked-users",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -122,6 +130,7 @@ AdminTestimonyRouter.get(
 AdminTestimonyRouter.get(
   "/most-viewed-users",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -138,6 +147,7 @@ AdminTestimonyRouter.get(
 AdminTestimonyRouter.post(
   "/flag/:id",
   [
+    isAdmin,
     param("id", "Testimony ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
@@ -147,22 +157,26 @@ AdminTestimonyRouter.post(
       .isLength({ min: 5 })
       .withMessage("Flag reason must be at least 5 characters long"),
   ],
-  Controller.FlagTestimony,
+  Controller.FlagTestimony as any,
 );
 
 // Unflag testimony
 AdminTestimonyRouter.post(
   "/unflag/:id",
-  param("id", "Testimony ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.UnflagTestimony,
+  [
+    isAdmin,
+    param("id", "Testimony ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.UnflagTestimony as any,
 );
 
 // Get all flagged testimonies
 AdminTestimonyRouter.get(
   "/flagged",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -178,16 +192,20 @@ AdminTestimonyRouter.get(
 // View single testimony by id
 AdminTestimonyRouter.get(
   "/details/:id",
-  param("id", "Testimony ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetTestimonyDetails,
+  [
+    isAdmin,
+    param("id", "Testimony ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
+  Controller.GetTestimonyDetails as any,
 );
 
 // Get all testimonies
 AdminTestimonyRouter.get(
   "/",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -196,7 +214,10 @@ AdminTestimonyRouter.get(
       .optional()
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
-    query("isFlagged", "isFlagged must be boolean").optional().isBoolean(),
+    query("isFlagged", "isFlagged must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
     query("userId", "User ID is required")
       .optional()
       .custom((value) => isValidObjectId(value)),

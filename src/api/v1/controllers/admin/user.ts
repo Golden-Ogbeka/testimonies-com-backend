@@ -6,16 +6,19 @@ import {
   sendSuccessFeedback,
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
-import UserModel from "../../../../models/user.model";
 import OrganizationModel from "../../../../models/organization.model";
-import { getPaginationOptions } from "../../../../utils/pagination";
+import TestimonyLikeModel from "../../../../models/testimony-like.model";
+import TestimonyReplyModel from "../../../../models/testimony-reply.model";
+import TestimonyViewModel from "../../../../models/testimony-view.model";
+import TestimonyModel from "../../../../models/testimony.model";
+import UserModel from "../../../../models/user.model";
 import {
   IdParams,
-  UserUpdateRequestBody,
-  KYCActionRequestBody,
-  UserFilterQuery,
   PaginationQuery,
+  UserFilterQuery,
+  UserUpdateRequestBody,
 } from "../../../../types/requests";
+import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminUserController = () => {
   const GetAllUsers = async (
@@ -27,42 +30,30 @@ export const AdminUserController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const {
-        page = 1,
-        limit = 20,
-        isActive,
-        isFlagged,
-        accountType,
-        subscriptionType,
-      } = req.query as any;
+      const { isActive, isFlagged, accountType, subscriptionType } = req.query;
 
       // Build filter
       const filter: any = {};
-      if (isActive !== undefined) filter.active = isActive === "true";
-      if (isFlagged !== undefined) filter.isFlagged = isFlagged === "true";
+      if (isActive !== undefined) filter.active = isActive;
+      if (isFlagged !== undefined) filter.isFlagged = isFlagged;
       if (accountType) filter.accountType = accountType;
       if (subscriptionType) filter.subscriptionType = subscriptionType;
 
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
+      const paginationOptions = getPaginationOptions(req as any);
 
       const users = await UserModel.paginate(filter, {
         ...paginationOptions,
         sort: { createdAt: -1 },
-        select: "-password -verificationCode -resetPasswordToken",
+      });
+
+      const organizations = await OrganizationModel.paginate(filter, {
+        ...paginationOptions,
+        sort: { createdAt: -1 },
       });
 
       return sendSuccessFeedback(res, "Users retrieved", {
-        users: users.docs,
-        pagination: {
-          currentPage: users.page,
-          totalPages: users.totalPages,
-          totalDocs: users.totalDocs,
-          hasNextPage: users.hasNextPage,
-          hasPrevPage: users.hasPrevPage,
-        },
+        users,
+        organizations,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -80,9 +71,9 @@ export const AdminUserController = () => {
 
       const { id } = req.params;
 
-      const user = await UserModel.findById(id).select(
-        "-password -verificationCode -resetPasswordToken",
-      );
+      const user =
+        (await UserModel.findById(id)) ||
+        (await OrganizationModel.findById(id));
       if (!user) {
         return sendErrorFeedback(res, 404, "User not found");
       }
@@ -106,56 +97,21 @@ export const AdminUserController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const {
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        profileImage,
-        bio,
-        profileVisibility,
-        isFlagged,
-      } = req.body;
+      const { isFlagged } = req.body;
 
-      const user = await UserModel.findById(id);
+      const user =
+        (await UserModel.findById(id)) ||
+        (await OrganizationModel.findById(id));
       if (!user) {
         return sendErrorFeedback(res, 404, "User not found");
       }
 
-      // Check if email is being changed and if it's already in use
-      if (email && email !== user.email) {
-        const existingUser = await UserModel.findOne({
-          email,
-          _id: { $ne: id },
-        });
-        if (existingUser) {
-          return sendErrorFeedback(res, 409, "Email is already in use");
-        }
-        const existingOrg = await OrganizationModel.findOne({
-          businessEmail: email,
-          _id: { $ne: id },
-        });
-        if (existingOrg) {
-          return sendErrorFeedback(res, 409, "Email is already in use");
-        }
-      }
+      user.isFlagged = isFlagged || user.isFlagged;
 
-      const updateData: any = {};
-      if (firstName) updateData.firstName = firstName;
-      if (lastName) updateData.lastName = lastName;
-      if (email) updateData.email = email;
-      if (phoneNumber) updateData.phoneNumber = phoneNumber;
-      if (profileImage) updateData.profileImage = profileImage;
-      if (bio) updateData.bio = bio;
-      if (profileVisibility) updateData.profileVisibility = profileVisibility;
-      if (isFlagged !== undefined) updateData.isFlagged = isFlagged;
-
-      const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, {
-        new: true,
-      }).select("-password -verificationCode -resetPasswordToken");
+      await user.save();
 
       return sendSuccessFeedback(res, "User updated successfully", {
-        user: updatedUser,
+        user,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -173,14 +129,20 @@ export const AdminUserController = () => {
 
       const { id } = req.params;
 
-      const user = await UserModel.findById(id);
+      const user =
+        (await UserModel.findById(id)) ||
+        (await OrganizationModel.findById(id));
       if (!user) {
         return sendErrorFeedback(res, 404, "User not found");
       }
 
-      await UserModel.findByIdAndUpdate(id, { active: false });
+      user.active = false;
 
-      return sendSuccessFeedback(res, "User deactivated successfully");
+      await user.save();
+
+      return sendSuccessFeedback(res, "User deactivated successfully", {
+        user,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -201,144 +163,12 @@ export const AdminUserController = () => {
       if (!user) {
         return sendErrorFeedback(res, 404, "User not found");
       }
+      user.active = true;
+      await user.save();
 
-      await UserModel.findByIdAndUpdate(id, { active: true });
-
-      return sendSuccessFeedback(res, "User activated successfully");
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const GetAllUserKYCApplications = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { page = 1, limit = 20, status } = req.query as any;
-
-      // Build filter
-      const filter: any = {};
-      if (status) filter.kycStatus = status;
-
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
+      return sendSuccessFeedback(res, "User activated successfully", {
+        user,
       });
-
-      const users = await UserModel.paginate(filter, {
-        ...paginationOptions,
-        sort: { createdAt: -1 },
-        select:
-          "firstName lastName email username kycStatus kycDocuments kycSubmittedAt",
-      });
-
-      return sendSuccessFeedback(res, "KYC applications retrieved", {
-        applications: users.docs,
-        pagination: {
-          currentPage: users.page,
-          totalPages: users.totalPages,
-          totalDocs: users.totalDocs,
-          hasNextPage: users.hasNextPage,
-          hasPrevPage: users.hasPrevPage,
-        },
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const GetUserKYCApplication = async (req: Request, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      const user = await UserModel.findById(id).select(
-        "firstName lastName email username kycStatus kycDocuments kycSubmittedAt kycReviewedAt kycReviewedBy kycRejectionReason",
-      );
-      if (!user) {
-        return sendErrorFeedback(res, 404, "User not found");
-      }
-
-      return sendSuccessFeedback(res, "KYC application retrieved", {
-        application: user,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const ApproveUserKYCApplication = async (
-    req: Request<IdParams, never, KYCActionRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-      const { adminId } = req.body;
-
-      const user = await UserModel.findById(id);
-      if (!user) {
-        return sendErrorFeedback(res, 404, "User not found");
-      }
-
-      await UserModel.findByIdAndUpdate(id, {
-        kycStatus: "approved",
-        kycReviewedAt: new Date(),
-        kycReviewedBy: adminId,
-        kycRejectionReason: undefined,
-      });
-
-      return sendSuccessFeedback(res, "KYC application approved successfully");
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const RejectUserKYCApplication = async (
-    req: Request<IdParams, never, KYCActionRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-      const { adminId, reason } = req.body;
-
-      const user = await UserModel.findById(id);
-      if (!user) {
-        return sendErrorFeedback(res, 404, "User not found");
-      }
-
-      await UserModel.findByIdAndUpdate(id, {
-        kycStatus: "rejected",
-        kycReviewedAt: new Date(),
-        kycReviewedBy: adminId,
-        kycRejectionReason: reason || "Rejected by admin",
-      });
-
-      return sendSuccessFeedback(res, "KYC application rejected successfully");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -362,24 +192,12 @@ export const AdminUserController = () => {
       const verifiedUsers = await UserModel.countDocuments({
         emailIsVerified: true,
       });
-      const kycApprovedUsers = await UserModel.countDocuments({
-        kycStatus: "approved",
-      });
-      const kycPendingUsers = await UserModel.countDocuments({
-        kycStatus: "pending",
-      });
-      const kycRejectedUsers = await UserModel.countDocuments({
-        kycStatus: "rejected",
-      });
 
       return sendSuccessFeedback(res, "User profile statistics retrieved", {
         totalUsers,
         activeUsers,
         flaggedUsers,
         verifiedUsers,
-        kycApprovedUsers,
-        kycPendingUsers,
-        kycRejectedUsers,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -417,18 +235,7 @@ export const AdminUserController = () => {
       });
 
       return sendSuccessFeedback(res, "User profile statistics retrieved", {
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username,
-          email: user.email,
-          active: user.active,
-          isFlagged: user.isFlagged,
-          emailIsVerified: user.emailIsVerified,
-          kycStatus: user.kycStatus,
-          createdAt: user.createdAt,
-        },
+        user,
         statistics: {
           testimoniesCount,
           likesCount,
@@ -444,67 +251,13 @@ export const AdminUserController = () => {
     }
   };
 
-  const GetAllUserMessageStats = async (
-    req: Request<never, never, never, PaginationQuery>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      // For now, this is a placeholder implementation
-      // In a real implementation, you would have a Message model
-      return sendSuccessFeedback(res, "User message statistics retrieved", {
-        totalMessages: 0,
-        sentMessages: 0,
-        receivedMessages: 0,
-        unreadMessages: 0,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const GetUserMessageStats = async (req: Request<IdParams>, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      // For now, this is a placeholder implementation
-      return sendSuccessFeedback(res, "User message statistics retrieved", {
-        userId: id,
-        totalMessages: 0,
-        sentMessages: 0,
-        receivedMessages: 0,
-        unreadMessages: 0,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
   return {
     GetAllUsers,
     GetSingleUser,
     UpdateUser,
     DeactivateUser,
     ActivateUser,
-    GetAllUserKYCApplications,
-    GetUserKYCApplication,
-    ApproveUserKYCApplication,
-    RejectUserKYCApplication,
     GetAllUsersProfileStats,
     GetUserProfileStats,
-    GetAllUserMessageStats,
-    GetUserMessageStats,
   };
 };

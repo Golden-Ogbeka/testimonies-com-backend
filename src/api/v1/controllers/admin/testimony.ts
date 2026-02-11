@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import { getAdminUserDetails } from "../../../../functions/auth";
 import {
   sendCatchFeedback,
   sendErrorFeedback,
@@ -7,18 +8,14 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import TestimonyModel from "../../../../models/testimony.model";
-import TestimonyLikeModel from "../../../../models/testimony-like.model";
-import TestimonyReplyModel from "../../../../models/testimony-reply.model";
-import TestimonyViewModel from "../../../../models/testimony-view.model";
-import UserModel from "../../../../models/user.model";
-import { getPaginationOptions } from "../../../../utils/pagination";
 import {
   IdParams,
+  PaginationQuery,
+  TestimonyFilterQuery,
   TestimonyFlagRequestBody,
   TestimonyUnflagRequestBody,
-  TestimonyFilterQuery,
-  PaginationQuery,
 } from "../../../../types/requests";
+import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminTestimonyController = () => {
   const GetTestimonyDetails = async (req: Request<IdParams>, res: Response) => {
@@ -30,31 +27,17 @@ export const AdminTestimonyController = () => {
       const { id } = req.params;
 
       const testimony = await TestimonyModel.findById(id).populate([
-        { path: "userId", select: "firstName lastName username profileImage" },
+        "userDetails",
+        "broadcastOrganizationDetails",
+        "flaggedByDetails",
       ]);
 
       if (!testimony) {
         return sendErrorFeedback(res, 404, "Testimony not found");
       }
 
-      // Get engagement metrics
-      const likes = await TestimonyLikeModel.countDocuments({
-        testimonyId: id,
-      });
-      const replies = await TestimonyReplyModel.countDocuments({
-        testimonyId: id,
-      });
-      const views = await TestimonyViewModel.countDocuments({
-        testimonyId: id,
-      });
-
       return sendSuccessFeedback(res, "Testimony details retrieved", {
-        testimony: {
-          ...testimony.toObject(),
-          likes,
-          replies,
-          views,
-        },
+        testimony,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -559,6 +542,7 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
+      const adminDetails = await getAdminUserDetails(req as any);
       const { id } = req.params;
       const { reason } = req.body;
 
@@ -570,6 +554,7 @@ export const AdminTestimonyController = () => {
       await TestimonyModel.findByIdAndUpdate(id, {
         isFlagged: true,
         flagReason: reason || "Flagged by admin",
+        flaggedBy: adminDetails._id,
       });
 
       return sendSuccessFeedback(res, "Testimony flagged successfully");
@@ -600,6 +585,7 @@ export const AdminTestimonyController = () => {
       await TestimonyModel.findByIdAndUpdate(id, {
         isFlagged: false,
         flagReason: undefined,
+        flaggedBy: undefined,
       });
 
       return sendSuccessFeedback(res, "Testimony unflagged successfully");
@@ -620,36 +606,19 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { page = 1, limit = 20 } = req.query as any;
-
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
+      const paginationOptions = getPaginationOptions(req as any);
 
       const testimonies = await TestimonyModel.paginate(
         { isFlagged: true },
         {
           ...paginationOptions,
           sort: { createdAt: -1 },
-          populate: [
-            {
-              path: "userId",
-              select: "firstName lastName username profileImage",
-            },
-          ],
+          populate: ["userDetails"],
         },
       );
 
       return sendSuccessFeedback(res, "Flagged testimonies retrieved", {
-        testimonies: testimonies.docs,
-        pagination: {
-          currentPage: testimonies.page,
-          totalPages: testimonies.totalPages,
-          totalDocs: testimonies.totalDocs,
-          hasNextPage: testimonies.hasNextPage,
-          hasPrevPage: testimonies.hasPrevPage,
-        },
+        testimonies,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -668,38 +637,23 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { page = 1, limit = 20, isFlagged, userId } = req.query as any;
+      const { isFlagged, userId } = req.query as any;
 
       // Build filter
       const filter: any = {};
       if (isFlagged !== undefined) filter.isFlagged = isFlagged === "true";
       if (userId) filter.userId = userId;
 
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
+      const paginationOptions = getPaginationOptions(req as any);
 
       const testimonies = await TestimonyModel.paginate(filter, {
         ...paginationOptions,
         sort: { createdAt: -1 },
-        populate: [
-          {
-            path: "userId",
-            select: "firstName lastName username profileImage",
-          },
-        ],
+        populate: ["userDetails"],
       });
 
       return sendSuccessFeedback(res, "Testimonies retrieved", {
-        testimonies: testimonies.docs,
-        pagination: {
-          currentPage: testimonies.page,
-          totalPages: testimonies.totalPages,
-          totalDocs: testimonies.totalDocs,
-          hasNextPage: testimonies.hasNextPage,
-          hasPrevPage: testimonies.hasPrevPage,
-        },
+        testimonies,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -711,9 +665,9 @@ export const AdminTestimonyController = () => {
   return {
     GetTestimonyDetails,
     GetTestimonyWithHighestEngagement,
-    GetTestimonyWithHighestLikes,
-    GetTestimonyWithHighestReplies,
-    GetTestimonyWithHighestViews,
+    GetTestimoniesWithHighestLikes,
+    GetTestimoniesWithHighestReplies,
+    GetTestimoniesWithHighestViews,
     GetMostActiveUsers,
     GetMostEngagedUsers,
     GetMostLikedUsers,

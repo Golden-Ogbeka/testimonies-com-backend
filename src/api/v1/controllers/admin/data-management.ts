@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import { Types } from "mongoose";
+import { getAdminUserDetails } from "../../../../functions/auth";
 import {
   sendCatchFeedback,
   sendErrorFeedback,
@@ -8,6 +10,7 @@ import {
 } from "../../../../functions/feedback";
 import FAQModel from "../../../../models/faq.model";
 import SystemContentModel from "../../../../models/system-content.model";
+import TeamPermissionModel from "../../../../models/team-permission.model";
 import {
   FAQCreateRequestBody,
   FAQUpdateRequestBody,
@@ -28,7 +31,8 @@ export const AdminDataManagementController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { question, answer, category, order } = req.body;
+      const { question, answer, order } = req.body;
+      const adminDetails = await getAdminUserDetails(req as any);
 
       // Check if FAQ with same question already exists
       const existingFAQ = await FAQModel.findOne({ question });
@@ -43,8 +47,8 @@ export const AdminDataManagementController = () => {
       const faq = await FAQModel.create({
         question,
         answer,
-        category,
         order: order || 0,
+        createdBy: adminDetails._id,
       });
 
       return sendSuccessFeedback(res, "FAQ created successfully", { faq });
@@ -66,7 +70,8 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const { question, answer, category, order, isActive } = req.body;
+      const { question, answer, order, isActive } = req.body;
+      const adminDetails = await getAdminUserDetails(req as any);
 
       const faq = await FAQModel.findById(id);
       if (!faq) {
@@ -88,19 +93,16 @@ export const AdminDataManagementController = () => {
         }
       }
 
-      const updateData: any = {};
-      if (question) updateData.question = question;
-      if (answer) updateData.answer = answer;
-      if (category) updateData.category = category;
-      if (order !== undefined) updateData.order = order;
-      if (isActive !== undefined) updateData.isActive = isActive;
+      faq.question = question || faq.question;
+      faq.answer = answer || faq.answer;
+      faq.order = order !== undefined ? order : faq.order;
+      faq.isActive = isActive !== undefined ? isActive : faq.isActive;
+      faq.updatedBy = adminDetails._id as Types.ObjectId;
 
-      const updatedFAQ = await FAQModel.findByIdAndUpdate(id, updateData, {
-        new: true,
-      });
+      await faq.save();
 
       return sendSuccessFeedback(res, "FAQ updated successfully", {
-        faq: updatedFAQ,
+        faq,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -118,12 +120,10 @@ export const AdminDataManagementController = () => {
 
       const { id } = req.params;
 
-      const faq = await FAQModel.findById(id);
+      const faq = await FAQModel.findByIdAndDelete(id);
       if (!faq) {
         return sendErrorFeedback(res, 404, "FAQ not found");
       }
-
-      await FAQModel.findByIdAndDelete(id);
 
       return sendSuccessFeedback(res, "FAQ deleted successfully");
     } catch (error) {
@@ -143,17 +143,13 @@ export const AdminDataManagementController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { page = 1, limit = 20, category, isActive } = req.query as any;
+      const { isActive } = req.query as any;
 
       // Build filter
       const filter: any = {};
-      if (category) filter.category = category;
       if (isActive !== undefined) filter.isActive = isActive === "true";
 
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
+      const paginationOptions = getPaginationOptions(req as any);
 
       const faqs = await FAQModel.paginate(filter, {
         ...paginationOptions,
@@ -161,14 +157,7 @@ export const AdminDataManagementController = () => {
       });
 
       return sendSuccessFeedback(res, "FAQs retrieved", {
-        faqs: faqs.docs,
-        pagination: {
-          currentPage: faqs.page,
-          totalPages: faqs.totalPages,
-          totalDocs: faqs.totalDocs,
-          hasNextPage: faqs.hasNextPage,
-          hasPrevPage: faqs.hasPrevPage,
-        },
+        faqs,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -300,14 +289,16 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { title, content, version } = req.body;
+      const adminDetails = await getAdminUserDetails(req as any);
 
       const updatedContent = await SystemContentModel.findOneAndUpdate(
         { type: "privacy_policy" },
         {
           title,
           content,
-          version: version || "1.0",
-          updatedAt: new Date(),
+          createdBy: adminDetails._id,
+          updatedBy: adminDetails._id,
+          ...(version && { version }),
         },
         { upsert: true, new: true },
       );
@@ -330,14 +321,16 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { title, content, version } = req.body;
+      const adminDetails = await getAdminUserDetails(req as any);
 
       const updatedContent = await SystemContentModel.findOneAndUpdate(
         { type: "terms_of_service" },
         {
           title,
           content,
-          version: version || "1.0",
-          updatedAt: new Date(),
+          createdBy: adminDetails._id,
+          updatedBy: adminDetails._id,
+          ...(version && { version }),
         },
         { upsert: true, new: true },
       );
@@ -360,14 +353,16 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { title, content, version } = req.body;
+      const adminDetails = await getAdminUserDetails(req as any);
 
       const updatedContent = await SystemContentModel.findOneAndUpdate(
         { type: "community_guidelines" },
         {
           title,
           content,
-          version: version || "1.0",
-          updatedAt: new Date(),
+          createdBy: adminDetails._id,
+          updatedBy: adminDetails._id,
+          ...(version && { version }),
         },
         { upsert: true, new: true },
       );
@@ -385,23 +380,31 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const CreateTeamPermissions = async (req: Request, res: Response) => {
+  const CreateTeamPermission = async (req: Request, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { teamName, permissions, description } = req.body;
+      const adminDetails = await getAdminUserDetails(req as any);
+      const { permission, description } = req.body;
 
-      // For now, this is a placeholder implementation
-      // In a real implementation, you would have a TeamPermission model
+      const existingPermission = await TeamPermissionModel.findOne({
+        permission,
+      });
+
+      if (existingPermission) {
+        return sendErrorFeedback(res, 400, "Permission already exists");
+      }
+
+      const teamPermission = await TeamPermissionModel.create({
+        name: permission,
+        description,
+        createdBy: adminDetails._id,
+      });
+
       return sendSuccessFeedback(res, "Team permissions created successfully", {
-        teamPermissions: {
-          teamName,
-          permissions,
-          description,
-          createdAt: new Date(),
-        },
+        teamPermission,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -411,7 +414,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const UpdateTeamPermissions = async (
+  const UpdateTeamPermission = async (
     req: Request<IdParams, never, TeamPermissionUpdateRequestBody>,
     res: Response,
   ) => {
@@ -421,17 +424,23 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const { teamName, permissions, description } = req.body;
+      const { permission, description } = req.body;
 
-      // For now, this is a placeholder implementation
+      const adminDetails = await getAdminUserDetails(req as any);
+
+      const teamPermission = await TeamPermissionModel.findById(id);
+      if (!teamPermission) {
+        return sendErrorFeedback(res, 404, "Team permission not found");
+      }
+
+      teamPermission.name = permission || teamPermission.name;
+      teamPermission.description = description || teamPermission.description;
+      teamPermission.updatedBy = adminDetails._id as Types.ObjectId;
+
+      await teamPermission.save();
+
       return sendSuccessFeedback(res, "Team permissions updated successfully", {
-        teamPermissions: {
-          id,
-          teamName,
-          permissions,
-          description,
-          updatedAt: new Date(),
-        },
+        teamPermission,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -441,7 +450,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const DeleteTeamPermissions = async (req: Request, res: Response) => {
+  const DeleteTeamPermission = async (req: Request, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -449,7 +458,11 @@ export const AdminDataManagementController = () => {
 
       const { id } = req.params;
 
-      // For now, this is a placeholder implementation
+      const teamPermission = await TeamPermissionModel.findByIdAndDelete(id);
+      if (!teamPermission) {
+        return sendErrorFeedback(res, 404, "Team permission not found");
+      }
+
       return sendSuccessFeedback(res, "Team permissions deleted successfully");
     } catch (error) {
       return sendCatchFeedback(
@@ -465,23 +478,18 @@ export const AdminDataManagementController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { page = 1, limit = 20 } = req.query as any;
+      const paginationOptions = getPaginationOptions(req as any);
 
-      // For now, this is a placeholder implementation
-      const paginationOptions = getPaginationOptions({
-        page: page as string,
-        limit: limit as string,
-      });
+      const teamPermissions = await TeamPermissionModel.paginate(
+        {},
+        {
+          ...paginationOptions,
+          sort: { order: 1, createdAt: -1 },
+        },
+      );
 
       return sendSuccessFeedback(res, "Team permissions retrieved", {
-        teamPermissions: [],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalDocs: 0,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
+        teamPermissions,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -499,14 +507,13 @@ export const AdminDataManagementController = () => {
 
       const { id } = req.params;
 
-      // For now, this is a placeholder implementation
+      const teamPermission = await TeamPermissionModel.findById(id);
+      if (!teamPermission) {
+        return sendErrorFeedback(res, 404, "Team permission not found");
+      }
+
       return sendSuccessFeedback(res, "Team permission retrieved", {
-        teamPermission: {
-          id,
-          teamName: "Sample Team",
-          permissions: ["read", "write"],
-          description: "Sample team permissions",
-        },
+        teamPermission,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -528,9 +535,9 @@ export const AdminDataManagementController = () => {
     UpdatePrivacyPolicy,
     UpdateTermsOfService,
     UpdateCommunityGuidelines,
-    UpdateTeamPermissions,
-    CreateTeamPermissions,
-    DeleteTeamPermissions,
+    UpdateTeamPermission,
+    CreateTeamPermission,
+    DeleteTeamPermission,
     GetAllTeamPermissions,
     GetSingleTeamPermission,
   };

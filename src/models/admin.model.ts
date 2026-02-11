@@ -1,4 +1,4 @@
-import { Document, PaginateModel, Schema, model } from "mongoose";
+import { Document, PaginateModel, Schema, Types, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
 export interface IAdmin extends Document {
@@ -17,6 +17,8 @@ export interface IAdmin extends Document {
   profileImage?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  createdBy: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
 }
 
 const adminSchema = new Schema<IAdmin>(
@@ -38,6 +40,9 @@ const adminSchema = new Schema<IAdmin>(
     lastSuccessfulLogin: { type: Date },
     verificationCode: { type: String },
     profileImage: { type: String },
+
+    createdBy: { type: Schema.Types.ObjectId, required: true },
+    updatedBy: { type: Schema.Types.ObjectId },
   },
   {
     timestamps: true,
@@ -54,6 +59,20 @@ adminSchema.methods.toJSON = function () {
   return obj;
 };
 
+// Virtuals
+adminSchema.virtual("createdByDetails", {
+  ref: "admin",
+  localField: "createdBy",
+  foreignField: "_id",
+  justOne: true,
+});
+
+adminSchema.virtual("updatedByDetails", {
+  ref: "admin",
+  localField: "updatedBy",
+  foreignField: "_id",
+  justOne: true,
+});
 adminSchema.plugin(mongoosePaginate);
 
 const AdminModel = model<IAdmin, PaginateModel<IAdmin>>("admin", adminSchema);

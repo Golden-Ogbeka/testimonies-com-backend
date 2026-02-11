@@ -56,8 +56,7 @@ export interface AdminCreateRequestBody {
 }
 
 export interface AdminUpdateRequestBody {
-  role?: "super-admin" | "admin";
-  permissions?: string[];
+  role: "super-admin" | "admin";
 }
 
 export interface AdminProfileUpdateRequestBody {
@@ -70,16 +69,11 @@ export interface AdminProfileUpdateRequestBody {
 export interface PermissionCreateRequestBody {
   name: string;
   description: string;
-  resource: string;
-  action: string;
 }
 
 export interface PermissionUpdateRequestBody {
   name?: string;
   description?: string;
-  resource?: string;
-  action?: string;
-  isActive?: boolean;
 }
 
 // Role Request Types
@@ -137,7 +131,6 @@ export interface RefundTransactionRequestBody {
 
 export interface ExtendSubscriptionRequestBody {
   days: number;
-  reason?: string;
 }
 
 // Promotion Request Types
@@ -157,6 +150,7 @@ export interface PromotionUpdateRequestBody {
   targetAudience?: "all" | "premium" | "basic" | "organizations";
   startDate?: string;
   endDate?: string;
+  isActive?: boolean;
 }
 
 export interface PromotionFlagRequestBody {
@@ -187,15 +181,6 @@ export interface TestimonyUnflagRequestBody {
 
 // User Request Types
 export interface UserUpdateRequestBody {
-  firstName?: string;
-  lastName?: string;
-  username?: string;
-  email?: string;
-  phoneNumber?: string;
-  profileImage?: string;
-  bio?: string;
-  profileVisibility?: string;
-  active?: boolean;
   isFlagged?: boolean;
 }
 
@@ -208,14 +193,13 @@ export interface UserKYCActionRequestBody {
 export interface FAQCreateRequestBody {
   question: string;
   answer: string;
-  category: string;
   order?: number;
 }
 
 export interface FAQUpdateRequestBody {
   question?: string;
   answer?: string;
-  category?: string;
+  isActive?: boolean;
   order?: number;
 }
 
@@ -242,19 +226,14 @@ export interface SystemContentUpdateRequestBody {
 
 // Team Permission Request Types
 export interface TeamPermissionUpdateRequestBody {
-  permissions: string[];
+  permission?: string;
+  description?: string;
 }
 
 // Query parameter types
 export interface PaginationQuery {
   page?: number;
   limit?: number;
-}
-
-export interface PermissionFilterQuery extends PaginationQuery {
-  resource?: string;
-  action?: string;
-  isActive?: boolean;
 }
 
 export interface RoleFilterQuery extends PaginationQuery {
@@ -282,8 +261,8 @@ export interface TestimonyFilterQuery extends PaginationQuery {
 }
 
 export interface UserFilterQuery extends PaginationQuery {
-  active?: boolean;
-  flagged?: boolean;
+  isActive?: boolean;
+  isFlagged?: boolean;
   accountType?: string;
   subscriptionType?: string;
 }
