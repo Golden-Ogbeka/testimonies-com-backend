@@ -1,10 +1,17 @@
 import { Request, Response } from "express";
-import { sendCatchFeedback, sendErrorFeedback } from "../../../../functions/feedback";
+import {
+  sendCatchFeedback,
+  sendErrorFeedback,
+} from "../../../../functions/feedback";
 
 export const UserMessagingController = () => {
   const GetMessageHistory = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "GetMessageHistory endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "GetMessageHistory endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -15,7 +22,11 @@ export const UserMessagingController = () => {
 
   const GetMessageableUsers = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "GetMessageableUsers endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "GetMessageableUsers endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -26,7 +37,11 @@ export const UserMessagingController = () => {
 
   const SendMessage = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "SendMessage endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "SendMessage endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -37,7 +52,11 @@ export const UserMessagingController = () => {
 
   const GetUserForMessaging = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "GetUserForMessaging endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "GetUserForMessaging endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -48,7 +67,11 @@ export const UserMessagingController = () => {
 
   const GetConversationHistory = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "GetConversationHistory endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "GetConversationHistory endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -59,7 +82,11 @@ export const UserMessagingController = () => {
 
   const SearchMessages = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "SearchMessages endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "SearchMessages endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -70,7 +97,11 @@ export const UserMessagingController = () => {
 
   const MarkConversationAsRead = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "MarkConversationAsRead endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "MarkConversationAsRead endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -81,7 +112,11 @@ export const UserMessagingController = () => {
 
   const MarkAllConversationsAsRead = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "MarkAllConversationsAsRead endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "MarkAllConversationsAsRead endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -92,7 +127,11 @@ export const UserMessagingController = () => {
 
   const MarkMessageAsRead = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "MarkMessageAsRead endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "MarkMessageAsRead endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -103,7 +142,11 @@ export const UserMessagingController = () => {
 
   const DeleteMessage = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "DeleteMessage endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "DeleteMessage endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -114,7 +157,11 @@ export const UserMessagingController = () => {
 
   const UpdateMessage = async (req: Request, res: Response) => {
     try {
-      return sendErrorFeedback(res, 501, "UpdateMessage endpoint is not yet implemented");
+      return sendErrorFeedback(
+        res,
+        501,
+        "UpdateMessage endpoint is not yet implemented",
+      );
     } catch (error) {
       return sendCatchFeedback(
         res,
