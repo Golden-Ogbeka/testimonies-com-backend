@@ -1,4 +1,4 @@
-import { WEBSITE_URL, ADMIN_DASHBOARD_URL, BASE_URL } from '../functions/env';
+import { ADMIN_DASHBOARD_URL, BASE_URL, WEBSITE_URL } from "../functions/env";
 
 /**
  * Normalizes a URL to its origin (protocol + host). Used for allowlist comparison.
@@ -8,7 +8,9 @@ import { WEBSITE_URL, ADMIN_DASHBOARD_URL, BASE_URL } from '../functions/env';
 function toOrigin(url: string): string | null {
   try {
     const u = new URL(url.trim());
-    return ['http:', 'https:'].includes(u.protocol) ? `${u.protocol}//${u.host}` : null;
+    return ["http:", "https:"].includes(u.protocol)
+      ? `${u.protocol}//${u.host}`
+      : null;
   } catch {
     return null;
   }
@@ -26,7 +28,7 @@ const ALLOWED_ORIGINS = [WEBSITE_URL, ADMIN_DASHBOARD_URL, BASE_URL]
  * @returns true if the URL's origin is in the allowlist, false otherwise.
  */
 export function isAllowedCallbackUrl(url: string | undefined): boolean {
-  if (!url || typeof url !== 'string') return false;
+  if (!url || typeof url !== "string") return false;
   const origin = toOrigin(url.trim());
   return origin !== null && ALLOWED_ORIGINS.includes(origin);
 }
@@ -40,7 +42,7 @@ export function isAllowedCallbackUrl(url: string | undefined): boolean {
  */
 export function getSafeCallbackUrl(
   provided: string | undefined,
-  defaultUrl: string | undefined
+  defaultUrl: string | undefined,
 ): string | undefined {
   if (isAllowedCallbackUrl(provided)) return provided!.trim();
   return defaultUrl;

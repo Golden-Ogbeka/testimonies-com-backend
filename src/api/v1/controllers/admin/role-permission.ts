@@ -3,21 +3,21 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
-    sendCatchFeedback,
-    sendErrorFeedback,
-    sendSuccessFeedback,
-    sendValidationErrorFeedback,
+  sendCatchFeedback,
+  sendErrorFeedback,
+  sendSuccessFeedback,
+  sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import AdminModel from "../../../../models/admin.model";
 import PermissionModel from "../../../../models/permission.model";
 import {
-    AdminCreateRequestBody,
-    AdminFilterQuery,
-    AdminProfileUpdateRequestBody,
-    AdminUpdateRequestBody,
-    IdParams,
-    PermissionCreateRequestBody,
-    PermissionUpdateRequestBody,
+  AdminCreateRequestBody,
+  AdminFilterQuery,
+  AdminProfileUpdateRequestBody,
+  AdminUpdateRequestBody,
+  IdParams,
+  PermissionCreateRequestBody,
+  PermissionUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 

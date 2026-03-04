@@ -42,10 +42,11 @@ export const FIELD_LENGTHS = {
  * Password strength: at least 6 characters with one uppercase, one number, and one special character.
  * Special characters: ! @ # $ % ^ & * ( ) - _ = + [ ] { } | ; : ' , . < > ? /
  */
-export const PASSWORD_PATTERN = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+[\]{}|;:',.<>?/]).+$/;
+export const PASSWORD_PATTERN =
+  /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+[\]{}|;:',.<>?/]).+$/;
 
 export const PASSWORD_STRENGTH_MESSAGE =
-  'Password must be at least 6 characters and include one uppercase letter, one number, and one special character (!@#$%^&*()-_=+[]{}|;\':",.<>?/).';
+  "Password must be at least 6 characters and include one uppercase letter, one number, and one special character (!@#$%^&*()-_=+[]{}|;':\",.<>?/).";
 
 /** User-facing length error messages (sentence case). */
 export const LENGTH_MESSAGES: Record<keyof typeof FIELD_LENGTHS, string> = {

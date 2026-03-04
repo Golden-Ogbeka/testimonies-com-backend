@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
-import { NextFunction, Request, Response } from 'express';
+import { randomUUID } from "crypto";
+import { NextFunction, Request, Response } from "express";
 
 declare global {
   namespace Express {
@@ -9,9 +9,13 @@ declare global {
   }
 }
 
-export function requestIdMiddleware(req: Request, res: Response, next: NextFunction) {
-  const id = (req.headers['x-request-id'] as string) || randomUUID();
+export function requestIdMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const id = (req.headers["x-request-id"] as string) || randomUUID();
   req.requestId = id;
-  res.setHeader('x-request-id', id);
+  res.setHeader("x-request-id", id);
   next();
 }

@@ -50,7 +50,6 @@ const promotionSchema = new Schema<IPromotion>(
 
 promotionSchema.index({ title: 1, description: 1 });
 
-
 // Virtual for admin who created the promotion
 promotionSchema.virtual("createdByDetails", {
   ref: "admin",
@@ -77,7 +76,6 @@ promotionSchema.virtual("flaggedByDetails", {
   select: "firstName lastName email",
   justOne: true,
 });
-
 
 promotionSchema.plugin(mongoosePaginate);
 

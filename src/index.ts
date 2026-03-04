@@ -136,10 +136,7 @@ app.get("/health", (req, res) => {
             ? "disconnecting"
             : "disconnected";
 
-    const status =
-      mongoState === 1
-        ? 200
-        : 503;
+    const status = mongoState === 1 ? 200 : 503;
 
     res.status(status).json({
       status: mongoState === 1 ? "ok" : "degraded",

@@ -1,5 +1,5 @@
-import { rateLimit } from 'express-rate-limit';
-import { ErrorCodes } from './error-codes';
+import { rateLimit } from "express-rate-limit";
+import { ErrorCodes } from "./error-codes";
 
 /**
  * Fixed rate limit for auth endpoints (login, signup, OTP, password reset) to reduce brute-force.
@@ -15,7 +15,7 @@ export const authRateLimiter = rateLimit({
   legacyHeaders: false,
   handler: (req, res) => {
     res.status(429).json({
-      message: 'Too many auth attempts. Try again in 15 minutes.',
+      message: "Too many auth attempts. Try again in 15 minutes.",
       code: ErrorCodes.RATE_LIMIT_EXCEEDED,
     });
   },

@@ -2,23 +2,23 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
-    sendCatchFeedback,
-    sendErrorFeedback,
-    sendSuccessFeedback,
-    sendValidationErrorFeedback,
+  sendCatchFeedback,
+  sendErrorFeedback,
+  sendSuccessFeedback,
+  sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import OrganizationModel from "../../../../models/organization.model";
 import SubscriptionPlanModel from "../../../../models/subscription-plan.model";
 import SubscriptionModel from "../../../../models/subscription.model";
 import UserModel from "../../../../models/user.model";
 import {
-    ExtendSubscriptionRequestBody,
-    IdParams,
-    PaginationQuery,
-    SubscriptionIdParams,
-    SubscriptionPlanCreateRequestBody,
-    SubscriptionPlanUpdateRequestBody,
-    UserIdParams,
+  ExtendSubscriptionRequestBody,
+  IdParams,
+  PaginationQuery,
+  SubscriptionIdParams,
+  SubscriptionPlanCreateRequestBody,
+  SubscriptionPlanUpdateRequestBody,
+  UserIdParams,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 

@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import {
-    sendCatchFeedback,
-    sendErrorFeedback,
-    sendSuccessFeedback,
-    sendValidationErrorFeedback,
+  sendCatchFeedback,
+  sendErrorFeedback,
+  sendSuccessFeedback,
+  sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import OrganizationModel from "../../../../models/organization.model";
 import TestimonyLikeModel from "../../../../models/testimony-like.model";
@@ -13,10 +13,10 @@ import TestimonyViewModel from "../../../../models/testimony-view.model";
 import TestimonyModel from "../../../../models/testimony.model";
 import UserModel from "../../../../models/user.model";
 import {
-    IdParams,
-    PaginationQuery,
-    UserFilterQuery,
-    UserUpdateRequestBody,
+  IdParams,
+  PaginationQuery,
+  UserFilterQuery,
+  UserUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 

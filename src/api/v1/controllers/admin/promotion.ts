@@ -2,18 +2,18 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
-    sendCatchFeedback,
-    sendErrorFeedback,
-    sendSuccessFeedback,
-    sendValidationErrorFeedback,
+  sendCatchFeedback,
+  sendErrorFeedback,
+  sendSuccessFeedback,
+  sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import PromotionModel from "../../../../models/promotion.model";
 import {
-    IdParams,
-    PaginationQuery,
-    PromotionCreateRequestBody,
-    PromotionFlagRequestBody,
-    PromotionUpdateRequestBody,
+  IdParams,
+  PaginationQuery,
+  PromotionCreateRequestBody,
+  PromotionFlagRequestBody,
+  PromotionUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
