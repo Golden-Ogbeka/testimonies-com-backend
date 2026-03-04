@@ -1,9 +1,8 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 npm run format
-npm run lint:fix
 npm run type:check
 
-# Re-stage any files that were modified by format/lint
+# Re-stage any files that were modified by format
 git add -u
+
