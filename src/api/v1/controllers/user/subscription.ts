@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { sendCatchFeedback } from "../../../../functions/feedback";
+import { sendCatchFeedback, sendErrorFeedback } from "../../../../functions/feedback";
 
 export const UserSubscriptionController = () => {
   const GetSubscriptionPlans = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "GetSubscriptionPlans endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -15,7 +15,7 @@ export const UserSubscriptionController = () => {
 
   const GetSubscriptionPlan = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "GetSubscriptionPlan endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -26,7 +26,7 @@ export const UserSubscriptionController = () => {
 
   const Subscribe = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "Subscribe endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -37,7 +37,7 @@ export const UserSubscriptionController = () => {
 
   const PayForSubscription = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "PayForSubscription endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -48,7 +48,7 @@ export const UserSubscriptionController = () => {
 
   const VerifyPayment = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "VerifyPayment endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -59,7 +59,7 @@ export const UserSubscriptionController = () => {
 
   const CancelSubscription = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "CancelSubscription endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -70,7 +70,7 @@ export const UserSubscriptionController = () => {
 
   const GetSubscriptionStatus = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "GetSubscriptionStatus endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -81,7 +81,7 @@ export const UserSubscriptionController = () => {
 
   const GetSubscriptionHistory = async (req: Request, res: Response) => {
     try {
-      // check for validation errors
+      return sendErrorFeedback(res, 501, "GetSubscriptionHistory endpoint is not yet implemented");
     } catch (error) {
       return sendCatchFeedback(
         res,
