@@ -7,12 +7,12 @@ import OrganizationModel, { IOrganization } from "../models/organization.model";
 import UserModel, { IUser } from "../models/user.model";
 
 export const getUserDetails = async (req: Request) => {
-  const authorization = req.headers.authorization;
+  const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
   const tokenData: any = jwt.verify(
-    authorization,
+    authorization as string,
     process.env.JWT_SECRET || "",
   );
 
@@ -32,12 +32,12 @@ export const getUserDetails = async (req: Request) => {
 };
 
 export const getTokenData = (req: Request) => {
-  const authorization = req.headers.authorization;
+  const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
   const tokenData: any = jwt.verify(
-    authorization,
+    authorization as string,
     process.env.JWT_SECRET || "",
   );
 
@@ -45,12 +45,12 @@ export const getTokenData = (req: Request) => {
 };
 
 export const getAdminUserDetails = async (req: Request) => {
-  const authorization = req.headers.authorization;
+  const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
   const tokenData: any = jwt.verify(
-    authorization,
+    authorization as string,
     process.env.JWT_SECRET || "",
   );
 

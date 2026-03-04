@@ -3,21 +3,21 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
-  sendCatchFeedback,
-  sendErrorFeedback,
-  sendSuccessFeedback,
-  sendValidationErrorFeedback,
+    sendCatchFeedback,
+    sendErrorFeedback,
+    sendSuccessFeedback,
+    sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import AdminModel from "../../../../models/admin.model";
 import PermissionModel from "../../../../models/permission.model";
 import {
-  AdminCreateRequestBody,
-  AdminFilterQuery,
-  AdminProfileUpdateRequestBody,
-  AdminUpdateRequestBody,
-  IdParams,
-  PermissionCreateRequestBody,
-  PermissionUpdateRequestBody,
+    AdminCreateRequestBody,
+    AdminFilterQuery,
+    AdminProfileUpdateRequestBody,
+    AdminUpdateRequestBody,
+    IdParams,
+    PermissionCreateRequestBody,
+    PermissionUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
@@ -236,8 +236,11 @@ export const AdminRolePermissionController = () => {
         permissions: permissions || [],
       });
 
+      // Remove password from response
+      const { password: _, ...adminResponse } = admin.toObject();
+
       return sendSuccessFeedback(res, "Admin created successfully", {
-        admin,
+        admin: adminResponse,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -259,6 +262,29 @@ export const AdminRolePermissionController = () => {
       const adminDetails = await getAdminUserDetails(req as any);
       const { id } = req.params;
       const { role } = req.body;
+
+      // Prevent self-modification
+      if (id === String(adminDetails._id)) {
+        return sendErrorFeedback(res, 400, "You cannot modify your own role");
+      }
+
+      // Get target admin
+      const targetAdmin = await AdminModel.findById(id);
+      if (!targetAdmin) {
+        return sendErrorFeedback(res, 404, "Admin not found");
+      }
+
+      // Prevent non-super-admin from modifying super-admin
+      if (
+        targetAdmin.role === "super-admin" &&
+        adminDetails.role !== "super-admin"
+      ) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You cannot modify a super-admin account",
+        );
+      }
 
       const updateData: any = {};
       updateData.role = role;
@@ -325,6 +351,33 @@ export const AdminRolePermissionController = () => {
       const { id } = req.params;
       const adminDetails = await getAdminUserDetails(req as any);
 
+      // Prevent self-deactivation
+      if (id === String(adminDetails._id)) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "You cannot deactivate your own account",
+        );
+      }
+
+      // Get target admin
+      const targetAdmin = await AdminModel.findById(id);
+      if (!targetAdmin) {
+        return sendErrorFeedback(res, 404, "Admin not found");
+      }
+
+      // Prevent non-super-admin from deactivating super-admin
+      if (
+        targetAdmin.role === "super-admin" &&
+        adminDetails.role !== "super-admin"
+      ) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You cannot deactivate a super-admin account",
+        );
+      }
+
       const updatedAdmin = await AdminModel.findByIdAndUpdate(
         id,
         {
@@ -333,9 +386,7 @@ export const AdminRolePermissionController = () => {
         },
         { new: true },
       );
-      if (!updatedAdmin) {
-        return sendErrorFeedback(res, 404, "Admin not found");
-      }
+
       return sendSuccessFeedback(res, "Admin deactivated successfully", {
         admin: updatedAdmin,
       });

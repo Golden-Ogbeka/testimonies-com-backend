@@ -43,6 +43,6 @@ teamPermissionSchema.virtual("updatedByDetails", {
 const TeamPermissionModel = model<
   ITeamPermission,
   PaginateModel<ITeamPermission>
->("permission", teamPermissionSchema);
+>("team-permission", teamPermissionSchema);
 
 export default TeamPermissionModel;

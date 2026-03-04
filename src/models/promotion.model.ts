@@ -48,8 +48,11 @@ const promotionSchema = new Schema<IPromotion>(
   },
 );
 
+promotionSchema.index({ title: 1, description: 1 });
+
+
 // Virtual for admin who created the promotion
-promotionSchema.virtual("createdBy", {
+promotionSchema.virtual("createdByDetails", {
   ref: "admin",
   localField: "createdBy",
   foreignField: "_id",
@@ -58,7 +61,7 @@ promotionSchema.virtual("createdBy", {
 });
 
 // Virtual for admin who updated the promotion
-promotionSchema.virtual("updatedBy", {
+promotionSchema.virtual("updatedByDetails", {
   ref: "admin",
   localField: "updatedBy",
   foreignField: "_id",
@@ -67,7 +70,7 @@ promotionSchema.virtual("updatedBy", {
 });
 
 // Virtual for admin who flagged the promotion
-promotionSchema.virtual("flaggedBy", {
+promotionSchema.virtual("flaggedByDetails", {
   ref: "admin",
   localField: "flaggedBy",
   foreignField: "_id",
@@ -75,7 +78,6 @@ promotionSchema.virtual("flaggedBy", {
   justOne: true,
 });
 
-promotionSchema.index({ title: 1, description: 1 });
 
 promotionSchema.plugin(mongoosePaginate);
 

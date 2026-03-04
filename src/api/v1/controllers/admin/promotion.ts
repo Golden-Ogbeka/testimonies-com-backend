@@ -2,18 +2,18 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
-  sendCatchFeedback,
-  sendErrorFeedback,
-  sendSuccessFeedback,
-  sendValidationErrorFeedback,
+    sendCatchFeedback,
+    sendErrorFeedback,
+    sendSuccessFeedback,
+    sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import PromotionModel from "../../../../models/promotion.model";
 import {
-  IdParams,
-  PaginationQuery,
-  PromotionCreateRequestBody,
-  PromotionFlagRequestBody,
-  PromotionUpdateRequestBody,
+    IdParams,
+    PaginationQuery,
+    PromotionCreateRequestBody,
+    PromotionFlagRequestBody,
+    PromotionUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
@@ -97,6 +97,28 @@ export const AdminPromotionController = () => {
       const { title, description, type, targetAudience, startDate, endDate } =
         req.body;
       const adminDetails = await getAdminUserDetails(req as any);
+
+      // Validate dates
+      if (endDate && new Date(startDate) >= new Date(endDate)) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "Start date must be before end date",
+        );
+      }
+
+      // Check for duplicate active promotion with same title
+      const existingPromotion = await PromotionModel.findOne({
+        title,
+        isActive: true,
+      });
+      if (existingPromotion) {
+        return sendErrorFeedback(
+          res,
+          409,
+          "Active promotion with this title already exists",
+        );
+      }
 
       const createdBy = adminDetails?._id;
 

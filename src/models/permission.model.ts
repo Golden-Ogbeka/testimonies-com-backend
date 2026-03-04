@@ -1,4 +1,4 @@
-import { Document, PaginateModel, Schema, Types, model } from "mongoose";
+import { Document, PaginateModel, Schema, Types, model, models } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
 export interface IPermission extends Document {
@@ -40,9 +40,8 @@ permissionSchema.virtual("updatedByDetails", {
   justOne: true,
 });
 
-const PermissionModel = model<IPermission, PaginateModel<IPermission>>(
-  "permission",
-  permissionSchema,
-);
+const PermissionModel =
+  (models.permission as PaginateModel<IPermission>) ||
+  model<IPermission, PaginateModel<IPermission>>("permission", permissionSchema);
 
 export default PermissionModel;

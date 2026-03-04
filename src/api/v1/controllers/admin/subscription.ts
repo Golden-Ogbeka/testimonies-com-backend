@@ -2,23 +2,23 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
-  sendCatchFeedback,
-  sendErrorFeedback,
-  sendSuccessFeedback,
-  sendValidationErrorFeedback,
+    sendCatchFeedback,
+    sendErrorFeedback,
+    sendSuccessFeedback,
+    sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import OrganizationModel from "../../../../models/organization.model";
 import SubscriptionPlanModel from "../../../../models/subscription-plan.model";
 import SubscriptionModel from "../../../../models/subscription.model";
 import UserModel from "../../../../models/user.model";
 import {
-  ExtendSubscriptionRequestBody,
-  IdParams,
-  PaginationQuery,
-  SubscriptionIdParams,
-  SubscriptionPlanCreateRequestBody,
-  SubscriptionPlanUpdateRequestBody,
-  UserIdParams,
+    ExtendSubscriptionRequestBody,
+    IdParams,
+    PaginationQuery,
+    SubscriptionIdParams,
+    SubscriptionPlanCreateRequestBody,
+    SubscriptionPlanUpdateRequestBody,
+    UserIdParams,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
@@ -399,9 +399,23 @@ export const AdminSubscriptionController = () => {
       const { subscriptionId } = req.params;
       const { days } = req.body;
 
+      // Validate days
+      if (days <= 0) {
+        return sendErrorFeedback(res, 400, "Days must be a positive number");
+      }
+
       const subscription = await SubscriptionModel.findById(subscriptionId);
       if (!subscription) {
         return sendErrorFeedback(res, 404, "Subscription not found");
+      }
+
+      // Check if subscription is expired
+      if (subscription.status === "expired") {
+        return sendErrorFeedback(
+          res,
+          400,
+          "Cannot extend an expired subscription. Please renew instead.",
+        );
       }
 
       // Extend subscription

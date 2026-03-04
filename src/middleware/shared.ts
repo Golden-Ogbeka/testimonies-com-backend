@@ -1,21 +1,22 @@
 import { NextFunction, Request, Response } from "express";
+import { API_KEY } from "../functions/env";
 import { sendErrorFeedback } from "../functions/feedback";
+import { ErrorCodes } from "../utils/error-codes";
 
 export const isValidAPI = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const API_KEY = process.env.API_KEY;
-
   const value = req.headers["x-api-key"];
-
-  if (!value) return sendErrorFeedback(res, 403, "API key is required");
-
-  if (API_KEY !== value) {
-    return sendErrorFeedback(res, 403, "Invalid API key");
-  }
-
+  if (!value)
+    return sendErrorFeedback(res, 401, "API key is required", {
+      code: ErrorCodes.API_KEY_REQUIRED,
+    });
+  if (API_KEY !== value)
+    return sendErrorFeedback(res, 401, "Invalid API key", {
+      code: ErrorCodes.INVALID_API_KEY,
+    });
   next();
 };
 

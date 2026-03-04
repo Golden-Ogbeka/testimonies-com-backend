@@ -189,7 +189,10 @@ AdminRolePermissionRouter.get(
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
     query("role", "Role is required").optional().isIn(["super-admin", "admin"]),
-    query("isActive", "isActive must be boolean").optional().isBoolean(),
+    query("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
   ],
   Controller.GetAllAdmins,
 );

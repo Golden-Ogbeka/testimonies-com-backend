@@ -50,25 +50,6 @@ export const AdminAuthController = () => {
       // find admin
       const existingAdmin = await AdminModel.findOne({ email });
 
-      // Create first time user if no admin exists (for development/testing purposes)
-      if (!existingAdmin && process.env.NODE_ENV === "development") {
-        const hashedPassword = await bcryptjs.hash(password, 8);
-        const newAdmin = await AdminModel.create({
-          email,
-          password: hashedPassword,
-          firstName: "Super",
-          lastName: "Admin",
-          role: "super-admin",
-          permissions: ["*"],
-          createdBy: new Types.ObjectId("000000000000000000000000"),
-        });
-
-        return sendSuccessFeedback(res, "Admin account created", {
-          adminId: newAdmin._id,
-          email: newAdmin.email,
-          password, // In production, do not return password
-        });
-      }
       if (!existingAdmin) {
         return sendErrorFeedback(res, 400, "Invalid email or password");
       }

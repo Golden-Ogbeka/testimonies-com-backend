@@ -13,12 +13,17 @@ export const isAdmin = async (
   next: NextFunction,
 ) => {
   try {
-    const value = req.headers.authorization;
+    const value = req.headers["x-jwt-token"];
+
+    console.log(value);
 
     if (!value)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(
+      value as string,
+      process.env.JWT_SECRET || "",
+    );
 
     if (!tokenData)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
@@ -37,6 +42,7 @@ export const isAdmin = async (
 
     next();
   } catch (error: any) {
+    console.log(error);
     return sendErrorFeedback(res, 401, "Unauthorized");
   }
 };
@@ -47,12 +53,15 @@ export const isSuperAdmin = async (
   next: NextFunction,
 ) => {
   try {
-    const value = req.headers.authorization;
+    const value = req.headers["x-jwt-token"];
 
     if (!value)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(
+      value as string,
+      process.env.JWT_SECRET || "",
+    );
 
     if (!tokenData)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
@@ -86,12 +95,15 @@ export const isUserOrOrganization = async (
   next: NextFunction,
 ) => {
   try {
-    const value = req.headers.authorization;
+    const value = req.headers["x-jwt-token"];
 
     if (!value)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(
+      value as string,
+      process.env.JWT_SECRET || "",
+    );
 
     if (!tokenData)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
@@ -126,12 +138,15 @@ export const isUser = async (
   next: NextFunction,
 ) => {
   try {
-    const value = req.headers.authorization;
+    const value = req.headers["x-jwt-token"];
 
     if (!value)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(
+      value as string,
+      process.env.JWT_SECRET || "",
+    );
 
     if (!tokenData)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
@@ -160,12 +175,15 @@ export const isOrganization = async (
   next: NextFunction,
 ) => {
   try {
-    const value = req.headers.authorization;
+    const value = req.headers["x-jwt-token"];
 
     if (!value)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData: any = jwt.verify(
+      value as string,
+      process.env.JWT_SECRET || "",
+    );
 
     if (!tokenData)
       return sendErrorFeedback(res, 401, "Unauthorized. Login to continue");

@@ -7,19 +7,33 @@ import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import hpp from "hpp";
 import { createServer } from "http";
+import mongoose from "mongoose";
 import { Server } from "socket.io";
+import swaggerUi from "swagger-ui-express";
 import AppRouter from "./api";
 import { socketHandler } from "./api/v1/socket";
 import { connectMongoDB } from "./config/db";
-import { PRODUCT_NAME } from "./functions/env";
+import { swaggerSpec } from "./config/swagger";
+import { validateEnv } from "./config/validate-env";
+import {
+  BASE_URL,
+  ENFORCE_HTTPS_REDIRECT,
+  NODE_ENV,
+  PORT as PORT_ENV,
+  PRODUCT_NAME,
+} from "./functions/env";
 import { sendCatchFeedback, sendErrorFeedback } from "./functions/feedback";
 import { AgendaControl } from "./jobs";
 import logger from "./middleware/logger";
+import { requestIdMiddleware } from "./middleware/request-id";
 import { multerErrorHandler } from "./utils/cloudinary";
 import { corsList } from "./utils/constants";
+import { ErrorCodes } from "./utils/error-codes";
+
 process.env.DOTENV_LOG = "false";
 
 dotenv.config();
+validateEnv();
 
 const app = express();
 const httpServer = createServer(app);
@@ -32,12 +46,22 @@ const io = new Server(httpServer, {
   path: "/socket.io",
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = PORT_ENV || 5000;
 
 // Security Start
 
 // Enable trust proxy
 app.set("trust proxy", 1); // '1' means trust the first proxy in the chain
+
+// In production, optionally redirect HTTP to HTTPS (set ENFORCE_HTTPS_REDIRECT=true when not behind a proxy that does this)
+if (NODE_ENV === "production" && ENFORCE_HTTPS_REDIRECT) {
+  app.use((req, res, next) => {
+    const proto = req.get("x-forwarded-proto");
+    if (proto === "https") return next();
+    const host = req.get("host") || req.hostname;
+    return res.redirect(301, `https://${host}${req.originalUrl}`);
+  });
+}
 
 // Limit API requests in specified time
 const limiter = rateLimit({
@@ -45,7 +69,12 @@ const limiter = rateLimit({
   limit: 500, // Limit each IP to 500 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: "Too many requests from this IP. Try again in 15 minutes",
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many requests from this IP. Try again in 15 minutes",
+      code: ErrorCodes.RATE_LIMIT_EXCEEDED,
+    });
+  },
 });
 
 app.use(limiter);
@@ -54,11 +83,17 @@ app.use(limiter);
 app.use(
   cors({
     origin: corsList,
+    credentials: true,
   }),
 );
 
 // Use Helmet!
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: NODE_ENV === "production",
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 
 // Prevent parameter pollution
 app.use(hpp());
@@ -77,6 +112,9 @@ app.use(express.urlencoded({ extended: false, limit: "5mb" }));
 // parse requests of content-type - application/json
 app.use(express.json());
 
+// Request ID middleware
+app.use(requestIdMiddleware);
+
 // Logger middleware
 app.use(logger);
 
@@ -85,12 +123,64 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to " + PRODUCT_NAME });
 });
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  try {
+    const mongoState = mongoose.connection.readyState;
+    const mongoStatus =
+      mongoState === 1
+        ? "connected"
+        : mongoState === 2
+          ? "connecting"
+          : mongoState === 3
+            ? "disconnecting"
+            : "disconnected";
+
+    const status =
+      mongoState === 1
+        ? 200
+        : 503;
+
+    res.status(status).json({
+      status: mongoState === 1 ? "ok" : "degraded",
+      timestamp: new Date().toISOString(),
+      mongo: mongoStatus,
+      uptimeSeconds: Math.floor(process.uptime()),
+    });
+  } catch (e) {
+    res.status(503).json({
+      status: "down",
+      timestamp: new Date().toISOString(),
+      mongo: "error",
+      uptimeSeconds: Math.floor(process.uptime()),
+    });
+  }
+});
+
+// Swagger Documentation
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Testimonies.com Admin API Documentation",
+  }),
+);
+
+// Swagger JSON endpoint
+app.get("/api-docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
 // API Routes
 app.use("/api", AppRouter);
 
 // Not found route
 app.use((req, res) => {
-  return sendErrorFeedback(res, 404, "API route not found.");
+  return sendErrorFeedback(res, 404, "API route not found.", {
+    code: ErrorCodes.NOT_FOUND,
+  });
 });
 
 // Error Handling for multer
@@ -105,14 +195,58 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Socket connection to express app
 socketHandler(io);
 
-httpServer
-  .listen(PORT, async () => {
-    console.log("Server running at PORT:", PORT);
-    await connectMongoDB();
-    await AgendaControl.start();
-  })
-  .on("error", (error) => {
-    // gracefully handle error
-    console.error("Server failed to start:", error);
-    throw new Error(error.message);
+const server = httpServer.listen(PORT, async () => {
+  const baseUrl = BASE_URL || `http://localhost:${PORT}`;
+  console.log("");
+  console.log(`  Server running on port ${PORT}`);
+  console.log("");
+  console.log("  Quick links (click to open):");
+  console.log(`  • Server:     ${baseUrl}`);
+  console.log(`  • Health:     ${baseUrl}/health`);
+  console.log(`  • API:        ${baseUrl}/api`);
+  console.log(`  • API v1:     ${baseUrl}/api/v1`);
+  console.log(`  • Swagger:    ${baseUrl}/docs`);
+  console.log("");
+  console.log(
+    "  Note: /api and /api/v1 require the x-api-key header. Swagger docs are public.",
+  );
+  console.log("");
+  // Run DB and Agenda in background so the process doesn't freeze if they're slow
+  Promise.all([connectMongoDB(), await AgendaControl.start()]).catch((err) => {
+    console.error(
+      "Startup error (server is up; /health may report down):",
+      err,
+    );
   });
+});
+
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(
+      `Port ${PORT} is already in use. Stop the other process or set PORT to a different value.`,
+    );
+  } else {
+    console.error("Server error:", error);
+  }
+  process.exit(1);
+});
+
+async function gracefulShutdown(signal: string) {
+  console.log(`${signal} received, closing server...`);
+  return new Promise<void>((resolve) => {
+    server.close(async () => {
+      try {
+        await AgendaControl.stop();
+        await mongoose.disconnect();
+        console.log("Shutdown complete");
+      } catch (e) {
+        console.error("Shutdown error", e);
+      }
+      process.exit(0);
+      resolve();
+    });
+  });
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

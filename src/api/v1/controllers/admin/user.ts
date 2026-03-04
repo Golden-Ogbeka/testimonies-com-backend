@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import {
-  sendCatchFeedback,
-  sendErrorFeedback,
-  sendSuccessFeedback,
-  sendValidationErrorFeedback,
+    sendCatchFeedback,
+    sendErrorFeedback,
+    sendSuccessFeedback,
+    sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import OrganizationModel from "../../../../models/organization.model";
 import TestimonyLikeModel from "../../../../models/testimony-like.model";
@@ -13,10 +13,10 @@ import TestimonyViewModel from "../../../../models/testimony-view.model";
 import TestimonyModel from "../../../../models/testimony.model";
 import UserModel from "../../../../models/user.model";
 import {
-  IdParams,
-  PaginationQuery,
-  UserFilterQuery,
-  UserUpdateRequestBody,
+    IdParams,
+    PaginationQuery,
+    UserFilterQuery,
+    UserUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
@@ -71,14 +71,21 @@ export const AdminUserController = () => {
 
       const { id } = req.params;
 
-      const user =
-        (await UserModel.findById(id)) ||
-        (await OrganizationModel.findById(id));
-      if (!user) {
+      // Query both models in parallel
+      const [user, organization] = await Promise.all([
+        UserModel.findById(id),
+        OrganizationModel.findById(id),
+      ]);
+
+      const foundUser = user || organization;
+      if (!foundUser) {
         return sendErrorFeedback(res, 404, "User not found");
       }
 
-      return sendSuccessFeedback(res, "User retrieved", { user });
+      return sendSuccessFeedback(res, "User retrieved", {
+        user: foundUser,
+        userType: user ? "user" : "organization",
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -159,15 +166,22 @@ export const AdminUserController = () => {
 
       const { id } = req.params;
 
-      const user = await UserModel.findById(id);
-      if (!user) {
+      // Query both models in parallel
+      const [user, organization] = await Promise.all([
+        UserModel.findById(id),
+        OrganizationModel.findById(id),
+      ]);
+
+      const foundUser = user || organization;
+      if (!foundUser) {
         return sendErrorFeedback(res, 404, "User not found");
       }
-      user.active = true;
-      await user.save();
+
+      foundUser.active = true;
+      await foundUser.save();
 
       return sendSuccessFeedback(res, "User activated successfully", {
-        user,
+        user: foundUser,
       });
     } catch (error) {
       return sendCatchFeedback(

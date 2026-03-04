@@ -14,7 +14,10 @@ AdminSubscriptionRouter.get(
     isAdmin,
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
-    query("isActive", "isActive must be boolean").optional().isBoolean(),
+    query("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
     query("billingCycle", "Billing cycle is required")
       .optional()
       .isIn(["monthly", "yearly", "quarterly"]),
@@ -88,7 +91,10 @@ AdminSubscriptionRouter.put(
       .optional()
       .isIn(["monthly", "yearly", "quarterly"]),
     body("features", "Features must be an array").optional().isArray(),
-    body("isActive", "isActive must be boolean").optional().isBoolean(),
+    body("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
     body("trialDays", "Trial days must be a number").optional().isNumeric(),
     body("maxUsers", "Max users must be a number").optional().isNumeric(),
     body("maxTestimonies", "Max testimonies must be a number")

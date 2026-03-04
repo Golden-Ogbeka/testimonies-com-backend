@@ -1,0 +1,9 @@
+{
+  "extends": "markdownlint/style/google",
+  "line-length": {
+    "line_length": 120
+  },
+  "no-duplicate-heading": false,
+  "blanks-around-lists": true,
+  "blanks-around-tables": true
+}
