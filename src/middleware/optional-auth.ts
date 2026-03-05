@@ -1,11 +1,12 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
 import { PRODUCT_NAME } from "../functions/env";
 import OrganizationModel from "../models/organization.model";
 import UserModel from "../models/user.model";
+import { CustomRequest, JWTPayload } from "../types";
 
 export const optionalAuth = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction,
 ) => {
@@ -17,7 +18,10 @@ export const optionalAuth = async (
       return next();
     }
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData = jwt.verify(
+      value,
+      process.env.JWT_SECRET || "",
+    ) as JWTPayload;
 
     if (!tokenData || tokenData.domain !== PRODUCT_NAME) {
       // Invalid token, continue without authentication
@@ -39,18 +43,18 @@ export const optionalAuth = async (
 
     if (user || organization) {
       // Add user info to request for use in controller
-      (req as any).user = user || organization;
-      (req as any).userType = user ? "user" : "organization";
+      req.user = (user || organization) as any; // Casting to any here as we can't easily avoid the union type mismatch with IUser | IOrganization without more complex casting
+      req.userType = user ? "user" : "organization";
     }
 
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Token verification failed, continue without authentication
     next();
   }
 };
 
-export const getOptionalUserDetails = async (req: Request) => {
+export const getOptionalUserDetails = async (req: CustomRequest) => {
   try {
     const value = req.headers.authorization;
 
@@ -59,7 +63,10 @@ export const getOptionalUserDetails = async (req: Request) => {
       return null;
     }
 
-    const tokenData: any = jwt.verify(value, process.env.JWT_SECRET || "");
+    const tokenData = jwt.verify(
+      value,
+      process.env.JWT_SECRET || "",
+    ) as JWTPayload;
 
     if (!tokenData || tokenData.domain !== PRODUCT_NAME) {
       // Invalid token, continue without authentication
@@ -82,7 +89,7 @@ export const getOptionalUserDetails = async (req: Request) => {
     if (!user && !organization) return null;
 
     return user || organization;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Token verification failed, continue without authentication
     return null;
   }

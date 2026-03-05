@@ -13,7 +13,8 @@ import swaggerUi from "swagger-ui-express";
 import AppRouter from "./api";
 import { socketHandler } from "./api/v1/socket";
 import { connectMongoDB } from "./config/db";
-import { swaggerSpec } from "./config/swagger";
+import { swaggerSpecAdmin } from "./config/swagger-admin";
+import { swaggerSpecUser } from "./config/swagger-user";
 import { validateEnv } from "./config/validate-env";
 import {
   BASE_URL,
@@ -154,20 +155,36 @@ app.get("/health", (req, res) => {
   }
 });
 
-// Swagger Documentation
+// Admin Swagger Documentation
 app.use(
-  "/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
+  "/docs/admin",
+  swaggerUi.serveFiles(swaggerSpecAdmin),
+  swaggerUi.setup(swaggerSpecAdmin, {
     customCss: ".swagger-ui .topbar { display: none }",
     customSiteTitle: "Testimonies.com Admin API Documentation",
   }),
 );
 
-// Swagger JSON endpoint
-app.get("/api-docs.json", (req, res) => {
+// User Swagger Documentation
+app.use(
+  "/docs/user",
+  swaggerUi.serveFiles(swaggerSpecUser),
+  swaggerUi.setup(swaggerSpecUser, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Testimonies.com User API Documentation",
+  }),
+);
+
+// Admin Swagger JSON endpoint
+app.get("/api-docs/admin.json", (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
+  res.send(swaggerSpecAdmin);
+});
+
+// User Swagger JSON endpoint
+app.get("/api-docs/user.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpecUser);
 });
 
 // API Routes
@@ -202,7 +219,8 @@ const server = httpServer.listen(PORT, async () => {
   console.log(`  • Health:     ${baseUrl}/health`);
   console.log(`  • API:        ${baseUrl}/api`);
   console.log(`  • API v1:     ${baseUrl}/api/v1`);
-  console.log(`  • Swagger:    ${baseUrl}/docs`);
+  console.log(`  • Admin Docs: ${baseUrl}/docs/admin`);
+  console.log(`  • User Docs:  ${baseUrl}/docs/user`);
   console.log("");
   console.log(
     "  Note: /api and /api/v1 require the x-api-key header. Swagger docs are public.",

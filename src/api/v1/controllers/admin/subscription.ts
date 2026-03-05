@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
@@ -11,6 +11,7 @@ import OrganizationModel from "../../../../models/organization.model";
 import SubscriptionPlanModel from "../../../../models/subscription-plan.model";
 import SubscriptionModel from "../../../../models/subscription.model";
 import UserModel from "../../../../models/user.model";
+import { CustomRequest } from "../../../../types/express";
 import {
   ExtendSubscriptionRequestBody,
   IdParams,
@@ -24,7 +25,7 @@ import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminSubscriptionController = () => {
   const GetAllPlans = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -35,11 +36,11 @@ export const AdminSubscriptionController = () => {
       const { isActive, billingCycle } = req.query as any;
 
       // Build filter
-      const filter: any = {};
+      const filter: Record<string, any> = {};
       if (isActive !== undefined) filter.isActive = isActive === "true";
       if (billingCycle) filter.billingCycle = billingCycle;
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const plans = await SubscriptionPlanModel.paginate(filter, {
         ...paginationOptions,
@@ -58,7 +59,7 @@ export const AdminSubscriptionController = () => {
   };
 
   const CreatePlan = async (
-    req: Request<never, never, SubscriptionPlanCreateRequestBody>,
+    req: CustomRequest<never, any, SubscriptionPlanCreateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -78,7 +79,7 @@ export const AdminSubscriptionController = () => {
         maxTestimonies,
       } = req.body;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       // Check if plan with same name already exists
       const existingPlan = await SubscriptionPlanModel.findOne({ name });
@@ -117,14 +118,14 @@ export const AdminSubscriptionController = () => {
   };
 
   const UpdatePlan = async (
-    req: Request<IdParams, never, SubscriptionPlanUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, SubscriptionPlanUpdateRequestBody>,
     res: Response,
   ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const { id } = req.params;
       const {
@@ -160,7 +161,7 @@ export const AdminSubscriptionController = () => {
         }
       }
 
-      const updateData: any = {};
+      const updateData: Record<string, any> = {};
       if (name) updateData.name = name;
       if (description) updateData.description = description;
       if (price !== undefined) updateData.price = price;
@@ -192,14 +193,17 @@ export const AdminSubscriptionController = () => {
       );
     }
   };
-  const DeactivatePlan = async (req: Request<IdParams>, res: Response) => {
+  const DeactivatePlan = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const plan = await SubscriptionPlanModel.findByIdAndUpdate(
         id,
@@ -225,14 +229,14 @@ export const AdminSubscriptionController = () => {
       );
     }
   };
-  const ActivatePlan = async (req: Request<IdParams>, res: Response) => {
+  const ActivatePlan = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const plan = await SubscriptionPlanModel.findByIdAndUpdate(
         id,
@@ -257,7 +261,7 @@ export const AdminSubscriptionController = () => {
     }
   };
 
-  const GetSinglePlan = async (req: Request<IdParams>, res: Response) => {
+  const GetSinglePlan = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -279,7 +283,7 @@ export const AdminSubscriptionController = () => {
     }
   };
 
-  const DeletePlan = async (req: Request<IdParams>, res: Response) => {
+  const DeletePlan = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -317,7 +321,7 @@ export const AdminSubscriptionController = () => {
   };
 
   const GetPlanSubscribedUsers = async (
-    req: Request<IdParams, never, never, PaginationQuery>,
+    req: CustomRequest<IdParams, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -327,7 +331,7 @@ export const AdminSubscriptionController = () => {
 
       const { id } = req.params;
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const subscriptions = await SubscriptionModel.paginate(
         { planId: id, status: "active" },
@@ -349,7 +353,10 @@ export const AdminSubscriptionController = () => {
     }
   };
 
-  const GetPlanStatistics = async (req: Request<IdParams>, res: Response) => {
+  const GetPlanStatistics = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -388,7 +395,11 @@ export const AdminSubscriptionController = () => {
   };
 
   const ExtendSubscription = async (
-    req: Request<SubscriptionIdParams, never, ExtendSubscriptionRequestBody>,
+    req: CustomRequest<
+      SubscriptionIdParams,
+      any,
+      ExtendSubscriptionRequestBody
+    >,
     res: Response,
   ) => {
     try {
@@ -436,7 +447,7 @@ export const AdminSubscriptionController = () => {
   };
 
   const GetUserSubscription = async (
-    req: Request<UserIdParams>,
+    req: CustomRequest<UserIdParams>,
     res: Response,
   ) => {
     try {
@@ -466,7 +477,7 @@ export const AdminSubscriptionController = () => {
   };
 
   const GetActiveSubscriptions = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -474,7 +485,7 @@ export const AdminSubscriptionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const subscriptions = await SubscriptionModel.paginate(
         { status: "active" },
@@ -497,7 +508,7 @@ export const AdminSubscriptionController = () => {
   };
 
   const GetCancelledSubscriptions = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -505,7 +516,7 @@ export const AdminSubscriptionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const subscriptions = await SubscriptionModel.paginate(
         { status: "cancelled" },
@@ -528,7 +539,7 @@ export const AdminSubscriptionController = () => {
   };
 
   const GetUnsubscribedUsers = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -542,7 +553,7 @@ export const AdminSubscriptionController = () => {
         { status: "active" },
       );
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const users = await UserModel.paginate(
         { _id: { $nin: usersWithSubscriptions } },

@@ -1,18 +1,24 @@
+import { ParamsDictionary } from "express-serve-static-core";
+
 // Common ID parameter types
-export interface IdParams {
+export interface IdParams extends ParamsDictionary {
   id: string;
 }
 
-export interface TransactionIdParams {
+export interface TransactionIdParams extends ParamsDictionary {
   transactionId: string;
 }
 
-export interface SubscriptionIdParams {
+export interface SubscriptionIdParams extends ParamsDictionary {
   subscriptionId: string;
 }
 
-export interface UserIdParams {
+export interface UserIdParams extends ParamsDictionary {
   userId: string;
+}
+
+export interface AdminIdParams extends ParamsDictionary {
+  adminId: string;
 }
 
 // Admin Auth Request Types
@@ -133,6 +139,20 @@ export interface ExtendSubscriptionRequestBody {
   days: number;
 }
 
+export interface SubscribeRequestBody {
+  planId: string;
+  autoRenew?: boolean;
+}
+
+export interface PayForSubscriptionRequestBody {
+  paymentGateway: "stripe" | "paystack" | "flutterwave";
+  subscriptionId: string;
+}
+
+export interface VerifyPaymentRequestBody {
+  reference: string;
+}
+
 // Promotion Request Types
 export interface PromotionCreateRequestBody {
   title: string;
@@ -177,6 +197,38 @@ export interface TestimonyFlagRequestBody {
 
 export interface TestimonyUnflagRequestBody {
   reason?: string;
+}
+
+export interface CreateTestimonyRequestBody {
+  title: string;
+  description: string;
+  tags?: string[];
+  isBroadcast?: boolean;
+  broadcastOrganizationId?: string;
+  isSecret?: boolean;
+}
+
+export interface UpdateTestimonyRequestBody {
+  title?: string;
+  description?: string;
+  tags?: string[];
+  isBroadcast?: boolean;
+  broadcastOrganizationId?: string;
+  isSecret?: boolean;
+}
+
+export interface ReplyToTestimonyRequestBody {
+  content: string;
+}
+
+export interface SendMessageRequestBody {
+  recipientId: string;
+  recipientType: "user" | "organization";
+  content: string;
+}
+
+export interface UpdateMessageRequestBody {
+  content: string;
 }
 
 // User Request Types
@@ -243,6 +295,7 @@ export interface RoleFilterQuery extends PaginationQuery {
 export interface AdminFilterQuery extends PaginationQuery {
   role?: string;
   isActive?: boolean;
+  [key: string]: any;
 }
 
 export interface DateRangeQuery extends PaginationQuery {
@@ -258,6 +311,7 @@ export interface SubscriptionFilterQuery extends PaginationQuery {
 export interface TestimonyFilterQuery extends PaginationQuery {
   userId?: string;
   flagged?: boolean;
+  isFlagged?: boolean;
 }
 
 export interface UserFilterQuery extends PaginationQuery {
@@ -276,4 +330,6 @@ export interface AuditLogFilterQuery extends PaginationQuery {
   category?: "auth" | "user" | "testimony" | "system" | "data" | "security";
   from?: string;
   to?: string;
+  startDate?: string;
+  endDate?: string;
 }

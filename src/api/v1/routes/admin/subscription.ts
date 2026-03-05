@@ -101,7 +101,7 @@ AdminSubscriptionRouter.put(
       .optional()
       .isNumeric(),
   ],
-  Controller.UpdatePlan as any,
+  Controller.UpdatePlan,
 );
 
 // Deactivate a subscription plan
@@ -113,7 +113,7 @@ AdminSubscriptionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeactivatePlan as any,
+  Controller.DeactivatePlan,
 );
 
 // Activate a subscription plan
@@ -125,7 +125,7 @@ AdminSubscriptionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.ActivatePlan as any,
+  Controller.ActivatePlan,
 );
 
 // Get subscription plan by ID
@@ -137,7 +137,7 @@ AdminSubscriptionRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetSinglePlan as any,
+  Controller.GetSinglePlan,
 );
 
 // Delete a subscription plan (only if no users are subscribed)
@@ -149,7 +149,7 @@ AdminSubscriptionRouter.delete(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeletePlan as any,
+  Controller.DeletePlan,
 );
 
 // Get all users subscribed to a specific plan
@@ -163,7 +163,7 @@ AdminSubscriptionRouter.get(
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
   ],
-  Controller.GetPlanSubscribedUsers as any,
+  Controller.GetPlanSubscribedUsers,
 );
 
 // Get subscription statistics (total revenue, active subscriptions, cancellations, etc.)
@@ -175,7 +175,7 @@ AdminSubscriptionRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetPlanStatistics as any,
+  Controller.GetPlanStatistics,
 );
 
 // Extend a user's subscription
@@ -191,7 +191,7 @@ AdminSubscriptionRouter.post(
       .isNumeric()
       .withMessage("Days must be a number"),
   ],
-  Controller.ExtendSubscription as any,
+  Controller.ExtendSubscription,
 );
 
 // Get user's subscription details by user ID
@@ -203,7 +203,7 @@ AdminSubscriptionRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetUserSubscription as any,
+  Controller.GetUserSubscription,
 );
 
 // Get all users with active subscriptions

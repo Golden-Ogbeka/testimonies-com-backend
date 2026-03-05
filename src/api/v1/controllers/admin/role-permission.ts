@@ -1,5 +1,5 @@
 import bcryptjs from "bcryptjs";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
@@ -10,25 +10,30 @@ import {
 } from "../../../../functions/feedback";
 import AdminModel from "../../../../models/admin.model";
 import PermissionModel from "../../../../models/permission.model";
+import { CustomRequest } from "../../../../types/express";
 import {
   AdminCreateRequestBody,
   AdminFilterQuery,
   AdminProfileUpdateRequestBody,
   AdminUpdateRequestBody,
   IdParams,
+  PaginationQuery,
   PermissionCreateRequestBody,
   PermissionUpdateRequestBody,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminRolePermissionController = () => {
-  const GetAllPermissions = async (req: Request, res: Response) => {
+  const GetAllPermissions = async (
+    req: CustomRequest<never, any, any, PaginationQuery>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const permissions = await PermissionModel.paginate(
         {},
@@ -48,7 +53,10 @@ export const AdminRolePermissionController = () => {
       );
     }
   };
-  const GetSinglePermission = async (req: Request<IdParams>, res: Response) => {
+  const GetSinglePermission = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -71,7 +79,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const CreatePermission = async (
-    req: Request<never, never, PermissionCreateRequestBody>,
+    req: CustomRequest<never, any, PermissionCreateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -81,7 +89,7 @@ export const AdminRolePermissionController = () => {
 
       const { name, description } = req.body;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       // Check if permission with same name already exists
       const existingPermission = await PermissionModel.findOne({ name });
@@ -111,7 +119,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const UpdatePermission = async (
-    req: Request<IdParams, never, PermissionUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, PermissionUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -122,7 +130,7 @@ export const AdminRolePermissionController = () => {
       const { id } = req.params;
       const { name, description } = req.body;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
       const permission = await PermissionModel.findById(id);
       if (!permission) {
         return sendErrorFeedback(res, 404, "Permission not found");
@@ -143,7 +151,7 @@ export const AdminRolePermissionController = () => {
         }
       }
 
-      const updateData: any = {};
+      const updateData: Record<string, any> = {};
       if (name) updateData.name = name;
       if (description) updateData.description = description;
       updateData.updatedBy = adminDetails._id;
@@ -165,7 +173,10 @@ export const AdminRolePermissionController = () => {
     }
   };
 
-  const DeletePermission = async (req: Request<IdParams>, res: Response) => {
+  const DeletePermission = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -188,7 +199,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const CreateAdmin = async (
-    req: Request<never, never, AdminCreateRequestBody>,
+    req: CustomRequest<never, any, AdminCreateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -200,7 +211,7 @@ export const AdminRolePermissionController = () => {
       const { firstName, lastName, email, phoneNumber, role, permissions } =
         adminData;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       // Check if admin with same email already exists
       const existingAdmin = await AdminModel.findOne({ email });
@@ -251,7 +262,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const UpdateAdminRole = async (
-    req: Request<IdParams, never, AdminUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, AdminUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -259,7 +270,7 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
       const { id } = req.params;
       const { role } = req.body;
 
@@ -286,7 +297,7 @@ export const AdminRolePermissionController = () => {
         );
       }
 
-      const updateData: any = {};
+      const updateData: Record<string, any> = {};
       updateData.role = role;
       updateData.updatedBy = adminDetails._id;
 
@@ -305,7 +316,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const UpdateAdminPermissions = async (
-    req: Request<IdParams, never, { permissions: string[] }>,
+    req: CustomRequest<IdParams, any, { permissions: string[] }>,
     res: Response,
   ) => {
     try {
@@ -313,7 +324,7 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
       const { id } = req.params;
       const { permissions } = req.body;
 
@@ -324,7 +335,7 @@ export const AdminRolePermissionController = () => {
       if (existingPermissions.length !== permissions.length) {
         return sendErrorFeedback(res, 400, "Invalid permissions");
       }
-      const updateData: any = {};
+      const updateData: Record<string, any> = {};
       updateData.permissions = permissions;
       updateData.updatedBy = adminDetails._id;
 
@@ -342,14 +353,17 @@ export const AdminRolePermissionController = () => {
     }
   };
 
-  const DeactivateAdmin = async (req: Request<IdParams>, res: Response) => {
+  const DeactivateAdmin = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       // Prevent self-deactivation
       if (id === String(adminDetails._id)) {
@@ -398,14 +412,14 @@ export const AdminRolePermissionController = () => {
     }
   };
 
-  const ActivateAdmin = async (req: Request<IdParams>, res: Response) => {
+  const ActivateAdmin = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const updatedAdmin = await AdminModel.findByIdAndUpdate(
         id,
@@ -431,7 +445,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const GetAllAdmins = async (
-    req: Request<never, never, never, AdminFilterQuery>,
+    req: CustomRequest<never, any, any, AdminFilterQuery>,
     res: Response,
   ) => {
     try {
@@ -439,19 +453,19 @@ export const AdminRolePermissionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
-      const { role, isActive } = req.query as any;
+      const adminDetails = await getAdminUserDetails(req);
+      const { role, isActive } = req.query;
 
       // Build filter
       const filter: any = {};
       if (role) filter.role = role;
-      if (isActive !== undefined) filter.isActive = isActive === "true";
+      if (isActive !== undefined) filter.isActive = isActive === true;
 
       if (adminDetails.role !== "super-admin") {
         filter.role = "admin";
       }
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const admins = await AdminModel.paginate(filter, {
         ...paginationOptions,
@@ -469,13 +483,16 @@ export const AdminRolePermissionController = () => {
     }
   };
 
-  const GetSingleAdmin = async (req: Request<IdParams>, res: Response) => {
+  const GetSingleAdmin = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const { id } = req.params;
 
@@ -503,7 +520,7 @@ export const AdminRolePermissionController = () => {
   };
 
   const UpdateAdmin = async (
-    req: Request<IdParams, never, AdminProfileUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, AdminProfileUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -514,9 +531,9 @@ export const AdminRolePermissionController = () => {
       const { id } = req.params;
       const { firstName, lastName, phoneNumber } = req.body;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
-      const updateData: any = {};
+      const updateData: Record<string, any> = {};
       if (firstName) updateData.firstName = firstName;
       if (lastName) updateData.lastName = lastName;
       if (phoneNumber) updateData.phoneNumber = phoneNumber;

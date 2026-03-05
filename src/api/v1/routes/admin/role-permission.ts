@@ -27,7 +27,7 @@ AdminRolePermissionRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetSinglePermission as any,
+  Controller.GetSinglePermission,
 );
 
 // Create permission
@@ -68,7 +68,7 @@ AdminRolePermissionRouter.put(
       .isLength({ min: 5 })
       .withMessage("Description must be at least 5 characters long"),
   ],
-  Controller.UpdatePermission as any,
+  Controller.UpdatePermission,
 );
 
 // Delete permission
@@ -80,7 +80,7 @@ AdminRolePermissionRouter.delete(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeletePermission as any,
+  Controller.DeletePermission,
 );
 
 // Create admin
@@ -139,7 +139,7 @@ AdminRolePermissionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .isIn(["super-admin", "admin"]),
   ],
-  Controller.UpdateAdminRole as any,
+  Controller.UpdateAdminRole,
 );
 
 // Update admin permissions
@@ -154,7 +154,7 @@ AdminRolePermissionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .isArray(),
   ],
-  Controller.UpdateAdminPermissions as any,
+  Controller.UpdateAdminPermissions,
 );
 
 // Deactivate admin
@@ -166,7 +166,7 @@ AdminRolePermissionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeactivateAdmin as any,
+  Controller.DeactivateAdmin,
 );
 
 // Reactivate admin
@@ -178,7 +178,7 @@ AdminRolePermissionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.ActivateAdmin as any,
+  Controller.ActivateAdmin,
 );
 
 // Get all admins
@@ -206,7 +206,7 @@ AdminRolePermissionRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetSingleAdmin as any,
+  Controller.GetSingleAdmin,
 );
 
 // Update admin details by admin ID
@@ -232,7 +232,7 @@ AdminRolePermissionRouter.put(
       .isMobilePhone("any")
       .withMessage("Please provide a valid phone number"),
   ],
-  Controller.UpdateAdmin as any,
+  Controller.UpdateAdmin,
 );
 
 export default AdminRolePermissionRouter;

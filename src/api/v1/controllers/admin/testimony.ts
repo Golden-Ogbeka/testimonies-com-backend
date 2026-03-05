@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
@@ -8,6 +8,7 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import TestimonyModel from "../../../../models/testimony.model";
+import { CustomRequest } from "../../../../types/express";
 import {
   IdParams,
   PaginationQuery,
@@ -18,7 +19,10 @@ import {
 import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminTestimonyController = () => {
-  const GetTestimonyDetails = async (req: Request<IdParams>, res: Response) => {
+  const GetTestimonyDetails = async (
+    req: CustomRequest<{ id: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -48,7 +52,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetTestimonyWithHighestEngagement = async (
-    req: Request,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -56,7 +60,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       // Get testimonies with highest engagement (likes + replies + views)
       const testimonies = await TestimonyModel.aggregate([
@@ -96,7 +101,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { engagementScore: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -127,7 +132,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetTestimoniesWithHighestLikes = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -135,7 +140,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       const testimonies = await TestimonyModel.aggregate([
         {
@@ -152,7 +158,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { likesCount: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -183,7 +189,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetTestimoniesWithHighestReplies = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -191,7 +197,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       const testimonies = await TestimonyModel.aggregate([
         {
@@ -208,7 +215,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { repliesCount: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -239,7 +246,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetTestimoniesWithHighestViews = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -247,7 +254,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       const testimonies = await TestimonyModel.aggregate([
         {
@@ -264,7 +272,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { viewsCount: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -295,7 +303,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetMostActiveUsers = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -303,7 +311,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       const users = await TestimonyModel.aggregate([
         {
@@ -314,7 +323,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { testimonyCount: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -342,7 +351,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetMostEngagedUsers = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -350,7 +359,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       // Get users with highest engagement (likes + replies received on their testimonies)
       const users = await TestimonyModel.aggregate([
@@ -387,7 +397,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { engagementScore: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -418,7 +428,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetMostLikedUsers = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -426,7 +436,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       const users = await TestimonyModel.aggregate([
         {
@@ -449,7 +460,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { totalLikes: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -476,7 +487,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetMostViewedUsers = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -484,7 +495,8 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = 10 } = req.query as any;
+      const { limit = "10" } = req.query;
+      const limitInt = parseInt(limit as string, 10);
 
       const users = await TestimonyModel.aggregate([
         {
@@ -507,7 +519,7 @@ export const AdminTestimonyController = () => {
           },
         },
         { $sort: { totalViews: -1 } },
-        { $limit: parseInt(limit) },
+        { $limit: limitInt },
         {
           $lookup: {
             from: "users",
@@ -534,7 +546,7 @@ export const AdminTestimonyController = () => {
   };
 
   const FlagTestimony = async (
-    req: Request<IdParams, never, TestimonyFlagRequestBody>,
+    req: CustomRequest<IdParams, any, TestimonyFlagRequestBody>,
     res: Response,
   ) => {
     try {
@@ -542,7 +554,7 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
       const { id } = req.params;
       const { reason } = req.body;
 
@@ -567,7 +579,7 @@ export const AdminTestimonyController = () => {
   };
 
   const UnflagTestimony = async (
-    req: Request<IdParams, never, TestimonyUnflagRequestBody>,
+    req: CustomRequest<IdParams, any, TestimonyUnflagRequestBody>,
     res: Response,
   ) => {
     try {
@@ -598,7 +610,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetFlaggedTestimonies = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -606,7 +618,7 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const testimonies = await TestimonyModel.paginate(
         { isFlagged: true },
@@ -629,7 +641,7 @@ export const AdminTestimonyController = () => {
   };
 
   const GetAllTestimonies = async (
-    req: Request<never, never, never, TestimonyFilterQuery>,
+    req: CustomRequest<never, any, any, TestimonyFilterQuery>,
     res: Response,
   ) => {
     try {
@@ -637,14 +649,14 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { isFlagged, userId } = req.query as any;
+      const { isFlagged, userId } = req.query;
 
       // Build filter
       const filter: any = {};
-      if (isFlagged !== undefined) filter.isFlagged = isFlagged === "true";
+      if (isFlagged !== undefined) filter.isFlagged = isFlagged === true;
       if (userId) filter.userId = userId;
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const testimonies = await TestimonyModel.paginate(filter, {
         ...paginationOptions,

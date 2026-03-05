@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import {
   sendCatchFeedback,
@@ -7,15 +7,18 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import AuditLogModel from "../../../../models/audit-log.model";
+import { CustomRequest } from "../../../../types/express";
 import {
+  AdminIdParams,
   AuditLogFilterQuery,
+  IdParams,
   PaginationQuery,
 } from "../../../../types/requests";
 import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminAuditLogController = () => {
   const ViewAuditLogs = async (
-    req: Request<never, never, never, AuditLogFilterQuery & PaginationQuery>,
+    req: CustomRequest<never, any, any, AuditLogFilterQuery & PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -23,26 +26,19 @@ export const AdminAuditLogController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const {
-        page = 1,
-        limit = 20,
-        category,
-        level,
-        startDate,
-        endDate,
-      } = req.query as any;
+      const { category, level, startDate, endDate } = req.query;
 
       // Build filter
-      const filter: any = {};
+      const filter: Record<string, any> = {};
       if (category) filter.category = category;
       if (level) filter.level = level;
       if (startDate || endDate) {
         filter.createdAt = {};
-        if (startDate) filter.createdAt.$gte = new Date(startDate as string);
-        if (endDate) filter.createdAt.$lte = new Date(endDate as string);
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate) filter.createdAt.$lte = new Date(endDate);
       }
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const auditLogs = await AuditLogModel.paginate(filter, {
         ...paginationOptions,
@@ -61,7 +57,7 @@ export const AdminAuditLogController = () => {
     }
   };
 
-  const ViewAuditLog = async (req: Request, res: Response) => {
+  const ViewAuditLog = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -86,7 +82,10 @@ export const AdminAuditLogController = () => {
     }
   };
 
-  const ViewAdminAuditLogs = async (req: Request, res: Response) => {
+  const ViewAdminAuditLogs = async (
+    req: CustomRequest<AdminIdParams, any, any, PaginationQuery>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -94,7 +93,7 @@ export const AdminAuditLogController = () => {
 
       const { adminId } = req.params;
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const auditLogs = await AuditLogModel.paginate(
         { adminId },

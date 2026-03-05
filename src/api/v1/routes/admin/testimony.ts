@@ -157,7 +157,7 @@ AdminTestimonyRouter.post(
       .isLength({ min: 5 })
       .withMessage("Flag reason must be at least 5 characters long"),
   ],
-  Controller.FlagTestimony as any,
+  Controller.FlagTestimony,
 );
 
 // Unflag testimony
@@ -169,7 +169,7 @@ AdminTestimonyRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.UnflagTestimony as any,
+  Controller.UnflagTestimony,
 );
 
 // Get all flagged testimonies
@@ -198,7 +198,7 @@ AdminTestimonyRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetTestimonyDetails as any,
+  Controller.GetTestimonyDetails,
 );
 
 // Get all testimonies

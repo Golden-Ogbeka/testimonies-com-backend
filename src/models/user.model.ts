@@ -83,6 +83,10 @@ userSchema.index({
   lastName: "text",
 });
 
+// Added Optimization Indexes
+userSchema.index({ active: 1, accountType: 1 });
+userSchema.index({ subscriptionType: 1, active: 1 });
+
 // Hide Password in responses
 userSchema.methods.toJSON = function () {
   let obj = this.toObject();

@@ -28,7 +28,7 @@ AdminDataManagementRouter.post(
 );
 
 // Update FAQ
-AdminDataManagementRouter.put<any>(
+AdminDataManagementRouter.put(
   "/faq/:id",
   [
     isAdmin,
@@ -55,7 +55,7 @@ AdminDataManagementRouter.put<any>(
 );
 
 // Delete FAQ
-AdminDataManagementRouter.delete<any>(
+AdminDataManagementRouter.delete(
   "/faq/:id",
   [
     isAdmin,
@@ -90,7 +90,7 @@ AdminDataManagementRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetSingleFAQ as any,
+  Controller.GetSingleFAQ,
 );
 
 // Get Privacy Policy
@@ -208,7 +208,7 @@ AdminDataManagementRouter.put(
       .withMessage("Permission name must be at least 2 characters long"),
     body("description").optional().trim(),
   ],
-  Controller.UpdateTeamPermission as any,
+  Controller.UpdateTeamPermission,
 );
 
 // Delete organizations' team member permission

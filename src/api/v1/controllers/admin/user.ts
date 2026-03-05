@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import {
   sendCatchFeedback,
@@ -12,8 +12,8 @@ import TestimonyReplyModel from "../../../../models/testimony-reply.model";
 import TestimonyViewModel from "../../../../models/testimony-view.model";
 import TestimonyModel from "../../../../models/testimony.model";
 import UserModel from "../../../../models/user.model";
+import { CustomRequest } from "../../../../types/express";
 import {
-  IdParams,
   PaginationQuery,
   UserFilterQuery,
   UserUpdateRequestBody,
@@ -22,7 +22,7 @@ import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminUserController = () => {
   const GetAllUsers = async (
-    req: Request<never, never, never, UserFilterQuery>,
+    req: CustomRequest<never, any, any, UserFilterQuery>,
     res: Response,
   ) => {
     try {
@@ -33,13 +33,13 @@ export const AdminUserController = () => {
       const { isActive, isFlagged, accountType, subscriptionType } = req.query;
 
       // Build filter
-      const filter: any = {};
+      const filter: Record<string, any> = {};
       if (isActive !== undefined) filter.active = isActive;
       if (isFlagged !== undefined) filter.isFlagged = isFlagged;
       if (accountType) filter.accountType = accountType;
       if (subscriptionType) filter.subscriptionType = subscriptionType;
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const users = await UserModel.paginate(filter, {
         ...paginationOptions,
@@ -63,7 +63,10 @@ export const AdminUserController = () => {
     }
   };
 
-  const GetSingleUser = async (req: Request<IdParams>, res: Response) => {
+  const GetSingleUser = async (
+    req: CustomRequest<{ id: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -95,7 +98,7 @@ export const AdminUserController = () => {
   };
 
   const UpdateUser = async (
-    req: Request<IdParams, never, UserUpdateRequestBody>,
+    req: CustomRequest<{ id: string }, any, UserUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -128,7 +131,10 @@ export const AdminUserController = () => {
     }
   };
 
-  const DeactivateUser = async (req: Request<IdParams>, res: Response) => {
+  const DeactivateUser = async (
+    req: CustomRequest<{ id: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -158,7 +164,10 @@ export const AdminUserController = () => {
     }
   };
 
-  const ActivateUser = async (req: Request<IdParams>, res: Response) => {
+  const ActivateUser = async (
+    req: CustomRequest<{ id: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -192,7 +201,7 @@ export const AdminUserController = () => {
   };
 
   const GetAllUsersProfileStats = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -221,7 +230,10 @@ export const AdminUserController = () => {
     }
   };
 
-  const GetUserProfileStats = async (req: Request<IdParams>, res: Response) => {
+  const GetUserProfileStats = async (
+    req: CustomRequest<{ id: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);

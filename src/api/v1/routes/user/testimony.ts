@@ -65,7 +65,7 @@ UserTestimonyRouter.get(
       .optional()
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetTestimonies,
+  Controller.GetTestimonies as any,
 );
 
 // Get single testimony by id (authenticated) - Would include the details of analytics (replies, etc)
@@ -75,7 +75,7 @@ UserTestimonyRouter.get(
   param("id", "Testimony ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.GetTestimony,
+  Controller.GetTestimony as any,
 );
 
 // Create testimony
@@ -160,7 +160,7 @@ UserTestimonyRouter.post(
       .withMessage("Kindly specify if testimony is secret or not as a boolean")
       .toBoolean(),
   ],
-  Controller.CreateTestimony,
+  Controller.CreateTestimony as any,
 );
 
 // Update testimony (for subscribed users only)
@@ -240,7 +240,7 @@ UserTestimonyRouter.put(
       .withMessage("Kindly specify if testimony is secret or not as a boolean")
       .toBoolean(),
   ],
-  Controller.UpdateTestimony,
+  Controller.UpdateTestimony as any,
 );
 
 // Delete testimony (for subscribed users only)
@@ -252,7 +252,7 @@ UserTestimonyRouter.delete(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeleteTestimony,
+  Controller.DeleteTestimony as any,
 );
 
 // Reply to testimony
@@ -269,7 +269,7 @@ UserTestimonyRouter.post(
       .isLength({ min: 1, max: 2000 })
       .withMessage("Reply must be between 1 and 2000 characters"),
   ],
-  Controller.ReplyToTestimony,
+  Controller.ReplyToTestimony as any,
 );
 
 // Update reply to testimony (for subscribed users only)
@@ -286,7 +286,7 @@ UserTestimonyRouter.put(
       .isLength({ min: 1, max: 2000 })
       .withMessage("Reply must be between 1 and 2000 characters"),
   ],
-  Controller.UpdateReply,
+  Controller.UpdateReply as any,
 );
 
 // Delete reply to testimony (for subscribed users only)
@@ -298,7 +298,7 @@ UserTestimonyRouter.delete(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeleteReply,
+  Controller.DeleteReply as any,
 );
 
 // Like testimony
@@ -322,7 +322,7 @@ UserTestimonyRouter.delete(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.UnlikeTestimony,
+  Controller.UnlikeTestimony as any,
 );
 
 // Get testimony likes
@@ -332,7 +332,7 @@ UserTestimonyRouter.get(
   param("id", "Testimony ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.GetTestimonyLikes,
+  Controller.GetTestimonyLikes as any,
 );
 
 // Get whether user liked testimony
@@ -344,7 +344,7 @@ UserTestimonyRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.CheckTestimonyLiked,
+  Controller.CheckTestimonyLiked as any,
 );
 
 // Get replies for a testimony
@@ -363,7 +363,7 @@ UserTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetTestimonyReplies,
+  Controller.GetTestimonyReplies as any,
 );
 
 // Get single reply by id
@@ -372,7 +372,7 @@ UserTestimonyRouter.get(
   param("id", "Reply ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.GetReply,
+  Controller.GetReply as any,
 );
 
 // Like reply to testimony
@@ -408,7 +408,7 @@ UserTestimonyRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.CheckReplyLiked,
+  Controller.CheckReplyLiked as any,
 );
 
 // Get likes for a reply
@@ -417,7 +417,7 @@ UserTestimonyRouter.get(
   param("id", "Reply ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.GetReplyLikes,
+  Controller.GetReplyLikes as any,
 );
 
 // Get user's testimonies (for authenticated users only)
@@ -434,7 +434,7 @@ UserTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetMyTestimonies,
+  Controller.GetMyTestimonies as any,
 );
 
 // Get user's replies to testimonies (for authenticated users only)
@@ -451,7 +451,7 @@ UserTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetMyReplies,
+  Controller.GetMyReplies as any,
 );
 
 // Delete all testimonies for a user (for subscribed users only)
@@ -529,7 +529,7 @@ UserTestimonyRouter.get(
       .isInt({ min: 1, max: 20 })
       .withMessage("Limit must be between 1 and 20"),
   ],
-  Controller.GetTrendingTestimonies,
+  Controller.GetTrendingTestimonies as any,
 );
 
 // Get replies of a specific user by user id
@@ -549,7 +549,7 @@ UserTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetUserReplies,
+  Controller.GetUserReplies as any,
 );
 
 // Get user testimony statistics (number of testimonies, replies, likes received, views received)
@@ -573,7 +573,7 @@ UserTestimonyRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetBroadcastRequests,
+  Controller.GetBroadcastRequests as any,
 );
 
 // View broadcast testimony request by id
@@ -585,7 +585,7 @@ UserTestimonyRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetBroadcastRequest,
+  Controller.GetBroadcastRequest as any,
 );
 
 // Approve broadcast testimony request
@@ -597,7 +597,7 @@ UserTestimonyRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.ApproveBroadcastRequest,
+  Controller.ApproveBroadcastRequest as any,
 );
 
 // Reject broadcast testimony request
@@ -609,7 +609,7 @@ UserTestimonyRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.RejectBroadcastRequest,
+  Controller.RejectBroadcastRequest as any,
 );
 
 export default UserTestimonyRouter;

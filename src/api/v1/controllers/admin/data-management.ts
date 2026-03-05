@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import { Types } from "mongoose";
 import { getAdminUserDetails } from "../../../../functions/auth";
@@ -11,6 +11,7 @@ import {
 import FAQModel from "../../../../models/faq.model";
 import SystemContentModel from "../../../../models/system-content.model";
 import TeamPermissionModel from "../../../../models/team-permission.model";
+import { CustomRequest } from "../../../../types/express";
 import {
   FAQCreateRequestBody,
   FAQUpdateRequestBody,
@@ -23,7 +24,7 @@ import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminDataManagementController = () => {
   const AddFAQ = async (
-    req: Request<never, never, FAQCreateRequestBody>,
+    req: CustomRequest<never, any, FAQCreateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -32,7 +33,7 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { question, answer, order } = req.body;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       // Check if FAQ with same question already exists
       const existingFAQ = await FAQModel.findOne({ question });
@@ -61,7 +62,7 @@ export const AdminDataManagementController = () => {
   };
 
   const UpdateFAQ = async (
-    req: Request<IdParams, never, FAQUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, FAQUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -71,7 +72,7 @@ export const AdminDataManagementController = () => {
 
       const { id } = req.params;
       const { question, answer, order, isActive } = req.body;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const faq = await FAQModel.findById(id);
       if (!faq) {
@@ -112,7 +113,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const DeleteFAQ = async (req: Request<IdParams>, res: Response) => {
+  const DeleteFAQ = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -135,7 +136,12 @@ export const AdminDataManagementController = () => {
   };
 
   const GetAllFAQs = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<
+      never,
+      any,
+      any,
+      PaginationQuery & { isActive?: string }
+    >,
     res: Response,
   ) => {
     try {
@@ -143,13 +149,13 @@ export const AdminDataManagementController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { isActive } = req.query as any;
+      const { isActive } = req.query;
 
       // Build filter
       const filter: any = {};
       if (isActive !== undefined) filter.isActive = isActive === "true";
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const faqs = await FAQModel.paginate(filter, {
         ...paginationOptions,
@@ -167,10 +173,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const GetSingleFAQ = async (
-    req: Request<IdParams, never, never, never>,
-    res: Response,
-  ) => {
+  const GetSingleFAQ = async (req: CustomRequest<IdParams>, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -192,10 +195,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const GetPrivacyPolicy = async (
-    req: Request<never, never, never, never>,
-    res: Response,
-  ) => {
+  const GetPrivacyPolicy = async (req: CustomRequest, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -221,10 +221,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const GetTermsOfService = async (
-    req: Request<never, never, never, never>,
-    res: Response,
-  ) => {
+  const GetTermsOfService = async (req: CustomRequest, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -250,10 +247,7 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const GetCommunityGuidelines = async (
-    req: Request<never, never, never, never>,
-    res: Response,
-  ) => {
+  const GetCommunityGuidelines = async (req: CustomRequest, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -280,7 +274,7 @@ export const AdminDataManagementController = () => {
   };
 
   const UpdatePrivacyPolicy = async (
-    req: Request<never, never, SystemContentUpdateRequestBody, never>,
+    req: CustomRequest<never, any, SystemContentUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -289,7 +283,7 @@ export const AdminDataManagementController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { title, content, version } = req.body;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const updatedContent = await SystemContentModel.findOneAndUpdate(
         { type: "privacy_policy" },
@@ -314,14 +308,17 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const UpdateTermsOfService = async (req: Request, res: Response) => {
+  const UpdateTermsOfService = async (
+    req: CustomRequest<never, any, SystemContentUpdateRequestBody>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { title, content, version } = req.body;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const updatedContent = await SystemContentModel.findOneAndUpdate(
         { type: "terms_of_service" },
@@ -346,14 +343,17 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const UpdateCommunityGuidelines = async (req: Request, res: Response) => {
+  const UpdateCommunityGuidelines = async (
+    req: CustomRequest<never, any, SystemContentUpdateRequestBody>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { title, content, version } = req.body;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const updatedContent = await SystemContentModel.findOneAndUpdate(
         { type: "community_guidelines" },
@@ -380,13 +380,16 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const CreateTeamPermission = async (req: Request, res: Response) => {
+  const CreateTeamPermission = async (
+    req: CustomRequest<never, any, { permission: string; description: string }>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
       const { permission, description } = req.body;
 
       const existingPermission = await TeamPermissionModel.findOne({
@@ -415,7 +418,7 @@ export const AdminDataManagementController = () => {
   };
 
   const UpdateTeamPermission = async (
-    req: Request<IdParams, never, TeamPermissionUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, TeamPermissionUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -426,7 +429,7 @@ export const AdminDataManagementController = () => {
       const { id } = req.params;
       const { permission, description } = req.body;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const teamPermission = await TeamPermissionModel.findById(id);
       if (!teamPermission) {
@@ -450,7 +453,10 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const DeleteTeamPermission = async (req: Request, res: Response) => {
+  const DeleteTeamPermission = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -472,13 +478,16 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const GetAllTeamPermissions = async (req: Request, res: Response) => {
+  const GetAllTeamPermissions = async (
+    req: CustomRequest<never, any, any, PaginationQuery>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const teamPermissions = await TeamPermissionModel.paginate(
         {},
@@ -499,7 +508,10 @@ export const AdminDataManagementController = () => {
     }
   };
 
-  const GetSingleTeamPermission = async (req: Request, res: Response) => {
+  const GetSingleTeamPermission = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);

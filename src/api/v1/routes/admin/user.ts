@@ -47,7 +47,7 @@ AdminUserRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetSingleUser as any,
+  Controller.GetSingleUser,
 );
 
 // Update user details
@@ -63,7 +63,7 @@ AdminUserRouter.patch(
       .isBoolean()
       .toBoolean(),
   ],
-  Controller.UpdateUser as any,
+  Controller.UpdateUser,
 );
 
 // Deactivate user account
@@ -75,7 +75,7 @@ AdminUserRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeactivateUser as any,
+  Controller.DeactivateUser,
 );
 
 // Activate user account
@@ -87,7 +87,7 @@ AdminUserRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.ActivateUser as any,
+  Controller.ActivateUser,
 );
 
 // Get users' profile statistics (such as number of testimonies submitted, average ratings, etc.)
@@ -116,7 +116,7 @@ AdminUserRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetUserProfileStats as any,
+  Controller.GetUserProfileStats,
 );
 
 export default AdminUserRouter;

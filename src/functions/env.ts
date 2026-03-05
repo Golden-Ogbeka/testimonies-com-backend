@@ -36,6 +36,18 @@ export const BASE_URL = (() => {
   return raw ? raw.replace(/\/$/, "") : undefined;
 })();
 
+// Stripe
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+
+// Paystack
+export const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+
+// Flutterwave
+export const FLUTTERWAVE_SECRET_KEY = process.env.FLUTTERWAVE_SECRET_KEY;
+export const FLUTTERWAVE_WEBHOOK_SECRET =
+  process.env.FLUTTERWAVE_WEBHOOK_SECRET;
+
 // SMS / Twilio
 export const SMS_BASE_URL = process.env.SMS_BASE_URL;
 export const SMS_SENDER_ID = process.env.SMS_SENDER_ID;

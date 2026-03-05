@@ -1,5 +1,5 @@
 import bcryptjs from "bcryptjs";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import { Types } from "mongoose";
@@ -20,9 +20,10 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import { AdminCronSchedules } from "../../../../jobs/schedules/admin";
-import AdminModel from "../../../../models/admin.model";
+import AdminModel, { IAdmin } from "../../../../models/admin.model";
 import AuditLogModel from "../../../../models/audit-log.model";
 import AuthSessionModel from "../../../../models/auth-session.model";
+import { CustomRequest } from "../../../../types/express";
 import {
   AdminChangePasswordRequestBody,
   AdminProfileUpdateRequestBody,
@@ -36,7 +37,7 @@ import { notifyUser } from "../../services/notification";
 
 export const AdminAuthController = () => {
   const Login = async (
-    req: Request<never, never, AdminSigninRequestBody>,
+    req: CustomRequest<never, any, AdminSigninRequestBody>,
     res: Response,
   ) => {
     try {
@@ -45,7 +46,7 @@ export const AdminAuthController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { email, password } = req.body;
-      const { ipAddress, userAgent } = getClientIPAndUserAgent(req as any);
+      const { ipAddress, userAgent } = getClientIPAndUserAgent(req);
 
       // find admin
       const existingAdmin = await AdminModel.findOne({ email });
@@ -95,7 +96,7 @@ export const AdminAuthController = () => {
       await notifyUser({
         sendEmailNotification: true,
         title: "OTP for Admin Login",
-        userDetails: existingAdmin as any,
+        userDetails: existingAdmin as unknown as IAdmin,
         message: `Use <b>${existingAdmin.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}. If you did not attempt to login, please contact support`,
       });
 
@@ -125,7 +126,7 @@ export const AdminAuthController = () => {
     }
   };
 
-  const Logout = async (req: Request, res: Response) => {
+  const Logout = async (req: CustomRequest, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -149,7 +150,7 @@ export const AdminAuthController = () => {
   };
 
   const VerifyOTP = async (
-    req: Request<never, never, AdminVerifyOTPRequestBody>,
+    req: CustomRequest<never, any, AdminVerifyOTPRequestBody>,
     res: Response,
   ) => {
     try {
@@ -158,7 +159,7 @@ export const AdminAuthController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { email, otp } = req.body;
-      const { ipAddress, userAgent } = getClientIPAndUserAgent(req as any);
+      const { ipAddress, userAgent } = getClientIPAndUserAgent(req);
 
       const admin = await AdminModel.findOne({ email });
       if (!admin) {
@@ -239,7 +240,7 @@ export const AdminAuthController = () => {
   };
 
   const ResendOTP = async (
-    req: Request<never, never, AdminResendOTPRequestBody>,
+    req: CustomRequest<never, any, AdminResendOTPRequestBody>,
     res: Response,
   ) => {
     try {
@@ -264,7 +265,7 @@ export const AdminAuthController = () => {
       await notifyUser({
         sendEmailNotification: true,
         title: "OTP for Admin Login",
-        userDetails: admin as any,
+        userDetails: admin as unknown as IAdmin,
         message: `Use <b>${otp}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}. If you did not attempt to login, please contact support`,
       });
 
@@ -278,7 +279,7 @@ export const AdminAuthController = () => {
   };
 
   const ResetPassword = async (
-    req: Request<never, never, AdminResetPasswordRequestBody>,
+    req: CustomRequest<never, any, AdminResetPasswordRequestBody>,
     res: Response,
   ) => {
     try {
@@ -303,7 +304,7 @@ export const AdminAuthController = () => {
       await notifyUser({
         sendEmailNotification: true,
         title: "OTP for Password Reset",
-        userDetails: admin as any,
+        userDetails: admin as unknown as IAdmin,
         message: `Use <b>${admin.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}. If you did not attempt to login, please contact support`,
       });
 
@@ -330,7 +331,7 @@ export const AdminAuthController = () => {
   };
 
   const ResetPasswordUpdate = async (
-    req: Request<never, never, AdminResetPasswordUpdateRequestBody>,
+    req: CustomRequest<never, any, AdminResetPasswordUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -371,7 +372,7 @@ export const AdminAuthController = () => {
   };
 
   const ChangePassword = async (
-    req: Request<never, never, AdminChangePasswordRequestBody>,
+    req: CustomRequest<never, any, AdminChangePasswordRequestBody>,
     res: Response,
   ) => {
     try {
@@ -380,7 +381,7 @@ export const AdminAuthController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { currentPassword, newPassword } = req.body;
-      const admin = await getAdminUserDetails(req as any);
+      const admin = await getAdminUserDetails(req);
 
       // Verify current password
       const isCurrentPasswordValid = await bcryptjs.compare(
@@ -409,16 +410,16 @@ export const AdminAuthController = () => {
     }
   };
 
-  const GetProfile = async (req: Request, res: Response) => {
+  const GetProfile = async (req: CustomRequest, res: Response) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const admin = await getAdminUserDetails(req as any);
+      const admin = await getAdminUserDetails(req);
 
       return sendSuccessFeedback(res, "Profile retrieved", { admin });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -427,7 +428,7 @@ export const AdminAuthController = () => {
   };
 
   const UpdateProfile = async (
-    req: Request<never, never, AdminProfileUpdateRequestBody>,
+    req: CustomRequest<never, any, AdminProfileUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -435,7 +436,7 @@ export const AdminAuthController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const admin = await getAdminUserDetails(req as any);
+      const admin = await getAdminUserDetails(req);
 
       const { firstName, lastName, phoneNumber } = req.body;
 
@@ -459,7 +460,7 @@ export const AdminAuthController = () => {
       return sendSuccessFeedback(res, "Profile updated successfully", {
         admin,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),

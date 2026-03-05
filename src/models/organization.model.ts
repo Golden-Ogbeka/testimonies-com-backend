@@ -87,6 +87,10 @@ organizationSchema.index({
   businessName: "text",
 });
 
+// Added Optimization Indexes
+organizationSchema.index({ active: 1, accountType: 1 });
+organizationSchema.index({ subscriptionType: 1, active: 1 });
+
 // Hide Password in responses
 organizationSchema.methods.toJSON = function () {
   let obj = this.toObject();

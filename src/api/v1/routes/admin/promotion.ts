@@ -41,7 +41,7 @@ AdminPromotionRouter.get(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetSinglePromotion as any,
+  Controller.GetSinglePromotion,
 );
 
 // Create a new promotion (this creates a promotion request for another admin's approval)
@@ -114,7 +114,7 @@ AdminPromotionRouter.put(
       .isBoolean()
       .toBoolean(),
   ],
-  Controller.UpdatePromotion as any,
+  Controller.UpdatePromotion,
 );
 
 // Deactivate a promotion
@@ -126,7 +126,7 @@ AdminPromotionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.DeactivatePromotion as any,
+  Controller.DeactivatePromotion,
 );
 
 // Activate a promotion
@@ -138,7 +138,7 @@ AdminPromotionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.ActivatePromotion as any,
+  Controller.ActivatePromotion,
 );
 
 // Flag promotion
@@ -155,7 +155,7 @@ AdminPromotionRouter.post(
       .isLength({ min: 5 })
       .withMessage("Flag reason must be at least 5 characters long"),
   ],
-  Controller.FlagPromotion as any,
+  Controller.FlagPromotion,
 );
 
 // Unflag promotion
@@ -167,7 +167,7 @@ AdminPromotionRouter.post(
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
   ],
-  Controller.UnflagPromotion as any,
+  Controller.UnflagPromotion,
 );
 
 // Get all flagged promotions

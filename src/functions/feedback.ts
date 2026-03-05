@@ -114,7 +114,20 @@ export const sendSuccessFeedback = (
   status?: number,
 ) => {
   const reqId = getRequestId(res);
-  const payload = { message, ...additionalObjects };
+
+  let data: any = additionalObjects || {};
+  const keys = Object.keys(data);
+  // If there's only one key (besides meta/requestId) and it's not and array/spread already
+  // we can consider unwrapping it for the 'data' property
+  if (keys.length === 1 && !["meta", "requestId"].includes(keys[0])) {
+    data = data[keys[0]];
+  }
+
+  const payload = {
+    message,
+    data,
+    ...additionalObjects,
+  };
   if (reqId) (payload as Record<string, unknown>).requestId = reqId;
   return res.status(status || 200).json(payload);
 };

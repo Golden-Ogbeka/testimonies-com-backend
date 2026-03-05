@@ -1,20 +1,20 @@
-import { Request } from "express";
 import jwt from "jsonwebtoken";
 // import AdminModel from "../models/admin.model";
 import { UAParser } from "ua-parser-js";
 import AdminModel, { IAdmin } from "../models/admin.model";
 import OrganizationModel, { IOrganization } from "../models/organization.model";
 import UserModel, { IUser } from "../models/user.model";
+import { CustomRequest, JWTPayload } from "../types";
 
-export const getUserDetails = async (req: Request) => {
+export const getUserDetails = async (req: CustomRequest) => {
   const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
-  const tokenData: any = jwt.verify(
+  const tokenData = jwt.verify(
     authorization as string,
     process.env.JWT_SECRET || "",
-  );
+  ) as JWTPayload;
 
   if (!tokenData) throw new Error("Unauthorized");
 
@@ -31,28 +31,28 @@ export const getUserDetails = async (req: Request) => {
   return details as IUser | IOrganization;
 };
 
-export const getTokenData = (req: Request) => {
+export const getTokenData = (req: CustomRequest) => {
   const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
-  const tokenData: any = jwt.verify(
+  const tokenData = jwt.verify(
     authorization as string,
     process.env.JWT_SECRET || "",
-  );
+  ) as JWTPayload;
 
   return tokenData || null;
 };
 
-export const getAdminUserDetails = async (req: Request) => {
+export const getAdminUserDetails = async (req: CustomRequest) => {
   const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
-  const tokenData: any = jwt.verify(
+  const tokenData = jwt.verify(
     authorization as string,
     process.env.JWT_SECRET || "",
-  );
+  ) as JWTPayload;
 
   if (!tokenData) throw new Error("Unauthorized");
 
@@ -108,7 +108,7 @@ export async function getLocationFromIP(ip: string | undefined) {
   }
 }
 
-export const getClientIPAndUserAgent = (req: Request) => {
+export const getClientIPAndUserAgent = (req: CustomRequest) => {
   const userAgent = req.headers["user-agent"] || "unknown";
   const ipAddress =
     req.headers["x-forwarded-for"] ||

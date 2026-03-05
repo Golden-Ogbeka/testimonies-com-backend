@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
 import { getAdminUserDetails } from "../../../../functions/auth";
 import {
@@ -8,6 +8,7 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import PromotionModel from "../../../../models/promotion.model";
+import { CustomRequest } from "../../../../types/express";
 import {
   IdParams,
   PaginationQuery,
@@ -18,29 +19,35 @@ import {
 import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminPromotionController = () => {
-  const GetAllPromotions = async (req: Request, res: Response) => {
+  const GetAllPromotions = async (
+    req: CustomRequest<
+      never,
+      any,
+      any,
+      PaginationQuery & {
+        type?: string;
+        targetAudience?: string;
+        isActive?: string;
+        isFlagged?: string;
+      }
+    >,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const {
-        page = 1,
-        limit = 20,
-        type,
-        targetAudience,
-        isActive,
-        isFlagged,
-      } = req.query;
+      const { type, targetAudience, isActive, isFlagged } = req.query;
 
       // Build filter
-      const filter: any = {};
+      const filter: Record<string, any> = {};
       if (type) filter.type = type;
       if (targetAudience) filter.targetAudience = targetAudience;
       if (isActive !== undefined) filter.isActive = isActive === "true";
       if (isFlagged !== undefined) filter.isFlagged = isFlagged === "true";
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const promotions = await PromotionModel.paginate(filter, {
         ...paginationOptions,
@@ -58,7 +65,10 @@ export const AdminPromotionController = () => {
     }
   };
 
-  const GetSinglePromotion = async (req: Request<IdParams>, res: Response) => {
+  const GetSinglePromotion = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -86,7 +96,7 @@ export const AdminPromotionController = () => {
   };
 
   const CreatePromotion = async (
-    req: Request<never, never, PromotionCreateRequestBody>,
+    req: CustomRequest<never, any, PromotionCreateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -96,7 +106,7 @@ export const AdminPromotionController = () => {
 
       const { title, description, type, targetAudience, startDate, endDate } =
         req.body;
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       // Validate dates
       if (endDate && new Date(startDate) >= new Date(endDate)) {
@@ -144,7 +154,7 @@ export const AdminPromotionController = () => {
   };
 
   const UpdatePromotion = async (
-    req: Request<IdParams, never, PromotionUpdateRequestBody>,
+    req: CustomRequest<IdParams, any, PromotionUpdateRequestBody>,
     res: Response,
   ) => {
     try {
@@ -163,7 +173,7 @@ export const AdminPromotionController = () => {
         isActive,
       } = req.body;
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
 
       const updatedBy = adminDetails?._id;
 
@@ -172,7 +182,7 @@ export const AdminPromotionController = () => {
         return sendErrorFeedback(res, 404, "Promotion not found");
       }
 
-      const updateData: any = {};
+      const updateData: Record<string, any> = {};
       if (title) updateData.title = title;
       if (description) updateData.description = description;
       if (type) updateData.type = type;
@@ -199,7 +209,10 @@ export const AdminPromotionController = () => {
     }
   };
 
-  const DeactivatePromotion = async (req: Request<IdParams>, res: Response) => {
+  const DeactivatePromotion = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -223,7 +236,10 @@ export const AdminPromotionController = () => {
     }
   };
 
-  const ActivatePromotion = async (req: Request<IdParams>, res: Response) => {
+  const ActivatePromotion = async (
+    req: CustomRequest<IdParams>,
+    res: Response,
+  ) => {
     try {
       // check for validation errors
       const errors = validationResult(req);
@@ -248,7 +264,7 @@ export const AdminPromotionController = () => {
   };
 
   const FlagPromotion = async (
-    req: Request<IdParams, never, PromotionFlagRequestBody>,
+    req: CustomRequest<IdParams, any, PromotionFlagRequestBody>,
     res: Response,
   ) => {
     try {
@@ -256,7 +272,7 @@ export const AdminPromotionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const adminDetails = await getAdminUserDetails(req as any);
+      const adminDetails = await getAdminUserDetails(req);
       const { id } = req.params;
       const { reason } = req.body;
 
@@ -287,7 +303,7 @@ export const AdminPromotionController = () => {
   };
 
   const UnflagPromotion = async (
-    req: Request<IdParams, never, PromotionFlagRequestBody>,
+    req: CustomRequest<IdParams, any, PromotionFlagRequestBody>,
     res: Response,
   ) => {
     try {
@@ -324,7 +340,7 @@ export const AdminPromotionController = () => {
   };
 
   const GetAllFlaggedPromotions = async (
-    req: Request<never, never, never, PaginationQuery>,
+    req: CustomRequest<never, any, any, PaginationQuery>,
     res: Response,
   ) => {
     try {
@@ -332,7 +348,7 @@ export const AdminPromotionController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const paginationOptions = getPaginationOptions(req as any);
+      const paginationOptions = getPaginationOptions(req);
 
       const promotions = await PromotionModel.paginate(
         { isFlagged: true },

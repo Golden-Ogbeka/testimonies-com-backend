@@ -1,4 +1,4 @@
-import express from "express";
+import { PaginateOptions } from "mongoose";
 import { PAGE_LIMIT } from "../functions/env";
 
 export interface PaginationCustomLabels {
@@ -38,29 +38,29 @@ export const paginationCustomLabels: PaginationCustomLabels = {
   nextPage: "nextPage",
   prevPage: "prevPage",
   totalPages: "totalPages",
-  // pagingCounter: 'slNo',
   meta: "pagination",
 };
 
 export const getPaginationOptions = (
-  req: express.Request<
-    never,
-    never,
-    unknown,
-    { page: number; limit?: number; from?: string; to?: string }
-  >,
-  sortBy?: {},
-) => {
-  const { page = 1, limit } = req.query;
+  req: { query: { page?: any; limit?: any } },
+  sortBy?: Record<string, number | string>,
+  populate?: string | string[] | any[] | any,
+): PaginateOptions => {
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  const limit = req.query.limit
+    ? parseInt(req.query.limit as string, 10)
+    : Number(PAGE_LIMIT);
 
-  const defaultLimit: number = Number(PAGE_LIMIT);
-
-  const pageOptions = {
+  const pageOptions: PaginateOptions = {
     page,
-    limit: limit ?? defaultLimit,
-    customLabels: paginationCustomLabels,
+    limit,
+    customLabels: paginationCustomLabels as any,
     sort: sortBy ? sortBy : { createdAt: -1 },
   };
+
+  if (populate) {
+    pageOptions.populate = populate;
+  }
 
   return pageOptions;
 };
