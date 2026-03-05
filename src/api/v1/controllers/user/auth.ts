@@ -75,7 +75,7 @@ export const UserAuthController = () => {
         password,
       } = req.body;
 
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           $or: [
             { email: businessEmail },
@@ -113,7 +113,7 @@ export const UserAuthController = () => {
         //     geocodedAddress[0].geometry.location.lng,
         //   ];
         // }
-        let newOrganization = await OrganizationModel.create({
+        const newOrganization = await OrganizationModel.create({
           password: hash,
           businessAddress,
           businessEmail,
@@ -155,7 +155,7 @@ export const UserAuthController = () => {
       const { username, password, email, phoneNumber, firstName, lastName } =
         req.body;
 
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           $or: [{ email }, { phoneNumber }, { username }],
         })) ||
@@ -183,7 +183,7 @@ export const UserAuthController = () => {
 
       // Hash password
       bcryptjs.hash(password!, 8, async function (err, hash) {
-        let newUser = await UserModel.create({
+        const newUser = await UserModel.create({
           password: hash,
           email,
           phoneNumber,
@@ -713,7 +713,7 @@ export const UserAuthController = () => {
       const { email } = req.body;
 
       // check if user exists
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           email,
           active: true,
@@ -762,7 +762,7 @@ export const UserAuthController = () => {
       const { email } = req.body;
 
       // check if user exists
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           email,
           active: true,
@@ -820,7 +820,7 @@ export const UserAuthController = () => {
       const { email, newPassword, verificationCode } = req.body;
 
       // check if user exists
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           email,
           verificationCode,
@@ -994,7 +994,7 @@ export const UserAuthController = () => {
               );
           }
 
-          let newUser = await UserModel.create({
+          const newUser = await UserModel.create({
             email,
             firstName,
             lastName,
@@ -1172,6 +1172,28 @@ export const UserAuthController = () => {
       );
     }
   };
+  const Logout = async (req: Request, res: Response) => {
+    try {
+      // check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const authorization = req.headers.authorization;
+      if (!authorization) {
+        return sendErrorFeedback(res, 401, "No token provided");
+      }
+
+      // Remove token from blacklist or invalidate session
+      await AuthSessionModel.deleteMany({ token: authorization });
+
+      return sendSuccessFeedback(res, "Logged out successfully");
+    } catch (error) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+  };
 
   return {
     SignupOrganization,
@@ -1193,5 +1215,6 @@ export const UserAuthController = () => {
     CheckUsername,
     GetSession,
     ResendResetPasswordOTP,
+    Logout,
   };
 };

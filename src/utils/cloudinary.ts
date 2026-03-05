@@ -1,11 +1,11 @@
+import { v2 as cloudinary } from "cloudinary";
 import * as dotenv from "dotenv";
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import multer, { FileFilterCallback } from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import { PRODUCT_NAME } from "../functions/env";
 import { sendErrorFeedback } from "../functions/feedback";
-const cloudinary = require("cloudinary").v2;
-// import { v2 as cloudinary } from 'cloudinary';
+import { CustomRequest } from "../types";
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ cloudinary.config({
 
 // File Filter for Images
 const imageFileFilter = (
-  req: Request,
+  req: CustomRequest,
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
@@ -35,7 +35,7 @@ const imageFileFilter = (
 
 // File Filter for Documents
 const documentFileFilter = (
-  req: Request,
+  req: CustomRequest,
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
@@ -70,7 +70,7 @@ const documentFileFilter = (
 
 // File Filter for Media (Images and Videos)
 const mediaFileFilter = (
-  req: Request,
+  req: CustomRequest,
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
@@ -98,7 +98,7 @@ const mediaFileFilter = (
 
 // File Filter for Media with count limit
 const testimonyMediaFileFilter = (
-  req: Request & { fileCount?: number },
+  req: CustomRequest,
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
@@ -139,7 +139,7 @@ const testimonyMediaFileFilter = (
 
 // File Filter for Videos
 const videoFileFilter = (
-  req: Request,
+  req: CustomRequest,
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
@@ -245,17 +245,19 @@ const videoParser = multer({
 });
 
 const multerErrorHandler = (
-  err: any,
-  req: Request,
+  err: unknown,
+  req: CustomRequest,
   res: Response,
   next: NextFunction,
-) => {
+): void => {
   if (err instanceof multer.MulterError) {
     // Multer-specific errors
     sendErrorFeedback(res, 400, `File upload error: ${err.message}`);
-  } else if (err) {
+  } else if (err instanceof Error) {
     // General errors
     sendErrorFeedback(res, 400, err.message);
+  } else if (err) {
+    sendErrorFeedback(res, 400, "An unknown error occurred during file upload");
   } else {
     next();
   }

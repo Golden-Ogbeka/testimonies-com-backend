@@ -280,7 +280,19 @@ UserAuthRouter.post(
 
     body("newPassword", "New password is required")
       .exists({ checkFalsy: true, checkNull: true })
-      .trim(),
+      .trim()
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters long")
+      .matches(/[A-Z]/)
+      .withMessage("Password must contain at least one uppercase letter")
+      .matches(/[a-z]/)
+      .withMessage("Password must contain at least one lowercase letter")
+      .matches(/[0-9]/)
+      .withMessage("Password must contain at least one number")
+      .matches(/[!@#$%^&*]/)
+      .withMessage(
+        "Password must contain at least one special character (!@#$%^&*)",
+      ),
     body("verificationCode", "Verification code is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim(),
@@ -336,5 +348,7 @@ UserAuthRouter.delete(
   ],
   Controller.DeleteSession,
 );
+
+UserAuthRouter.post("/logout", isUserOrOrganization, Controller.Logout);
 
 export default UserAuthRouter;

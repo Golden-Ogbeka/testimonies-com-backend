@@ -1,3 +1,7 @@
+/**
+ * Environment variables loaded from .env via dotenv.
+ * All exports are raw process.env values (or derived). Use for PORT, JWT_SECRET, API keys, etc.
+ */
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -11,31 +15,51 @@ export const OTP_EXPIRY = process.env.OTP_EXPIRY;
 export const DEFAULT_JOB_TIMER = process.env.DEFAULT_JOB_TIMER;
 export const PRODUCT_NAME = process.env.PRODUCT_NAME;
 export const APP_THEME = process.env.APP_THEME;
+export const NODE_ENV = process.env.NODE_ENV;
 
-//  Email Setup
+// Email
 export const EMAIL_HOST = process.env.EMAIL_HOST;
+export const EMAIL_PORT = process.env.EMAIL_PORT || "587";
 export const EMAIL_USER = process.env.EMAIL_USER;
 export const EMAIL_PASS = process.env.EMAIL_PASS;
 export const EMAIL_FROM = process.env.EMAIL_FROM;
 export const EMAIL_API_KEY = process.env.EMAIL_API_KEY;
-export const EMAIL_PORT = process.env.EMAIL_PORT;
 
-//  Cloudinary
-export const CLOUD_NAME = process.env.CLOUD_NAME;
-export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
-export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
-
-//  Frontend URLs
+// Frontend URLs
 export const ADMIN_DASHBOARD_URL = process.env.ADMIN_DASHBOARD_URL;
 export const WEBSITE_URL = process.env.WEBSITE_URL;
+export const CORS_ORIGINS = process.env.CORS_ORIGINS?.trim() ?? "";
 
-// SMS
+/** Public base URL of this API server (e.g. https://api.example.com). Used for startup console links and any absolute URLs. If unset, falls back to http://localhost:PORT. */
+export const BASE_URL = (() => {
+  const raw = process.env.BASE_URL?.trim();
+  return raw ? raw.replace(/\/$/, "") : undefined;
+})();
+
+// Stripe
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+
+// Paystack
+export const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+
+// Flutterwave
+export const FLUTTERWAVE_SECRET_KEY = process.env.FLUTTERWAVE_SECRET_KEY;
+export const FLUTTERWAVE_WEBHOOK_SECRET =
+  process.env.FLUTTERWAVE_WEBHOOK_SECRET;
+
+// SMS / Twilio
 export const SMS_BASE_URL = process.env.SMS_BASE_URL;
 export const SMS_SENDER_ID = process.env.SMS_SENDER_ID;
 export const SMS_API_KEY = process.env.SMS_API_KEY;
 export const TWILIO_SMS_SENDER_ID = process.env.TWILIO_SMS_SENDER_ID;
 export const TWILIO_SMS_API_KEY = process.env.TWILIO_SMS_API_KEY;
 export const TWILIO_SMS_PHONE_NUMBER = process.env.TWILIO_SMS_PHONE_NUMBER;
+
+// Cloudinary (profile image upload)
+export const CLOUD_NAME = process.env.CLOUD_NAME;
+export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 // Google APIS
 export const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
@@ -56,5 +80,10 @@ export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 export const GOOGLE_AUTH_REDIRECT = process.env.GOOGLE_AUTH_REDIRECT;
 
-//  Clock in Distance
+// Clock in Distance
 export const MAX_CLOCK_IN_DISTANCE = process.env.MAX_CLOCK_IN_DISTANCE;
+
+/** When true and NODE_ENV=production, redirect HTTP to HTTPS (use when not behind a proxy that does this). */
+export const ENFORCE_HTTPS_REDIRECT =
+  process.env.ENFORCE_HTTPS_REDIRECT === "true" ||
+  process.env.ENFORCE_HTTPS_REDIRECT === "1";

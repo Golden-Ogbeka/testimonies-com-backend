@@ -1,6 +1,7 @@
 import bcryptjs from "bcryptjs";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { validationResult } from "express-validator";
+import { ParamsDictionary } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
 import { Types } from "mongoose";
 import { getUserDetails } from "../../../../functions/auth";
@@ -18,17 +19,22 @@ import TestimonyReplyModel from "../../../../models/testimony-reply.model";
 import TestimonyViewModel from "../../../../models/testimony-view.model";
 import TestimonyModel, { ITestimony } from "../../../../models/testimony.model";
 import {
+  AuthUserRequest,
+  CreateTestimonyRequestBody,
   CustomPaginateResult,
-  getPaginationOptions,
-} from "../../../../utils/pagination";
+  CustomRequest,
+  ReplyToTestimonyRequestBody,
+  UpdateTestimonyRequestBody,
+} from "../../../../types";
+import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const UserTestimonyController = () => {
-  const GetPublicTestimonies = async (req: Request, res: Response) => {
+  const GetPublicTestimonies = async (req: CustomRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const options = getPaginationOptions(req as any);
+      const options = getPaginationOptions(req);
 
       const result = (await TestimonyModel.paginate(
         {
@@ -59,7 +65,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Public testimonies retrieved", {
         testimonies: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -67,7 +73,7 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const GetPublicTestimony = async (req: Request, res: Response) => {
+  const GetPublicTestimony = async (req: CustomRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
@@ -100,7 +106,7 @@ export const UserTestimonyController = () => {
       }
 
       return sendSuccessFeedback(res, "Testimony retrieved", { testimony });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -109,15 +115,17 @@ export const UserTestimonyController = () => {
   };
 
   const GetTestimonies = async (
-    req: Request<
+    req: CustomRequest<
       never,
-      never,
+      any,
       never,
       {
         tag?: string;
         keyword?: string;
         type?: "broadcast" | "normal";
         userId?: string;
+        page?: string;
+        limit?: string;
       }
     >,
     res: Response,
@@ -128,11 +136,11 @@ export const UserTestimonyController = () => {
         return sendValidationErrorFeedback(res, errors);
       }
 
-      const userDetails = await getUserDetails(req as any);
-      const options = getPaginationOptions(req as any);
+      const userDetails = await getUserDetails(req);
+      const options = getPaginationOptions(req);
       const { offset } = paginate({
-        page: options.page,
-        limit: options.limit,
+        page: options.page ?? 1,
+        limit: options.limit ?? 20,
       });
 
       const { tag, keyword, type, userId } = req.query;
@@ -276,7 +284,7 @@ export const UserTestimonyController = () => {
               },
               { $sort: { isFollowed: -1, createdAt: -1 } },
               { $skip: offset },
-              { $limit: options.limit },
+              { $limit: options.limit ?? 20 },
               {
                 $project: {
                   blocked: 0,
@@ -300,24 +308,24 @@ export const UserTestimonyController = () => {
       const testimonies = result?.results ?? [];
       const totalCount = result?.total?.[0]?.total ?? 0;
 
-      const totalPages = Math.ceil(totalCount / options.limit);
-      const hasNextPage = offset + options.limit < totalCount;
-      const hasPrevPage = options.page > 1;
+      const totalPages = Math.ceil(totalCount / (options.limit ?? 20));
+      const hasNextPage = offset + (options.limit ?? 20) < totalCount;
+      const hasPrevPage = (options.page ?? 1) > 1;
 
       return sendSuccessFeedback(res, "Testimonies retrieved", {
         testimonies: {
           results: testimonies,
           totalResults: totalCount,
-          resultsPerPage: options.limit,
-          currentPage: options.page,
+          resultsPerPage: options.limit ?? 20,
+          currentPage: options.page ?? 1,
           totalPages,
-          nextPage: hasNextPage ? options.page + 1 : null,
-          prevPage: hasPrevPage ? options.page - 1 : null,
+          nextPage: hasNextPage ? (options.page ?? 1) + 1 : null,
+          prevPage: hasPrevPage ? (options.page ?? 1) - 1 : null,
           hasNextPage,
           hasPrevPage,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -326,16 +334,19 @@ export const UserTestimonyController = () => {
   };
 
   const GetTestimony = async (
-    req: Request<{
-      id: string;
-    }>,
+    req: CustomRequest<
+      {
+        id: string;
+      },
+      any
+    >,
     res: Response,
   ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
@@ -368,14 +379,14 @@ export const UserTestimonyController = () => {
       // Check if testimony has been viewed already
       const alreadyViewed = await TestimonyViewModel.findOne({
         testimonyId: testimony._id,
-        userId: userDetails?._id,
+        userId: userDetails._id,
       }).lean();
 
       if (!alreadyViewed) {
         await TestimonyViewModel.create({
           testimonyId: testimony._id,
-          userId: userDetails?._id,
-          userType: userDetails?.accountType,
+          userId: userDetails._id,
+          userType: userDetails.accountType,
         });
         testimony.viewsCount = (testimony.viewsCount || 0) + 1;
         await testimony.save();
@@ -387,7 +398,7 @@ export const UserTestimonyController = () => {
           isLiked: !!isLiked,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -396,25 +407,14 @@ export const UserTestimonyController = () => {
   };
 
   const CreateTestimony = async (
-    req: Request<
-      never,
-      never,
-      {
-        title: string;
-        description: string;
-        tags?: string[];
-        isBroadcast?: boolean;
-        broadcastOrganizationId?: string;
-        isSecret?: boolean;
-      }
-    >,
+    req: AuthUserRequest<never, any, CreateTestimonyRequestBody>,
     res: Response,
   ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const {
         title,
@@ -425,7 +425,7 @@ export const UserTestimonyController = () => {
         isSecret,
       } = req.body;
 
-      const files = req.files as Express.Multer.File[];
+      const files = req.files as Express.Multer.File[] | undefined;
       const uploadedMediaURLs: string[] = [];
       if (files && files.length > 0) {
         for (const file of files) {
@@ -468,7 +468,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Testimony created successfully", {
         testimony,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -477,19 +477,12 @@ export const UserTestimonyController = () => {
   };
 
   const UpdateTestimony = async (
-    req: Request<
+    req: AuthUserRequest<
       {
         id: string;
       },
-      never,
-      {
-        title?: string;
-        description?: string;
-        tags?: string[];
-        isBroadcast?: boolean;
-        broadcastOrganizationId?: string;
-        isSecret?: boolean;
-      }
+      any,
+      UpdateTestimonyRequestBody
     >,
     res: Response,
   ) => {
@@ -497,7 +490,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
       const {
@@ -530,11 +523,9 @@ export const UserTestimonyController = () => {
         broadcastOrganizationId !== undefined &&
         broadcastOrganizationId !== null
       ) {
-        typeof broadcastOrganizationId === "string"
-          ? new Types.ObjectId(broadcastOrganizationId)
-          : broadcastOrganizationId;
-      } else {
-        testimony.broadcastOrganizationId = testimony.broadcastOrganizationId;
+        testimony.broadcastOrganizationId = new Types.ObjectId(
+          broadcastOrganizationId,
+        ) as any;
       }
       testimony.isSecret =
         isSecret !== undefined ? isSecret : testimony.isSecret;
@@ -545,7 +536,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Testimony updated successfully", {
         testimony,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -554,7 +545,7 @@ export const UserTestimonyController = () => {
   };
 
   const DeleteTestimony = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -563,7 +554,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
@@ -584,7 +575,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Testimony deleted successfully", {
         testimony,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -593,12 +584,12 @@ export const UserTestimonyController = () => {
   };
 
   const ReplyToTestimony = async (
-    req: Request<
-      { id: string },
-      never,
+    req: AuthUserRequest<
       {
-        description: string;
-      }
+        id: string;
+      },
+      any,
+      ReplyToTestimonyRequestBody
     >,
     res: Response,
   ) => {
@@ -606,10 +597,10 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
-      const { description } = req.body;
+      const { content } = req.body;
 
       const testimony = await TestimonyModel.findOne({
         _id: id,
@@ -624,19 +615,19 @@ export const UserTestimonyController = () => {
       const reply = await TestimonyReplyModel.create({
         testimonyId: testimony._id,
         userId: userDetails._id,
-        content: description,
+        content: content,
         likesCount: 0,
         userType: userDetails.accountType,
       });
 
       // Update testimony replies count
-      testimony.repliesCount += 1;
+      testimony.repliesCount = (testimony.repliesCount || 0) + 1;
       await testimony.save();
 
       return sendSuccessFeedback(res, "Reply created successfully", {
         reply,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -645,12 +636,12 @@ export const UserTestimonyController = () => {
   };
 
   const UpdateReply = async (
-    req: Request<
-      { id: string },
-      never,
+    req: AuthUserRequest<
       {
-        description: string;
-      }
+        id: string;
+      },
+      any,
+      ReplyToTestimonyRequestBody
     >,
     res: Response,
   ) => {
@@ -658,29 +649,29 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
-      const { description } = req.body;
+      const { content } = req.body;
 
       const reply = await TestimonyReplyModel.findOne({
         _id: id,
         userId: userDetails._id,
         isDeleted: false,
-      }).select("-isDeleted -deletedAt -deletedBy");
+      });
 
       if (!reply) {
         return sendErrorFeedback(res, 404, "Reply not found");
       }
 
-      reply.content = description || reply.content;
+      reply.content = content || reply.content;
       reply.isEdited = true;
       await reply.save();
 
       return sendSuccessFeedback(res, "Reply updated successfully", {
         reply,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -689,7 +680,7 @@ export const UserTestimonyController = () => {
   };
 
   const DeleteReply = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -698,8 +689,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
-
+      const userDetails = await getUserDetails(req);
       const { id } = req.params;
 
       const reply = await TestimonyReplyModel.findOne({
@@ -726,7 +716,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Reply deleted successfully", {
         reply,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -735,7 +725,7 @@ export const UserTestimonyController = () => {
   };
 
   const LikeTestimony = async (
-    req: Request<{
+    req: CustomRequest<{
       id: string;
     }>,
     res: Response,
@@ -744,7 +734,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
@@ -794,13 +784,15 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const UnlikeTestimony = async (req: Request, res: Response) => {
+  const UnlikeTestimony = async (
+    req: AuthUserRequest<{ id: string }>,
+    res: Response,
+  ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
-
+      const userDetails = await getUserDetails(req);
       const { id } = req.params;
 
       const testimony = await TestimonyModel.findOne({
@@ -832,7 +824,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Testimony unliked successfully", {
         testimony,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -841,9 +833,17 @@ export const UserTestimonyController = () => {
   };
 
   const GetTestimonyLikes = async (
-    req: Request<{
-      id: string;
-    }>,
+    req: AuthUserRequest<
+      {
+        id: string;
+      },
+      any,
+      any,
+      {
+        page?: string;
+        limit?: string;
+      }
+    >,
     res: Response,
   ) => {
     try {
@@ -851,7 +851,7 @@ export const UserTestimonyController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { id } = req.params;
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const testimony = await TestimonyModel.findOne({
         _id: id,
@@ -863,7 +863,7 @@ export const UserTestimonyController = () => {
         return sendErrorFeedback(res, 404, "Testimony not found");
       }
 
-      const options = getPaginationOptions(req as any);
+      const options = getPaginationOptions(req);
 
       const likes = await TestimonyLikeModel.paginate(
         {
@@ -878,7 +878,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Likes retrieved", {
         likes,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -887,7 +887,7 @@ export const UserTestimonyController = () => {
   };
 
   const CheckTestimonyLiked = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -896,7 +896,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
@@ -918,7 +918,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Like status retrieved", {
         isLiked: !!like,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -939,9 +939,17 @@ export const UserTestimonyController = () => {
    */
   /*******  e6f11ee0-81a0-47b3-b172-84c1695d256f  *******/
   const GetTestimonyReplies = async (
-    req: Request<{
-      id: string;
-    }>,
+    req: AuthUserRequest<
+      {
+        id: string;
+      },
+      any,
+      any,
+      {
+        page?: string;
+        limit?: string;
+      }
+    >,
     res: Response,
   ) => {
     try {
@@ -950,8 +958,8 @@ export const UserTestimonyController = () => {
 
       const { id } = req.params;
 
-      const options = getPaginationOptions(req as any);
-      const userDetails = await getUserDetails(req as any);
+      const options = getPaginationOptions(req);
+      const userDetails = await getUserDetails(req);
 
       const testimony = await TestimonyModel.findOne({
         _id: id,
@@ -979,10 +987,10 @@ export const UserTestimonyController = () => {
 
       const isLiked = await TestimonyReplyLikeModel.find({
         userId: userDetails._id,
-        replyId: { $in: result.results.map((reply) => reply._id) },
+        replyId: { $in: result.results.map((reply: any) => reply._id) },
       });
 
-      result.results = result.results.map((reply) => {
+      result.results = result.results.map((reply: any) => {
         return {
           ...reply.toObject(),
           isLiked: isLiked.some(
@@ -994,7 +1002,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Replies retrieved", {
         replies: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1003,7 +1011,7 @@ export const UserTestimonyController = () => {
   };
 
   const GetReply = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -1012,24 +1020,31 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
+      const userDetails = await getUserDetails(req);
       const { id } = req.params;
 
       const reply = await TestimonyReplyModel.findOne({
         _id: id,
         isDeleted: false,
-      })
-        .select("-isDeleted -deletedAt -deletedBy")
-        .populate("userDetails")
-        .populate("testimonyDetails");
+      }).populate(["userDetails", "testimonyDetails"]);
 
       if (!reply) {
         return sendErrorFeedback(res, 404, "Reply not found");
       }
 
-      return sendSuccessFeedback(res, "Reply retrieved", {
-        reply,
+      // Check if user liked the reply
+      const isLiked = await TestimonyReplyLikeModel.findOne({
+        replyId: reply._id,
+        userId: userDetails._id,
       });
-    } catch (error) {
+
+      return sendSuccessFeedback(res, "Reply retrieved", {
+        reply: {
+          ...reply.toObject(),
+          isLiked: !!isLiked,
+        },
+      });
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1038,7 +1053,7 @@ export const UserTestimonyController = () => {
   };
 
   const LikeReply = async (
-    req: Request<{
+    req: CustomRequest<{
       id: string;
     }>,
     res: Response,
@@ -1047,14 +1062,14 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
       const reply = await TestimonyReplyModel.findOne({
         _id: id,
         isDeleted: false,
-      }).lean();
+      });
 
       if (!reply) {
         return sendErrorFeedback(res, 404, "Reply not found");
@@ -1065,7 +1080,7 @@ export const UserTestimonyController = () => {
         replyId: reply._id,
         userId: userDetails._id,
         testimonyId: reply.testimonyId,
-      }).lean();
+      });
 
       if (existingLike) {
         return sendErrorFeedback(res, 400, "You have already liked this reply");
@@ -1095,7 +1110,7 @@ export const UserTestimonyController = () => {
   };
 
   const UnlikeReply = async (
-    req: Request<{
+    req: CustomRequest<{
       id: string;
     }>,
     res: Response,
@@ -1104,14 +1119,14 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
       const reply = await TestimonyReplyModel.findOne({
         _id: id,
         isDeleted: false,
-      }).lean();
+      });
 
       if (!reply) {
         return sendErrorFeedback(res, 404, "Reply not found");
@@ -1145,7 +1160,7 @@ export const UserTestimonyController = () => {
   };
 
   const CheckReplyLiked = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -1154,7 +1169,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const { id } = req.params;
 
@@ -1175,7 +1190,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Like status retrieved", {
         isLiked: !!like,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1184,9 +1199,17 @@ export const UserTestimonyController = () => {
   };
 
   const GetReplyLikes = async (
-    req: Request<{
-      id: string;
-    }>,
+    req: AuthUserRequest<
+      {
+        id: string;
+      },
+      any,
+      any,
+      {
+        page?: string;
+        limit?: string;
+      }
+    >,
     res: Response,
   ) => {
     try {
@@ -1204,7 +1227,7 @@ export const UserTestimonyController = () => {
         return sendErrorFeedback(res, 404, "Reply not found");
       }
 
-      const options = getPaginationOptions(req as any);
+      const options = getPaginationOptions(req);
 
       const likes = await TestimonyReplyLikeModel.paginate(
         {
@@ -1219,7 +1242,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Likes retrieved", {
         likes,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1227,13 +1250,24 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const GetMyTestimonies = async (req: Request, res: Response) => {
+  const GetMyTestimonies = async (
+    req: AuthUserRequest<
+      never,
+      any,
+      any,
+      {
+        page?: string;
+        limit?: string;
+      }
+    >,
+    res: Response,
+  ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
-      const options = getPaginationOptions(req as any);
+      const userDetails = await getUserDetails(req);
+      const options = getPaginationOptions(req);
 
       const result = (await TestimonyModel.paginate(
         {
@@ -1250,7 +1284,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "My testimonies retrieved", {
         testimonies: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1258,13 +1292,24 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const GetMyReplies = async (req: Request, res: Response) => {
+  const GetMyReplies = async (
+    req: AuthUserRequest<
+      never,
+      any,
+      any,
+      {
+        page?: string;
+        limit?: string;
+      }
+    >,
+    res: Response,
+  ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
-      const options = getPaginationOptions(req as any);
+      const userDetails = await getUserDetails(req);
+      const options = getPaginationOptions(req);
 
       const result = (await TestimonyReplyModel.paginate(
         {
@@ -1282,7 +1327,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "My replies retrieved", {
         replies: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1291,9 +1336,9 @@ export const UserTestimonyController = () => {
   };
 
   const DeleteAllTestimonies = async (
-    req: Request<
-      never,
-      never,
+    req: CustomRequest<
+      ParamsDictionary,
+      any,
       {
         password: string;
       }
@@ -1304,7 +1349,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
       const { password } = req.body;
 
       const passwordMatch = await bcryptjs.compare(
@@ -1339,9 +1384,9 @@ export const UserTestimonyController = () => {
   };
 
   const DeleteAllReplies = async (
-    req: Request<
-      never,
-      never,
+    req: CustomRequest<
+      ParamsDictionary,
+      any,
       {
         password: string;
       }
@@ -1352,7 +1397,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
       const { password } = req.body;
 
       const passwordMatch = await bcryptjs.compare(
@@ -1386,7 +1431,7 @@ export const UserTestimonyController = () => {
   };
 
   const GetTestimonyTags = async (
-    req: Request<never, never, never, { limit?: number }>,
+    req: CustomRequest<never, any, never, { limit?: string }>,
     res: Response,
   ) => {
     try {
@@ -1417,7 +1462,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Testimony tags retrieved", {
         tags: result.map((item) => item._id),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1425,12 +1470,12 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const GetTrendingTestimonies = async (req: Request, res: Response) => {
+  const GetTrendingTestimonies = async (req: CustomRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const options = getPaginationOptions(req as any);
+      const options = getPaginationOptions(req);
 
       const result = (await TestimonyModel.paginate(
         {
@@ -1461,7 +1506,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Trending testimonies retrieved", {
         testimonies: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1470,7 +1515,12 @@ export const UserTestimonyController = () => {
   };
 
   const GetUserReplies = async (
-    req: Request<{ userId: string }>,
+    req: CustomRequest<
+      { userId: string },
+      any,
+      any,
+      { page?: string; limit?: string }
+    >,
     res: Response,
   ) => {
     try {
@@ -1478,7 +1528,7 @@ export const UserTestimonyController = () => {
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
       const { userId } = req.params;
-      const options = getPaginationOptions(req as any);
+      const options = getPaginationOptions(req);
 
       const result = (await TestimonyReplyModel.paginate(
         {
@@ -1487,7 +1537,7 @@ export const UserTestimonyController = () => {
         },
         {
           ...options,
-          select: "-isDeleted -isSecret -deletedAt -deletedBy",
+          select: "-isDeleted -deletedAt -deletedBy",
           populate: ["testimonyDetails"],
           sort: { createdAt: -1 },
         },
@@ -1496,7 +1546,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "User replies retrieved", {
         replies: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1504,12 +1554,12 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const GetUserTestimonyStats = async (req: Request, res: Response) => {
+  const GetUserTestimonyStats = async (req: CustomRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
 
       const [
         testimoniesCount,
@@ -1557,7 +1607,7 @@ export const UserTestimonyController = () => {
           viewsReceivedCount,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1565,20 +1615,31 @@ export const UserTestimonyController = () => {
     }
   };
 
-  const GetBroadcastRequests = async (req: Request, res: Response) => {
+  const GetBroadcastRequests = async (
+    req: AuthUserRequest<
+      never,
+      any,
+      any,
+      {
+        page?: string;
+        limit?: string;
+      }
+    >,
+    res: Response,
+  ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
-      const options = getPaginationOptions(req as any);
+      const userDetails = await getUserDetails(req);
+      const options = getPaginationOptions(req);
 
       const result = (await TestimonyModel.paginate(
         {
           isDeleted: false,
           isBroadcast: true,
           broadcastApproved: false,
-          broadcastOrganizationId: userDetails,
+          broadcastOrganizationId: userDetails._id,
         },
         {
           ...options,
@@ -1591,7 +1652,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Broadcast requests retrieved", {
         requests: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1600,14 +1661,14 @@ export const UserTestimonyController = () => {
   };
 
   const GetBroadcastRequest = async (
-    req: Request<{ id: string }>,
+    req: AuthUserRequest<{ id: string }>,
     res: Response,
   ) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
       const { id } = req.params;
 
       const testimony = await TestimonyModel.findOne({
@@ -1627,7 +1688,7 @@ export const UserTestimonyController = () => {
       return sendSuccessFeedback(res, "Broadcast request retrieved", {
         request: testimony,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1636,7 +1697,7 @@ export const UserTestimonyController = () => {
   };
 
   const ApproveBroadcastRequest = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -1645,7 +1706,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
       const { id } = req.params;
 
       const testimony = await TestimonyModel.findOne({
@@ -1670,7 +1731,7 @@ export const UserTestimonyController = () => {
           testimony,
         },
       );
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),
@@ -1678,7 +1739,7 @@ export const UserTestimonyController = () => {
     }
   };
   const RejectBroadcastRequest = async (
-    req: Request<{
+    req: AuthUserRequest<{
       id: string;
     }>,
     res: Response,
@@ -1687,7 +1748,7 @@ export const UserTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDetails(req);
       const { id } = req.params;
 
       const testimony = await TestimonyModel.findOne({
@@ -1715,7 +1776,7 @@ export const UserTestimonyController = () => {
           testimony,
         },
       );
-    } catch (error) {
+    } catch (error: unknown) {
       return sendCatchFeedback(
         res,
         error instanceof Error ? error : new Error(String(error)),

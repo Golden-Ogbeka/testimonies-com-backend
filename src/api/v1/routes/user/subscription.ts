@@ -19,21 +19,24 @@ UserSubscriptionRouter.get(
 );
 
 // Subscribe to a plan
-UserSubscriptionRouter.post("/subscribe", Controller.Subscribe);
+UserSubscriptionRouter.post("/subscribe", Controller.Subscribe as any);
 
 // Pay for subscription plan
-UserSubscriptionRouter.post("/pay", Controller.PayForSubscription);
+UserSubscriptionRouter.post("/pay", Controller.PayForSubscription as any);
 
 // Verify subscription payment
-UserSubscriptionRouter.post("/verify-payment", Controller.VerifyPayment);
+UserSubscriptionRouter.post("/verify-payment", Controller.VerifyPayment as any);
 
 // Cancel subscription
-UserSubscriptionRouter.post("/cancel", Controller.CancelSubscription);
+UserSubscriptionRouter.post("/cancel", Controller.CancelSubscription as any);
 
 // Get user's current subscription status
-UserSubscriptionRouter.get("/status", Controller.GetSubscriptionStatus);
+UserSubscriptionRouter.get("/status", Controller.GetSubscriptionStatus as any);
 
 // Get user's subscription history
-UserSubscriptionRouter.get("/history", Controller.GetSubscriptionHistory);
+UserSubscriptionRouter.get(
+  "/history",
+  Controller.GetSubscriptionHistory as any,
+);
 
 export default UserSubscriptionRouter;

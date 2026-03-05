@@ -21,6 +21,8 @@ export interface IAuthSession {
   deviceOSVersion?: string;
   deviceModel?: string;
   deviceManufacturer?: string;
+
+  userType?: "user" | "organization" | "admin";
 }
 
 const authSessionSchema = new Schema<IAuthSession>(
@@ -49,6 +51,11 @@ const authSessionSchema = new Schema<IAuthSession>(
     deviceOSVersion: String,
     deviceModel: String,
     deviceManufacturer: String,
+    userType: {
+      type: String,
+      enum: ["user", "organization", "admin"],
+      default: "user",
+    },
   },
 
   {
@@ -60,7 +67,7 @@ const authSessionSchema = new Schema<IAuthSession>(
 
 // Hide Password in responses
 authSessionSchema.methods.toJSON = function () {
-  let obj = this.toObject();
+  const obj = this.toObject();
   delete obj.token;
 
   return obj;

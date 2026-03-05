@@ -36,6 +36,8 @@ const testimonyReplySchema = new Schema<ITestimonyReply>(
 testimonyReplySchema.index({
   content: "text",
 });
+testimonyReplySchema.index({ testimonyId: 1 });
+testimonyReplySchema.index({ userId: 1 });
 
 // Virtuals
 testimonyReplySchema.virtual("testimonyDetails", {

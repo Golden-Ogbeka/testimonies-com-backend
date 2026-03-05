@@ -19,7 +19,7 @@ UserMessagingRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetMessageHistory,
+  Controller.GetMessageHistory as any,
 );
 
 // Get list of users that can be messaged
@@ -35,11 +35,11 @@ UserMessagingRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetMessageableUsers,
+  Controller.GetMessageableUsers as any,
 );
 
 // Send a message
-UserMessagingRouter.post("/send", Controller.SendMessage);
+UserMessagingRouter.post("/send", Controller.SendMessage as any);
 
 // View user details for messaging
 UserMessagingRouter.get(
@@ -47,7 +47,7 @@ UserMessagingRouter.get(
   param("id", "User ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.GetUserForMessaging,
+  Controller.GetUserForMessaging as any,
 );
 
 // View conversation history with a specific user
@@ -66,7 +66,7 @@ UserMessagingRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.GetConversationHistory,
+  Controller.GetConversationHistory as any,
 );
 
 // Search all messages with a specific keyword
@@ -82,7 +82,7 @@ UserMessagingRouter.get(
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
   ],
-  Controller.SearchMessages,
+  Controller.SearchMessages as any,
 );
 
 // Mark conversation with user as read
@@ -91,13 +91,13 @@ UserMessagingRouter.patch(
   param("userId", "User ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.MarkConversationAsRead,
+  Controller.MarkConversationAsRead as any,
 );
 
 // Mark all conversations as read
 UserMessagingRouter.patch(
   "/conversations/read-all",
-  Controller.MarkAllConversationsAsRead,
+  Controller.MarkAllConversationsAsRead as any,
 );
 
 // Mark message as read
@@ -106,7 +106,7 @@ UserMessagingRouter.patch(
   param("id", "Message ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.MarkMessageAsRead,
+  Controller.MarkMessageAsRead as any,
 );
 
 // Delete message
@@ -115,7 +115,7 @@ UserMessagingRouter.delete(
   param("id", "Message ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.DeleteMessage,
+  Controller.DeleteMessage as any,
 );
 
 // Update message
@@ -124,7 +124,7 @@ UserMessagingRouter.put(
   param("id", "Message ID is required")
     .exists({ checkFalsy: true, checkNull: true })
     .custom((value) => isValidObjectId(value)),
-  Controller.UpdateMessage,
+  Controller.UpdateMessage as any,
 );
 
 export default UserMessagingRouter;

@@ -1,3 +1,4 @@
+import { IAdmin } from "../../../models/admin.model";
 import { IOrganization } from "../../../models/organization.model";
 import { IUser } from "../../../models/user.model";
 import { EmailAttachmentType } from "../../../types";
@@ -10,7 +11,7 @@ type BaseNotifyUserProps = {
   sendInAppNotification?: boolean;
   sendPushNotification?: boolean;
   sendEmailNotification?: boolean;
-  userDetails?: IUser | IOrganization;
+  userDetails?: IUser | IOrganization | IAdmin;
   title: string;
   message: string;
   emailAttachment?: EmailAttachmentType;
@@ -26,32 +27,40 @@ type NotifyUserSingle = {
 // Multi-user variant
 type NotifyUserMultiple = {
   isMultiple: true;
-  multipleUsers: IUser[] | IOrganization[];
+  multipleUsers: IUser[] | IOrganization[] | IAdmin[];
 } & BaseNotifyUserProps;
 
 // --- Helper functions ---
 
-const getUserEmail = (user: IUser | IOrganization): string | undefined => {
+const getUserEmail = (
+  user: IUser | IOrganization | IAdmin,
+): string | undefined => {
   if ("email" in user) return user.email;
   if ("businessEmail" in user) return user.businessEmail;
   return undefined;
 };
 
-const getUserName = (user: IUser | IOrganization): string => {
+const getUserName = (user: IUser | IOrganization | IAdmin): string => {
   if ("firstName" in user) return user.firstName;
   if ("businessName" in user) return user.businessName;
-  const emailUser = user as IUser | IOrganization;
+  const emailUser = user as IUser | IOrganization | IAdmin;
   if ("email" in emailUser) return emailUser.email;
   if ("businessEmail" in emailUser) return emailUser.businessEmail;
   return "User";
 };
 
-const getUserId = (user?: IUser | IOrganization, fallback?: string) => {
+const _getUserId = (
+  user?: IUser | IOrganization | IAdmin,
+  fallback?: string,
+) => {
   if (!user) return fallback;
   return "_id" in user ? user._id : fallback;
 };
 
-const getUserNtfToken = (user?: IUser | IOrganization, fallback?: string) => {
+const _getUserNtfToken = (
+  user?: IUser | IOrganization | IAdmin,
+  fallback?: string,
+) => {
   if (!user) return fallback ?? "";
   return "ntfToken" in user ? user.ntfToken || "" : (fallback ?? "");
 };
@@ -63,15 +72,12 @@ export const notifyUser = async (
 ): Promise<void> => {
   const {
     sendEmailNotification,
-    sendInAppNotification,
-    sendPushNotification,
     title,
     message,
     emailAttachment,
     userDetails,
     isMultiple = false,
     multipleUsers = [],
-    ...notificationProps
   } = props;
 
   // --- Email Notifications ---

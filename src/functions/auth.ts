@@ -1,19 +1,20 @@
-import { Request } from "express";
 import jwt from "jsonwebtoken";
 // import AdminModel from "../models/admin.model";
 import { UAParser } from "ua-parser-js";
+import AdminModel, { IAdmin } from "../models/admin.model";
 import OrganizationModel, { IOrganization } from "../models/organization.model";
 import UserModel, { IUser } from "../models/user.model";
+import { CustomRequest, JWTPayload } from "../types";
 
-export const getUserDetails = async (req: Request) => {
-  const authorization = req.headers.authorization;
+export const getUserDetails = async (req: CustomRequest) => {
+  const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
-  const tokenData: any = jwt.verify(
-    authorization,
+  const tokenData = jwt.verify(
+    authorization as string,
     process.env.JWT_SECRET || "",
-  );
+  ) as JWTPayload;
 
   if (!tokenData) throw new Error("Unauthorized");
 
@@ -30,39 +31,39 @@ export const getUserDetails = async (req: Request) => {
   return details as IUser | IOrganization;
 };
 
-export const getTokenData = (req: Request) => {
-  const authorization = req.headers.authorization;
+export const getTokenData = (req: CustomRequest) => {
+  const authorization = req.headers["x-jwt-token"];
 
   if (!authorization) throw new Error("Unauthorized");
 
-  const tokenData: any = jwt.verify(
-    authorization,
+  const tokenData = jwt.verify(
+    authorization as string,
     process.env.JWT_SECRET || "",
-  );
+  ) as JWTPayload;
 
   return tokenData || null;
 };
 
-// export const getAdminUserDetails = async (req: Request) => {
-//   const authorization = req.headers.authorization;
+export const getAdminUserDetails = async (req: CustomRequest) => {
+  const authorization = req.headers["x-jwt-token"];
 
-//   if (!authorization) throw new Error("Unauthorized");
+  if (!authorization) throw new Error("Unauthorized");
 
-//   const tokenData: any = jwt.verify(
-//     authorization,
-//     process.env.JWT_SECRET || "",
-//   );
+  const tokenData = jwt.verify(
+    authorization as string,
+    process.env.JWT_SECRET || "",
+  ) as JWTPayload;
 
-//   if (!tokenData) throw new Error("Unauthorized");
+  if (!tokenData) throw new Error("Unauthorized");
 
-//   const details = await AdminModel.findOne({
-//     email: tokenData?.email,
-//   });
+  const details = await AdminModel.findOne({
+    email: tokenData?.email,
+  });
 
-//   if (!details) throw new Error("Unauthorized!");
+  if (!details) throw new Error("Unauthorized!");
 
-//   return details;
-// };
+  return details as IAdmin;
+};
 
 export const extractSensitiveUserInfo = (user: IUser) => {
   delete user.password;
@@ -106,3 +107,14 @@ export async function getLocationFromIP(ip: string | undefined) {
     return null;
   }
 }
+
+export const getClientIPAndUserAgent = (req: CustomRequest) => {
+  const userAgent = req.headers["user-agent"] || "unknown";
+  const ipAddress =
+    req.headers["x-forwarded-for"] ||
+    req.socket.remoteAddress ||
+    req.ip ||
+    "unknown";
+
+  return { ipAddress, userAgent };
+};

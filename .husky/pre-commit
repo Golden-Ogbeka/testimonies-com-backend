@@ -1,2 +1,8 @@
+#!/bin/sh
+
 npm run format
 npm run type:check
+
+# Re-stage any files that were modified by format
+git add -u
+

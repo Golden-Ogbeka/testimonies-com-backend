@@ -15,7 +15,7 @@ export const UserCronDefinitions = (agenda: Agenda) => {
         const data = attrs.data as { email: string };
         const userEmail = data.email;
 
-        let existingUser =
+        const existingUser =
           (await UserModel.findOne({ email: userEmail })) ||
           (await OrganizationModel.findOne({ businessEmail: userEmail }));
         if (existingUser) {
@@ -40,7 +40,7 @@ export const UserCronDefinitions = (agenda: Agenda) => {
       const data = attrs.data as { email: string };
       const userEmail = data.email;
 
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({ email: userEmail })) ||
         (await OrganizationModel.findOne({ businessEmail: userEmail }));
       if (existingUser) {
@@ -62,7 +62,7 @@ export const UserCronDefinitions = (agenda: Agenda) => {
       const data = attrs.data as { email: string };
       const userEmail = data.email;
 
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({ email: userEmail })) ||
         (await OrganizationModel.findOne({ businessEmail: userEmail }));
       if (existingUser) {
@@ -86,7 +86,7 @@ export const UserCronDefinitions = (agenda: Agenda) => {
         const data = attrs.data as { email: string };
         const userEmail = data.email;
 
-        let existingUser =
+        const existingUser =
           (await UserModel.findOne({ email: userEmail })) ||
           (await OrganizationModel.findOne({ businessEmail: userEmail }));
         if (existingUser) {

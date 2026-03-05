@@ -61,7 +61,7 @@ const sendEmail = async ({
   try {
     const mailOptions: nodemailer.SendMailOptions & {
       template?: string;
-      context?: any;
+      context?: Record<string, string | number | boolean | undefined>;
     } = {
       from: EMAIL_FROM,
       to: recipient,

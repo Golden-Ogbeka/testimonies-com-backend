@@ -16,6 +16,9 @@ export interface ITestimony extends Document {
   broadcastApproved: boolean;
   isDeleted: boolean;
   isEdited: boolean;
+  isFlagged?: boolean;
+  flagReason?: string;
+  flaggedBy?: Schema.Types.ObjectId;
   deletedAt?: Date;
   mediaURLs?: string[];
   isSecret?: boolean;
@@ -53,6 +56,9 @@ const testimonySchema = new Schema<ITestimony>(
       enum: ["user", "broadcast-organization"],
       default: "user",
     },
+    flagReason: String,
+    isFlagged: Boolean,
+    flaggedBy: { type: Schema.Types.ObjectId },
   },
 
   {
@@ -96,6 +102,23 @@ testimonySchema.virtual("broadcastOrganizationDetails", {
   justOne: true,
 });
 
+// flagged by details
+testimonySchema.virtual("flaggedByDetails", {
+  ref: "admin",
+  localField: "flaggedBy",
+  foreignField: "_id",
+  justOne: true,
+});
+
+testimonySchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.isFlagged;
+  delete obj.flagReason;
+  delete obj.deletedBy;
+  delete obj.flaggedBy;
+
+  return obj;
+};
 testimonySchema.plugin(mongoosePaginate);
 
 const TestimonyModel = model<ITestimony, PaginateModel<ITestimony>>(

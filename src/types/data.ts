@@ -1,4 +1,5 @@
 import { Document, Types } from "mongoose";
+import { IAdmin } from "../models/admin.model";
 import { IOrganization } from "../models/organization.model";
 import { IUser } from "../models/user.model";
 
@@ -92,7 +93,7 @@ export interface NotificationType {
 
   // Virtuals
   // adminDetails?: IAdmin;
-  userDetails?: IUser | IOrganization;
+  userDetails?: IUser | IOrganization | IAdmin;
 }
 
 export type INotification = NotificationType &
@@ -141,7 +142,7 @@ export interface PushNotificationType<
   adminId?: Types.ObjectId;
   data?: T;
   // adminDetails?: IAdmin;
-  userDetails?: IUser | IOrganization;
+  userDetails?: IUser | IOrganization | IAdmin;
 }
 
 export type IPushNotification = PushNotificationType &

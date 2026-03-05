@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: testimonies-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - testimonies-network
+
+  app:
+    build: .
+    container_name: testimonies-backend
+    depends_on:
+      - mongo
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      MONGO_URI: mongodb://admin:admin@mongo:27017/testimonies_com?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_key}
+      API_KEY: ${API_KEY:-dev_api_key}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - testimonies-network
+    command: npm run dev
+
+volumes:
+  mongo_data:
+
+networks:
+  testimonies-network:
+    driver: bridge

@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { param, query } from "express-validator";
+import { body, param, query } from "express-validator";
+import { isAdmin, isSuperAdmin } from "../../../../middleware/auth";
 import { isValidObjectId } from "../../../../middleware/validation";
 import { AdminUserController } from "../../controllers/admin/user";
 
@@ -10,6 +11,7 @@ const Controller = AdminUserController();
 AdminUserRouter.get(
   "/",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -18,6 +20,20 @@ AdminUserRouter.get(
       .optional()
       .isInt({ min: 1, max: 100 })
       .withMessage("Limit must be between 1 and 100"),
+    query("isActive", "isActive must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
+    query("isFlagged", "isFlagged must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
+    query("accountType", "Account type is required")
+      .optional()
+      .isIn(["user", "organization"]),
+    query("subscriptionType", "Subscription type is required")
+      .optional()
+      .isIn(["basic", "premium", "enterprise"]),
   ],
   Controller.GetAllUsers,
 );
@@ -25,86 +41,60 @@ AdminUserRouter.get(
 // Get user by ID
 AdminUserRouter.get(
   "/details/:id",
-  param("id", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    isAdmin,
+    param("id", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
   Controller.GetSingleUser,
 );
 
 // Update user details
 AdminUserRouter.patch(
   "/:id",
-  param("id", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    isSuperAdmin,
+    param("id", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    body("isFlagged", "isFlagged must be boolean")
+      .optional()
+      .isBoolean()
+      .toBoolean(),
+  ],
   Controller.UpdateUser,
 );
 
 // Deactivate user account
 AdminUserRouter.post(
   "/deactivate/:id",
-  param("id", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
+  [
+    isSuperAdmin,
+    param("id", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+  ],
   Controller.DeactivateUser,
 );
 
 // Activate user account
 AdminUserRouter.post(
   "/activate/:id",
-  param("id", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.ActivateUser,
-);
-
-// Get user kyc applications
-AdminUserRouter.get(
-  "/kyc",
   [
-    query("page")
-      .optional()
-      .isInt({ min: 1 })
-      .withMessage("Page must be a positive integer"),
-    query("limit")
-      .optional()
-      .isInt({ min: 1, max: 100 })
-      .withMessage("Limit must be between 1 and 100"),
+    isSuperAdmin,
+    param("id", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetAllUserKYCApplications,
-);
-
-// Get user kyc application by ID
-AdminUserRouter.get(
-  "/kyc/details/:id",
-  param("id", "KYC ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetUserKYCApplication,
-);
-
-// Approve user kyc application
-AdminUserRouter.post(
-  "/kyc/approve/:id",
-  param("id", "KYC ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.ApproveUserKYCApplication,
-);
-
-// Reject user kyc application
-AdminUserRouter.post(
-  "/kyc/reject/:id",
-  param("id", "KYC ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.RejectUserKYCApplication,
+  Controller.ActivateUser,
 );
 
 // Get users' profile statistics (such as number of testimonies submitted, average ratings, etc.)
 AdminUserRouter.get(
   "/profile-stats",
   [
+    isAdmin,
     query("page")
       .optional()
       .isInt({ min: 1 })
@@ -120,35 +110,13 @@ AdminUserRouter.get(
 // Get profile statistics of a particular user by ID
 AdminUserRouter.get(
   "/profile-stats/user/:id",
-  param("id", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetUserProfileStats,
-);
-
-// Get user message statistics (such as number of messages sent, received, etc.)
-AdminUserRouter.get(
-  "/message-stats",
   [
-    query("page")
-      .optional()
-      .isInt({ min: 1 })
-      .withMessage("Page must be a positive integer"),
-    query("limit")
-      .optional()
-      .isInt({ min: 1, max: 100 })
-      .withMessage("Limit must be between 1 and 100"),
+    isAdmin,
+    param("id", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
   ],
-  Controller.GetAllUserMessageStats,
-);
-
-// Get message statistics of a particular user by ID
-AdminUserRouter.get(
-  "/message-stats/user/:id",
-  param("id", "User ID is required")
-    .exists({ checkFalsy: true, checkNull: true })
-    .custom((value) => isValidObjectId(value)),
-  Controller.GetUserMessageStats,
+  Controller.GetUserProfileStats,
 );
 
 export default AdminUserRouter;
