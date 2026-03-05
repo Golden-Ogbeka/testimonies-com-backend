@@ -59,51 +59,60 @@ const options: swaggerJsdoc.Options = {
         Error: {
           type: "object",
           properties: {
-            success: {
-              type: "boolean",
-              example: false,
-            },
             message: {
               type: "string",
               example: "Error message",
+            },
+            code: {
+              type: "string",
+              example: "VALIDATION_ERROR",
+            },
+            requestId: {
+              type: "string",
+              example: "3f1d9d9f-2aef-4c89-bd29-0190d6f6ea55",
             },
           },
         },
         ValidationError: {
           type: "object",
           properties: {
-            success: {
-              type: "boolean",
-              example: false,
-            },
             message: {
               type: "string",
               example: "Validation failed",
             },
-            errors: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  field: { type: "string" },
-                  message: { type: "string" },
-                },
-              },
+            code: {
+              type: "string",
+              example: "VALIDATION_ERROR",
+            },
+            requestId: {
+              type: "string",
+              example: "3f1d9d9f-2aef-4c89-bd29-0190d6f6ea55",
             },
           },
         },
         PaginationMeta: {
           type: "object",
           properties: {
-            totalDocs: { type: "number" },
-            limit: { type: "number" },
+            totalResults: { type: "number" },
+            resultsPerPage: { type: "number" },
             totalPages: { type: "number" },
-            page: { type: "number" },
-            pagingCounter: { type: "number" },
-            hasPrevPage: { type: "boolean" },
-            hasNextPage: { type: "boolean" },
+            currentPage: { type: "number" },
             prevPage: { type: "number", nullable: true },
             nextPage: { type: "number", nullable: true },
+          },
+        },
+        StandardSuccessResponse: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              example: "Resource retrieved successfully",
+            },
+            data: { type: "object" },
+            requestId: {
+              type: "string",
+              example: "3f1d9d9f-2aef-4c89-bd29-0190d6f6ea55",
+            },
           },
         },
       },

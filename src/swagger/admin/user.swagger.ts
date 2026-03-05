@@ -76,7 +76,7 @@
 
 /**
  * @swagger
- * /admin/user/{id}:
+ * /admin/user/details/{id}:
  *   get:
  *     summary: Get single user
  *     description: Retrieve detailed information about a specific user
@@ -95,8 +95,12 @@
  *         description: User retrieved successfully
  *       404:
  *         description: User not found
- *
- *   put:
+ */
+
+/**
+ * @swagger
+ * /admin/user/{id}:
+ *   patch:
  *     summary: Update user
  *     description: Update user information
  *     tags: [Admin Users]
@@ -127,8 +131,8 @@
 
 /**
  * @swagger
- * /admin/user/{id}/deactivate:
- *   put:
+ * /admin/user/deactivate/{id}:
+ *   post:
  *     summary: Deactivate user
  *     description: Deactivate a user account
  *     tags: [Admin Users]
@@ -150,8 +154,8 @@
 
 /**
  * @swagger
- * /admin/user/{id}/activate:
- *   put:
+ * /admin/user/activate/{id}:
+ *   post:
  *     summary: Activate user
  *     description: Activate a user account
  *     tags: [Admin Users]
@@ -173,7 +177,7 @@
 
 /**
  * @swagger
- * /admin/user/stats/all:
+ * /admin/user/profile-stats:
  *   get:
  *     summary: Get all users statistics
  *     description: Retrieve overall user statistics
@@ -189,8 +193,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                 data:
@@ -208,7 +210,7 @@
 
 /**
  * @swagger
- * /admin/user/{id}/stats:
+ * /admin/user/profile-stats/user/{id}:
  *   get:
  *     summary: Get user statistics
  *     description: Retrieve statistics for a specific user

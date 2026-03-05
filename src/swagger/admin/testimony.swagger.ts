@@ -34,7 +34,7 @@
 
 /**
  * @swagger
- * /admin/testimony/{id}:
+ * /admin/testimony/details/{id}:
  *   get:
  *     summary: Get testimony details
  *     description: Retrieve detailed information about a specific testimony
@@ -57,8 +57,8 @@
 
 /**
  * @swagger
- * /admin/testimony/{id}/flag:
- *   put:
+ * /admin/testimony/flag/{id}:
+ *   post:
  *     summary: Flag testimony
  *     description: Flag a testimony as inappropriate
  *     tags: [Admin Testimonies]
@@ -91,8 +91,8 @@
 
 /**
  * @swagger
- * /admin/testimony/{id}/unflag:
- *   put:
+ * /admin/testimony/unflag/{id}:
+ *   post:
  *     summary: Unflag testimony
  *     description: Remove flag from a testimony
  *     tags: [Admin Testimonies]
@@ -146,7 +146,7 @@
 
 /**
  * @swagger
- * /admin/testimony/analytics/highest-engagement:
+ * /admin/testimony/highest-engagement:
  *   get:
  *     summary: Get testimonies with highest engagement
  *     description: Retrieve testimonies with the most likes, replies, and views
@@ -167,7 +167,7 @@
 
 /**
  * @swagger
- * /admin/testimony/analytics/highest-likes:
+ * /admin/testimony/highest-likes:
  *   get:
  *     summary: Get testimonies with highest likes
  *     tags: [Admin Testimonies]
@@ -187,7 +187,7 @@
 
 /**
  * @swagger
- * /admin/testimony/analytics/highest-replies:
+ * /admin/testimony/highest-replies:
  *   get:
  *     summary: Get testimonies with highest replies
  *     tags: [Admin Testimonies]
@@ -207,7 +207,7 @@
 
 /**
  * @swagger
- * /admin/testimony/analytics/highest-views:
+ * /admin/testimony/highest-views:
  *   get:
  *     summary: Get testimonies with highest views
  *     tags: [Admin Testimonies]
@@ -227,7 +227,7 @@
 
 /**
  * @swagger
- * /admin/testimony/analytics/most-active-users:
+ * /admin/testimony/most-active-users:
  *   get:
  *     summary: Get most active users
  *     description: Retrieve users with most testimonies
@@ -248,7 +248,7 @@
 
 /**
  * @swagger
- * /admin/testimony/analytics/most-engaged-users:
+ * /admin/testimony/most-engaged-users:
  *   get:
  *     summary: Get most engaged users
  *     description: Retrieve users with highest engagement on their testimonies

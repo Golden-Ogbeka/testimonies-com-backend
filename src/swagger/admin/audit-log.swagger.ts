@@ -92,8 +92,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                 data:
@@ -102,15 +100,15 @@
  *                     auditLogs:
  *                       type: object
  *                       properties:
- *                         docs:
+ *                         results:
  *                           type: array
  *                           items:
  *                             $ref: '#/components/schemas/AuditLog'
- *                         totalDocs:
+ *                         totalResults:
  *                           type: number
- *                         limit:
+ *                         resultsPerPage:
  *                           type: number
- *                         page:
+ *                         currentPage:
  *                           type: number
  *                         totalPages:
  *                           type: number
@@ -143,8 +141,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                 data:
@@ -193,8 +189,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                 data:
@@ -203,7 +197,7 @@
  *                     auditLogs:
  *                       type: object
  *                       properties:
- *                         docs:
+ *                         results:
  *                           type: array
  *                           items:
  *                             $ref: '#/components/schemas/AuditLog'

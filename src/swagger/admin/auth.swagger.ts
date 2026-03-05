@@ -85,9 +85,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
  *                 message:
  *                   type: string
  *                   example: Login successful. Please verify OTP
@@ -135,8 +132,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                 data:
@@ -304,8 +299,6 @@
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                 data:
