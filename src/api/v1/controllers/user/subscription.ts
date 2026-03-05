@@ -113,7 +113,7 @@ export const UserSubscriptionController = () => {
       const trialDays = plan.trialDays || 0;
       const startDate = new Date();
       let endDate = new Date(startDate);
-      let trialEndDate =
+      const trialEndDate =
         trialDays > 0
           ? new Date(startDate.getTime() + trialDays * 24 * 60 * 60 * 1000)
           : undefined;

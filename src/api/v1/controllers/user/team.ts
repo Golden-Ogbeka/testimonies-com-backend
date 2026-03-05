@@ -44,7 +44,7 @@ export const UserTeamController = () => {
         ],
       );
 
-      // @ts-ignore
+      // @ts-expect-error - paginate method exists but not in types
       const teamMembers = await TeamMemberModel.paginate(
         { organization: orgId },
         options as any,
@@ -331,7 +331,7 @@ export const UserTeamController = () => {
         { createdAt: -1 },
       );
 
-      // @ts-ignore
+      // @ts-expect-error - paginate method exists but not in types
       const roles = await TeamPermissionModel.paginate(
         { createdBy: orgId },
         options as any,
@@ -444,7 +444,7 @@ export const UserTeamController = () => {
         { createdAt: -1 },
       );
 
-      // @ts-ignore
+      // @ts-expect-error - paginate method exists but not in types
       const logs = await TeamActivityLogModel.paginate(
         {
           organization: orgId,
@@ -510,7 +510,7 @@ export const UserTeamController = () => {
         ],
       );
 
-      // @ts-ignore
+      // @ts-expect-error - paginate method exists but not in types
       const logs = await TeamActivityLogModel.paginate(
         { organization: orgId },
         options as any,
@@ -554,7 +554,7 @@ export const UserTeamController = () => {
         ],
       );
 
-      // @ts-ignore
+      // @ts-expect-error - paginate method exists but not in types
       const teamMembers = await TeamMemberModel.paginate(
         { organization: orgId, user: { $in: userIds } },
         options as any,

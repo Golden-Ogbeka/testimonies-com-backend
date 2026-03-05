@@ -67,7 +67,7 @@ const authSessionSchema = new Schema<IAuthSession>(
 
 // Hide Password in responses
 authSessionSchema.methods.toJSON = function () {
-  let obj = this.toObject();
+  const obj = this.toObject();
   delete obj.token;
 
   return obj;

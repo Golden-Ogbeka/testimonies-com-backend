@@ -5,7 +5,7 @@ import { FIELD_LENGTHS, LENGTH_MESSAGES } from "./field-validators";
 export const LIST_MAX_LIMIT = 100;
 
 /** Convert camelCase param name to a friendly label (e.g. adminId -> "Admin ID"). */
-function paramLabel(name: string): string {
+function _paramLabel(name: string): string {
   const withSpaces = name.replace(/([A-Z])/g, " $1").trim();
   return (
     withSpaces.charAt(0).toUpperCase() +

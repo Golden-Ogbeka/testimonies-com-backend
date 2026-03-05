@@ -89,7 +89,7 @@ userSchema.index({ subscriptionType: 1, active: 1 });
 
 // Hide Password in responses
 userSchema.methods.toJSON = function () {
-  let obj = this.toObject();
+  const obj = this.toObject();
   delete obj.password;
   delete obj.verificationCode;
   delete obj.smsPinId;

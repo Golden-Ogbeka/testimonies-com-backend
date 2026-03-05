@@ -49,7 +49,7 @@ const getUserName = (user: IUser | IOrganization | IAdmin): string => {
   return "User";
 };
 
-const getUserId = (
+const _getUserId = (
   user?: IUser | IOrganization | IAdmin,
   fallback?: string,
 ) => {
@@ -57,7 +57,7 @@ const getUserId = (
   return "_id" in user ? user._id : fallback;
 };
 
-const getUserNtfToken = (
+const _getUserNtfToken = (
   user?: IUser | IOrganization | IAdmin,
   fallback?: string,
 ) => {
@@ -72,15 +72,12 @@ export const notifyUser = async (
 ): Promise<void> => {
   const {
     sendEmailNotification,
-    sendInAppNotification,
-    sendPushNotification,
     title,
     message,
     emailAttachment,
     userDetails,
     isMultiple = false,
     multipleUsers = [],
-    ...notificationProps
   } = props;
 
   // --- Email Notifications ---

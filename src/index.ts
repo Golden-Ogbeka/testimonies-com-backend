@@ -201,7 +201,7 @@ app.use((req, res) => {
 app.use(multerErrorHandler);
 
 // General Error Handling
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   sendCatchFeedback(res, err);
 });

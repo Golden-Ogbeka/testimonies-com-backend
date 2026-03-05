@@ -75,7 +75,7 @@ export const UserAuthController = () => {
         password,
       } = req.body;
 
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           $or: [
             { email: businessEmail },
@@ -113,7 +113,7 @@ export const UserAuthController = () => {
         //     geocodedAddress[0].geometry.location.lng,
         //   ];
         // }
-        let newOrganization = await OrganizationModel.create({
+        const newOrganization = await OrganizationModel.create({
           password: hash,
           businessAddress,
           businessEmail,
@@ -155,7 +155,7 @@ export const UserAuthController = () => {
       const { username, password, email, phoneNumber, firstName, lastName } =
         req.body;
 
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           $or: [{ email }, { phoneNumber }, { username }],
         })) ||
@@ -183,7 +183,7 @@ export const UserAuthController = () => {
 
       // Hash password
       bcryptjs.hash(password!, 8, async function (err, hash) {
-        let newUser = await UserModel.create({
+        const newUser = await UserModel.create({
           password: hash,
           email,
           phoneNumber,
@@ -713,7 +713,7 @@ export const UserAuthController = () => {
       const { email } = req.body;
 
       // check if user exists
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           email,
           active: true,
@@ -762,7 +762,7 @@ export const UserAuthController = () => {
       const { email } = req.body;
 
       // check if user exists
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           email,
           active: true,
@@ -820,7 +820,7 @@ export const UserAuthController = () => {
       const { email, newPassword, verificationCode } = req.body;
 
       // check if user exists
-      let existingUser =
+      const existingUser =
         (await UserModel.findOne({
           email,
           verificationCode,
@@ -994,7 +994,7 @@ export const UserAuthController = () => {
               );
           }
 
-          let newUser = await UserModel.create({
+          const newUser = await UserModel.create({
             email,
             firstName,
             lastName,

@@ -53,7 +53,7 @@ const adminSchema = new Schema<IAdmin>(
 
 // Hide Password in responses
 adminSchema.methods.toJSON = function () {
-  let obj = this.toObject();
+  const obj = this.toObject();
   delete obj.password;
   delete obj.verificationCode;
   return obj;

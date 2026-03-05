@@ -27,7 +27,7 @@ export const UserPromotionController = () => {
       const { page, limit } = req.query as any;
 
       // Filter promotions based on the user's audience
-      let targetAudiences = ["all"];
+      const targetAudiences = ["all"];
       if (userType === "organization") {
         targetAudiences.push("organizations");
       } else {
@@ -44,7 +44,6 @@ export const UserPromotionController = () => {
         { createdAt: -1 },
       );
 
-      // @ts-ignore
       const promotions = await PromotionModel.paginate(
         {
           isActive: true,
@@ -181,7 +180,6 @@ export const UserPromotionController = () => {
         { createdAt: -1 },
       );
 
-      // @ts-ignore
       const requests = await PromotionRequestModel.paginate(
         { user: userId },
         options as any,
@@ -236,7 +234,7 @@ export const UserPromotionController = () => {
       // Get a random active promotion for ad display
       const { userType, user } = getUserIdAndType(req);
 
-      let targetAudiences = ["all"];
+      const targetAudiences = ["all"];
       if (userType === "organization") {
         targetAudiences.push("organizations");
       } else {

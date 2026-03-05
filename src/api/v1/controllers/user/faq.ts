@@ -17,7 +17,6 @@ export const UserFaqController = () => {
 
       const query = { isActive: true };
 
-      // @ts-ignore
       const faqs = await FAQModel.paginate(query, options as any);
 
       return sendSuccessFeedback(res, "Active FAQs retrieved successfully", {

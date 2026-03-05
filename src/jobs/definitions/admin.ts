@@ -1,7 +1,7 @@
 import Agenda from "agenda";
 // import AdminModel from "../../models/admin.model";
 
-export const AdminCronDefinitions = (agenda: Agenda) => {
+export const AdminCronDefinitions = (_agenda: Agenda) => {
   // Reset OTP
   // agenda.define(
   //   CRON_JOB_NAMES.RESET_ADMIN_VERIFICATION_CODE,

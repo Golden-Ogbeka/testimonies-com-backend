@@ -68,7 +68,6 @@ export const AdminFaqController = () => {
     res: Response,
   ) => {
     try {
-      const { page, limit } = req.query;
       const options = getPaginationOptions(req, { order: 1, createdAt: -1 }, [
         { path: "createdByDetails", select: "firstName lastName email" },
         { path: "updatedByDetails", select: "firstName lastName email" },
@@ -102,7 +101,7 @@ export const AdminFaqController = () => {
       const adminDetails = await getAdminUserDetails(req);
       const adminId = adminDetails._id;
 
-      let faq = await FAQModel.findById(id);
+      const faq = await FAQModel.findById(id);
       if (!faq) {
         return sendErrorFeedback(res, 404, "FAQ not found");
       }
