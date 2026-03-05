@@ -653,7 +653,10 @@ export const AdminTestimonyController = () => {
 
       // Build filter
       const filter: any = {};
-      if (isFlagged !== undefined) filter.isFlagged = isFlagged === true;
+      if (isFlagged !== undefined) {
+        filter.isFlagged =
+          String(isFlagged).toLowerCase() === "true" || isFlagged === true;
+      }
       if (userId) filter.userId = userId;
 
       const paginationOptions = getPaginationOptions(req);

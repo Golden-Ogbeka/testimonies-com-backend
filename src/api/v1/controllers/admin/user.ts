@@ -34,8 +34,14 @@ export const AdminUserController = () => {
 
       // Build filter
       const filter: Record<string, any> = {};
-      if (isActive !== undefined) filter.active = isActive;
-      if (isFlagged !== undefined) filter.isFlagged = isFlagged;
+      if (isActive !== undefined) {
+        filter.active =
+          String(isActive).toLowerCase() === "true" || isActive === true;
+      }
+      if (isFlagged !== undefined) {
+        filter.isFlagged =
+          String(isFlagged).toLowerCase() === "true" || isFlagged === true;
+      }
       if (accountType) filter.accountType = accountType;
       if (subscriptionType) filter.subscriptionType = subscriptionType;
 

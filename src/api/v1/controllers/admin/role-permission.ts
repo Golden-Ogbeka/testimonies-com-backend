@@ -459,7 +459,10 @@ export const AdminRolePermissionController = () => {
       // Build filter
       const filter: any = {};
       if (role) filter.role = role;
-      if (isActive !== undefined) filter.isActive = isActive === true;
+      if (isActive !== undefined) {
+        filter.isActive =
+          String(isActive).toLowerCase() === "true" || isActive === true;
+      }
 
       if (adminDetails.role !== "super-admin") {
         filter.role = "admin";
