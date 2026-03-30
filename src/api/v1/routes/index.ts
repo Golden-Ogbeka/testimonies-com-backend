@@ -4,6 +4,7 @@ import AdminAuditLogRouter from "./admin/audit-log";
 import AdminAuthRouter from "./admin/auth";
 import AdminDataManagementRouter from "./admin/data-management";
 import AdminFaqRouter from "./admin/faq";
+import AdminRolePermissionRouter from "./admin/role-permission";
 import AdminTestimonyRouter from "./admin/testimony";
 import AdminUserRouter from "./admin/user";
 import UserAuthRouter from "./user/auth";
@@ -17,11 +18,11 @@ const V1Router = express.Router();
 V1Router.use("/admin/auth", isValidAdminAPI, AdminAuthRouter);
 V1Router.use("/admin/testimony", isValidAdminAPI, AdminTestimonyRouter);
 V1Router.use("/admin/user", isValidAdminAPI, AdminUserRouter);
-// V1Router.use(
-//   "/admin/role-permission",
-//   isValidAdminAPI,
-//   AdminRolePermissionRouter,
-// );
+V1Router.use(
+  "/admin/role-permission",
+  isValidAdminAPI,
+  AdminRolePermissionRouter,
+);
 // V1Router.use("/admin/subscription", isValidAdminAPI, AdminSubscriptionRouter);
 // V1Router.use("/admin/promotion", isValidAdminAPI, AdminPromotionRouter);
 V1Router.use("/admin/audit-log", isValidAdminAPI, AdminAuditLogRouter);

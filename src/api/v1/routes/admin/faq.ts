@@ -30,6 +30,7 @@ AdminFaqRouter.get(
   [
     query("page", "Page must be a number").optional().isNumeric(),
     query("limit", "Limit must be a number").optional().isNumeric(),
+    query("isActive", "Active must be a boolean").optional().isBoolean(),
   ],
   Controller.GetFaqs,
 );

@@ -286,6 +286,7 @@ export interface TeamPermissionUpdateRequestBody {
 export interface PaginationQuery {
   page?: number;
   limit?: number;
+  isActive?: boolean;
 }
 
 export interface RoleFilterQuery extends PaginationQuery {

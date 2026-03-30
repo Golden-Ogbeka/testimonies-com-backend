@@ -37,7 +37,6 @@ export const isAdmin = async (
 
     next();
   } catch (error: unknown) {
-    console.log(error);
     return sendErrorFeedback(res, 401, "Unauthorized");
   }
 };

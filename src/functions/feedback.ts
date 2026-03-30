@@ -110,12 +110,13 @@ export const sendErrorFeedback = (
 export const sendSuccessFeedback = (
   res: express.Response,
   message: string,
-  additionalObjects?: Record<string, unknown>,
+  responseData?: Record<string, unknown>,
   status?: number,
+  additionalObject?: Record<string, unknown>,
 ) => {
   const reqId = getRequestId(res);
 
-  let data: any = additionalObjects || {};
+  let data: any = responseData || {};
   const keys = Object.keys(data);
   // If there's only one key (besides meta/requestId) and it's not and array/spread already
   // we can consider unwrapping it for the 'data' property
@@ -126,7 +127,7 @@ export const sendSuccessFeedback = (
   const payload = {
     message,
     data,
-    ...additionalObjects,
+    ...additionalObject,
   };
   if (reqId) (payload as Record<string, unknown>).requestId = reqId;
   return res.status(status || 200).json(payload);

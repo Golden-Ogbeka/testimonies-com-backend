@@ -68,12 +68,14 @@ export const AdminFaqController = () => {
     res: Response,
   ) => {
     try {
+      const { isActive } = req.query;
       const options = getPaginationOptions(req, { order: 1, createdAt: -1 }, [
         { path: "createdByDetails", select: "firstName lastName email" },
         { path: "updatedByDetails", select: "firstName lastName email" },
       ]);
 
-      const query: Record<string, any> = {};
+      const query: Record<string, any> =
+        isActive !== undefined ? { isActive } : {};
 
       const faqs = await FAQModel.paginate(query, options);
 

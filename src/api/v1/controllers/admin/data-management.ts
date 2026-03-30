@@ -8,13 +8,10 @@ import {
   sendSuccessFeedback,
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
-import FAQModel from "../../../../models/faq.model";
 import SystemContentModel from "../../../../models/system-content.model";
 import TeamPermissionModel from "../../../../models/team-permission.model";
 import { CustomRequest } from "../../../../types/express";
 import {
-  FAQCreateRequestBody,
-  FAQUpdateRequestBody,
   IdParams,
   PaginationQuery,
   SystemContentUpdateRequestBody,
@@ -23,178 +20,6 @@ import {
 import { getPaginationOptions } from "../../../../utils/pagination";
 
 export const AdminDataManagementController = () => {
-  const AddFAQ = async (
-    req: CustomRequest<never, any, FAQCreateRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { question, answer, order } = req.body;
-      const adminDetails = await getAdminUserDetails(req);
-
-      // Check if FAQ with same question already exists
-      const existingFAQ = await FAQModel.findOne({ question });
-      if (existingFAQ) {
-        return sendErrorFeedback(
-          res,
-          409,
-          "FAQ with this question already exists",
-        );
-      }
-
-      const faq = await FAQModel.create({
-        question,
-        answer,
-        order: order || 0,
-        createdBy: adminDetails._id,
-      });
-
-      return sendSuccessFeedback(res, "FAQ created successfully", { faq });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const UpdateFAQ = async (
-    req: CustomRequest<IdParams, any, FAQUpdateRequestBody>,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-      const { question, answer, order, isActive } = req.body;
-      const adminDetails = await getAdminUserDetails(req);
-
-      const faq = await FAQModel.findById(id);
-      if (!faq) {
-        return sendErrorFeedback(res, 404, "FAQ not found");
-      }
-
-      // Check if another FAQ with same question exists
-      if (question && question !== faq.question) {
-        const existingFAQ = await FAQModel.findOne({
-          question,
-          _id: { $ne: id },
-        });
-        if (existingFAQ) {
-          return sendErrorFeedback(
-            res,
-            409,
-            "FAQ with this question already exists",
-          );
-        }
-      }
-
-      faq.question = question || faq.question;
-      faq.answer = answer || faq.answer;
-      faq.order = order !== undefined ? order : faq.order;
-      faq.isActive = isActive !== undefined ? isActive : faq.isActive;
-      faq.updatedBy = adminDetails._id as Types.ObjectId;
-
-      await faq.save();
-
-      return sendSuccessFeedback(res, "FAQ updated successfully", {
-        faq,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const DeleteFAQ = async (req: CustomRequest<IdParams>, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      const faq = await FAQModel.findByIdAndDelete(id);
-      if (!faq) {
-        return sendErrorFeedback(res, 404, "FAQ not found");
-      }
-
-      return sendSuccessFeedback(res, "FAQ deleted successfully");
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const GetAllFAQs = async (
-    req: CustomRequest<
-      never,
-      any,
-      any,
-      PaginationQuery & { isActive?: string }
-    >,
-    res: Response,
-  ) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { isActive } = req.query;
-
-      // Build filter
-      const filter: any = {};
-      if (isActive !== undefined) filter.isActive = isActive === "true";
-
-      const paginationOptions = getPaginationOptions(req);
-
-      const faqs = await FAQModel.paginate(filter, {
-        ...paginationOptions,
-        sort: { order: 1, createdAt: -1 },
-      });
-
-      return sendSuccessFeedback(res, "FAQs retrieved", {
-        faqs,
-      });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
-  const GetSingleFAQ = async (req: CustomRequest<IdParams>, res: Response) => {
-    try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      const faq = await FAQModel.findById(id);
-      if (!faq) {
-        return sendErrorFeedback(res, 404, "FAQ not found");
-      }
-
-      return sendSuccessFeedback(res, "FAQ retrieved", { faq });
-    } catch (error) {
-      return sendCatchFeedback(
-        res,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  };
-
   const GetPrivacyPolicy = async (req: CustomRequest, res: Response) => {
     try {
       // check for validation errors
@@ -205,10 +30,6 @@ export const AdminDataManagementController = () => {
         type: "privacy_policy",
         isActive: true,
       });
-
-      if (!privacyPolicy) {
-        return sendErrorFeedback(res, 404, "Privacy policy not found");
-      }
 
       return sendSuccessFeedback(res, "Privacy policy retrieved", {
         content: privacyPolicy,
@@ -232,10 +53,6 @@ export const AdminDataManagementController = () => {
         isActive: true,
       });
 
-      if (!termsOfService) {
-        return sendErrorFeedback(res, 404, "Terms of service not found");
-      }
-
       return sendSuccessFeedback(res, "Terms of service retrieved", {
         content: termsOfService,
       });
@@ -257,10 +74,6 @@ export const AdminDataManagementController = () => {
         type: "community_guidelines",
         isActive: true,
       });
-
-      if (!communityGuidelines) {
-        return sendErrorFeedback(res, 404, "Community guidelines not found");
-      }
 
       return sendSuccessFeedback(res, "Community guidelines retrieved", {
         content: communityGuidelines,
@@ -536,11 +349,6 @@ export const AdminDataManagementController = () => {
   };
 
   return {
-    AddFAQ,
-    UpdateFAQ,
-    DeleteFAQ,
-    GetAllFAQs,
-    GetSingleFAQ,
     GetPrivacyPolicy,
     GetTermsOfService,
     GetCommunityGuidelines,
