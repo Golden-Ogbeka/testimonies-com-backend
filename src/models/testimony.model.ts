@@ -112,10 +112,10 @@ testimonySchema.virtual("flaggedByDetails", {
 
 testimonySchema.methods.toJSON = function () {
   const obj = this.toObject();
-  delete obj.isFlagged;
-  delete obj.flagReason;
-  delete obj.deletedBy;
-  delete obj.flaggedBy;
+  // delete obj.isFlagged;
+  // delete obj.flagReason;
+  // delete obj.deletedBy;
+  // delete obj.flaggedBy;
 
   return obj;
 };

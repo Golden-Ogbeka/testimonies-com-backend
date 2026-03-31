@@ -91,7 +91,7 @@ export const AdminTestimonyController = () => {
         },
         {
           $addFields: {
-            engagementScore: {
+            count: {
               $add: [
                 { $size: "$likes" },
                 { $size: "$replies" },
@@ -100,7 +100,7 @@ export const AdminTestimonyController = () => {
             },
           },
         },
-        { $sort: { engagementScore: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
@@ -108,13 +108,25 @@ export const AdminTestimonyController = () => {
             localField: "userId",
             foreignField: "_id",
             as: "user",
+            // select user fields
+            pipeline: [
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  email: 1,
+                  profilePicture: 1,
+                },
+              },
+            ],
           },
         },
         {
           $project: {
-            content: 1,
+            title: 1,
+            description: 1,
             createdAt: 1,
-            engagementScore: 1,
+            count: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -154,24 +166,36 @@ export const AdminTestimonyController = () => {
         },
         {
           $addFields: {
-            likesCount: { $size: "$likes" },
+            count: { $size: "$likes" },
           },
         },
-        { $sort: { likesCount: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
             from: "users",
             localField: "userId",
             foreignField: "_id",
+            // select user fields
+            pipeline: [
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  email: 1,
+                  profilePicture: 1,
+                },
+              },
+            ],
             as: "user",
           },
         },
         {
           $project: {
-            content: 1,
+            title: 1,
+            description: 1,
             createdAt: 1,
-            likesCount: 1,
+            count: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -211,24 +235,36 @@ export const AdminTestimonyController = () => {
         },
         {
           $addFields: {
-            repliesCount: { $size: "$replies" },
+            count: { $size: "$replies" },
           },
         },
-        { $sort: { repliesCount: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
             from: "users",
             localField: "userId",
             foreignField: "_id",
+            // select user fields
+            pipeline: [
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  email: 1,
+                  profilePicture: 1,
+                },
+              },
+            ],
             as: "user",
           },
         },
         {
           $project: {
-            content: 1,
+            title: 1,
+            description: 1,
             createdAt: 1,
-            repliesCount: 1,
+            count: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -268,24 +304,36 @@ export const AdminTestimonyController = () => {
         },
         {
           $addFields: {
-            viewsCount: { $size: "$views" },
+            count: { $size: "$views" },
           },
         },
-        { $sort: { viewsCount: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
             from: "users",
             localField: "userId",
             foreignField: "_id",
+            // select user fields
+            pipeline: [
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  email: 1,
+                  profilePicture: 1,
+                },
+              },
+            ],
             as: "user",
           },
         },
         {
           $project: {
-            content: 1,
+            title: 1,
+            description: 1,
             createdAt: 1,
-            viewsCount: 1,
+            count: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -318,11 +366,11 @@ export const AdminTestimonyController = () => {
         {
           $group: {
             _id: "$userId",
-            testimonyCount: { $sum: 1 },
+            count: { $sum: 1 },
             lastActivity: { $max: "$createdAt" },
           },
         },
-        { $sort: { testimonyCount: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
@@ -330,11 +378,22 @@ export const AdminTestimonyController = () => {
             localField: "_id",
             foreignField: "_id",
             as: "user",
+            // select user fields
+            pipeline: [
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  email: 1,
+                  profilePicture: 1,
+                },
+              },
+            ],
           },
         },
         {
           $project: {
-            testimonyCount: 1,
+            count: 1,
             lastActivity: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
@@ -389,14 +448,14 @@ export const AdminTestimonyController = () => {
         {
           $group: {
             _id: "$userId",
-            totalLikes: { $sum: "$totalLikes" },
+            count: { $sum: "$count" },
             totalReplies: { $sum: "$totalReplies" },
-            engagementScore: {
+            totalLikes: {
               $sum: { $add: ["$totalLikes", "$totalReplies"] },
             },
           },
         },
-        { $sort: { engagementScore: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
@@ -408,9 +467,9 @@ export const AdminTestimonyController = () => {
         },
         {
           $project: {
-            totalLikes: 1,
+            count: 1,
             totalReplies: 1,
-            engagementScore: 1,
+            totalLikes: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -450,16 +509,16 @@ export const AdminTestimonyController = () => {
         },
         {
           $addFields: {
-            likesCount: { $size: "$likes" },
+            count: { $size: "$likes" },
           },
         },
         {
           $group: {
             _id: "$userId",
-            totalLikes: { $sum: "$likesCount" },
+            count: { $sum: "$count" },
           },
         },
-        { $sort: { totalLikes: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
@@ -471,7 +530,7 @@ export const AdminTestimonyController = () => {
         },
         {
           $project: {
-            totalLikes: 1,
+            count: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -509,16 +568,16 @@ export const AdminTestimonyController = () => {
         },
         {
           $addFields: {
-            viewsCount: { $size: "$views" },
+            count: { $size: "$views" },
           },
         },
         {
           $group: {
             _id: "$userId",
-            totalViews: { $sum: "$viewsCount" },
+            count: { $sum: "$count" },
           },
         },
-        { $sort: { totalViews: -1 } },
+        { $sort: { count: -1 } },
         { $limit: limitInt },
         {
           $lookup: {
@@ -530,7 +589,7 @@ export const AdminTestimonyController = () => {
         },
         {
           $project: {
-            totalViews: 1,
+            count: 1,
             user: { $arrayElemAt: ["$user", 0] },
           },
         },
@@ -563,13 +622,15 @@ export const AdminTestimonyController = () => {
         return sendErrorFeedback(res, 404, "Testimony not found");
       }
 
-      await TestimonyModel.findByIdAndUpdate(id, {
+      const updatedTestimony = await TestimonyModel.findByIdAndUpdate(id, {
         isFlagged: true,
         flagReason: reason || "Flagged by admin",
         flaggedBy: adminDetails._id,
       });
 
-      return sendSuccessFeedback(res, "Testimony flagged successfully");
+      return sendSuccessFeedback(res, "Testimony flagged successfully", {
+        updatedTestimony,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
