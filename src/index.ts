@@ -1,3 +1,4 @@
+import colors from "colors/safe";
 import compression from "compression";
 import cors from "cors";
 import * as dotenv from "dotenv";
@@ -212,7 +213,7 @@ socketHandler(io);
 const server = httpServer.listen(PORT, async () => {
   const baseUrl = BASE_URL || `http://localhost:${PORT}`;
   console.log("");
-  console.log(`  Server running on port ${PORT}`);
+  console.log(colors.green(`  Server running on port ${PORT}`));
   console.log("");
   console.log("  Quick links (click to open):");
   console.log(`  • Server:     ${baseUrl}`);

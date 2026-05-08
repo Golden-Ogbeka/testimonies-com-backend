@@ -19,6 +19,9 @@ const transporter = nodemailer.createTransport({
     user: EMAIL_USER,
     pass: EMAIL_PASS,
   },
+  connectionTimeout: 5000, // 10 seconds
+  greetingTimeout: 5000,
+  socketTimeout: 5000,
 });
 
 // Handlebars view engine setup
