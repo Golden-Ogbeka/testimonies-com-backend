@@ -1,7 +1,7 @@
 import bcryptjs from "bcryptjs";
 import { Response } from "express";
-import { validationResult } from "express-validator";
 import { ParamsDictionary } from "express-serve-static-core";
+import { validationResult } from "express-validator";
 import { ObjectId } from "mongodb";
 import { Types } from "mongoose";
 import { getUserDetails } from "../../../../functions/auth";
@@ -132,15 +132,21 @@ export const UserTestimonyController = () => {
   ) => {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         return sendValidationErrorFeedback(res, errors);
       }
 
-      const userDetails = await getUserDetails(req);
+      const currentUser = await getUserDetails(req);
+
       const options = getPaginationOptions(req);
+
+      const page = options.page ?? 1;
+      const limit = options.limit ?? 20;
+
       const { offset } = paginate({
-        page: options.page ?? 1,
-        limit: options.limit ?? 20,
+        page,
+        limit,
       });
 
       const { tag, keyword, type, userId } = req.query;
@@ -150,14 +156,19 @@ export const UserTestimonyController = () => {
         isSecret: false,
       };
 
+      const andConditions: Record<string, any>[] = [];
+
+      // FILTER BY USER
       if (userId) {
         matchQuery.userId = new ObjectId(userId);
       }
 
+      // FILTER BY TAG
       if (tag) {
         matchQuery.tags = tag.toLowerCase();
       }
 
+      // FILTER BY TYPE
       if (type === "broadcast") {
         matchQuery.isBroadcast = true;
         matchQuery.broadcastApproved = true;
@@ -167,43 +178,98 @@ export const UserTestimonyController = () => {
         matchQuery.isBroadcast = false;
       }
 
+      // DEFAULT FILTER
       if (!type) {
-        matchQuery.$or = [
-          { isBroadcast: false },
-          { isBroadcast: true, broadcastApproved: true },
-        ];
+        andConditions.push({
+          $or: [
+            { isBroadcast: false },
+            {
+              isBroadcast: true,
+              broadcastApproved: true,
+            },
+          ],
+        });
       }
 
+      // KEYWORD SEARCH
       if (keyword) {
-        matchQuery.$or = [
-          { title: { $regex: keyword, $options: "i" } },
-          { description: { $regex: keyword, $options: "i" } },
-        ];
+        andConditions.push({
+          $or: [
+            {
+              title: {
+                $regex: keyword,
+                $options: "i",
+              },
+            },
+            {
+              description: {
+                $regex: keyword,
+                $options: "i",
+              },
+            },
+          ],
+        });
+      }
+
+      if (andConditions.length > 0) {
+        matchQuery.$and = andConditions;
       }
 
       const basePipeline = [
-        { $match: matchQuery },
+        {
+          $match: matchQuery,
+        },
 
+        // BLOCKED USERS
         {
           $lookup: {
             from: "user-blocks",
-            localField: "userId",
-            foreignField: "userToBlockId",
-            pipeline: [{ $match: { userBlockingId: userDetails._id } }],
+            let: {
+              testimonyUserId: "$userId",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$userToBlockId", "$$testimonyUserId"],
+                      },
+                      {
+                        $eq: ["$userBlockingId", currentUser._id],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
             as: "blocked",
           },
         },
 
+        // FOLLOW STATUS
         {
           $lookup: {
             from: "follow-requests",
-            localField: "userId",
-            foreignField: "leaderId",
+            let: {
+              testimonyUserId: "$userId",
+            },
             pipeline: [
               {
                 $match: {
-                  followerId: userDetails._id,
-                  status: "accepted",
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$leaderId", "$$testimonyUserId"],
+                      },
+                      {
+                        $eq: ["$followerId", currentUser._id],
+                      },
+                      {
+                        $eq: ["$status", "accepted"],
+                      },
+                    ],
+                  },
                 },
               },
             ],
@@ -211,52 +277,145 @@ export const UserTestimonyController = () => {
           },
         },
 
+        // USER DETAILS
         {
           $lookup: {
             from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            pipeline: [{ $project: { profileVisibility: 1 } }],
+            let: {
+              testimonyUserId: "$userId",
+              testimonyUserType: "$userType",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$$testimonyUserType", "user"],
+                      },
+                      {
+                        $eq: ["$_id", "$$testimonyUserId"],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  username: 1,
+                  profileImage: 1,
+                  accountType: 1,
+                  profileVisibility: 1,
+                },
+              },
+            ],
             as: "user",
           },
         },
 
+        // ORGANIZATION DETAILS
         {
           $lookup: {
             from: "organizations",
-            localField: "userId",
-            foreignField: "_id",
-            pipeline: [{ $project: { profileVisibility: 1 } }],
+            let: {
+              testimonyUserId: "$userId",
+              testimonyUserType: "$userType",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$$testimonyUserType", "organization"],
+                      },
+                      {
+                        $eq: ["$_id", "$$testimonyUserId"],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  businessName: 1,
+                  businessLogoURL: 1,
+                  accountType: 1,
+                  profileVisibility: 1,
+                },
+              },
+            ],
             as: "org",
           },
         },
 
+        // COMPUTED FIELDS
         {
           $addFields: {
-            isBlocked: { $gt: [{ $size: "$blocked" }, 0] },
-            isFollowed: { $gt: [{ $size: "$followed" }, 0] },
+            isBlocked: {
+              $gt: [{ $size: "$blocked" }, 0],
+            },
+
+            isFollowed: {
+              $gt: [{ $size: "$followed" }, 0],
+            },
+
+            userDetails: {
+              $cond: {
+                if: {
+                  $eq: ["$userType", "user"],
+                },
+                then: {
+                  $arrayElemAt: ["$user", 0],
+                },
+                else: {
+                  $arrayElemAt: ["$org", 0],
+                },
+              },
+            },
+
             visibility: {
               $ifNull: [
-                { $arrayElemAt: ["$user.profileVisibility", 0] },
-                { $arrayElemAt: ["$org.profileVisibility", 0] },
+                {
+                  $arrayElemAt: ["$user.profileVisibility", 0],
+                },
+                {
+                  $arrayElemAt: ["$org.profileVisibility", 0],
+                },
               ],
             },
           },
         },
 
+        // VISIBILITY FILTERING
         {
           $match: {
-            $and: [
-              { isBlocked: false },
-              { visibility: { $ne: "secret" } },
+            isBlocked: false,
+
+            visibility: {
+              $ne: "secret",
+            },
+
+            $or: [
               {
-                $or: [
-                  { visibility: "public" },
+                visibility: "public",
+              },
+
+              {
+                $and: [
                   {
-                    $and: [{ visibility: "private" }, { isFollowed: true }],
+                    visibility: "private",
                   },
-                  { userId: userDetails._id },
+                  {
+                    isFollowed: true,
+                  },
                 ],
+              },
+
+              {
+                userId: currentUser._id,
               },
             ],
           },
@@ -265,33 +424,70 @@ export const UserTestimonyController = () => {
 
       const [result] = await TestimonyModel.aggregate([
         ...basePipeline,
+
         {
           $facet: {
             results: [
+              // LIKED STATUS
               {
                 $lookup: {
                   from: "testimony-likes",
-                  localField: "_id",
-                  foreignField: "testimonyId",
-                  pipeline: [{ $match: { userId: userDetails._id } }],
+                  let: {
+                    testimonyId: "$_id",
+                  },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            {
+                              $eq: ["$testimonyId", "$$testimonyId"],
+                            },
+                            {
+                              $eq: ["$userId", currentUser._id],
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  ],
                   as: "liked",
                 },
               },
+
               {
                 $addFields: {
-                  isLiked: { $gt: [{ $size: "$liked" }, 0] },
+                  isLiked: {
+                    $gt: [{ $size: "$liked" }, 0],
+                  },
                 },
               },
-              { $sort: { isFollowed: -1, createdAt: -1 } },
-              { $skip: offset },
-              { $limit: options.limit ?? 20 },
+
+              // SORTING
+              {
+                $sort: {
+                  isFollowed: -1,
+                  createdAt: -1,
+                },
+              },
+
+              // PAGINATION
+              {
+                $skip: offset,
+              },
+
+              {
+                $limit: limit,
+              },
+
+              // CLEANUP
               {
                 $project: {
                   blocked: 0,
                   followed: 0,
+                  liked: 0,
                   user: 0,
                   org: 0,
-                  liked: 0,
                   isBlocked: 0,
                   visibility: 0,
                   isDeleted: 0,
@@ -300,27 +496,38 @@ export const UserTestimonyController = () => {
                 },
               },
             ],
-            total: [{ $count: "total" }],
+
+            total: [
+              {
+                $count: "total",
+              },
+            ],
           },
         },
       ]);
 
       const testimonies = result?.results ?? [];
+
       const totalCount = result?.total?.[0]?.total ?? 0;
 
-      const totalPages = Math.ceil(totalCount / (options.limit ?? 20));
-      const hasNextPage = offset + (options.limit ?? 20) < totalCount;
-      const hasPrevPage = (options.page ?? 1) > 1;
+      const totalPages = Math.ceil(totalCount / limit);
+
+      const hasNextPage = offset + limit < totalCount;
+
+      const hasPrevPage = page > 1;
 
       return sendSuccessFeedback(res, "Testimonies retrieved", {
         testimonies: {
           results: testimonies,
           totalResults: totalCount,
-          resultsPerPage: options.limit ?? 20,
-          currentPage: options.page ?? 1,
+          resultsPerPage: limit,
+          currentPage: page,
           totalPages,
-          nextPage: hasNextPage ? (options.page ?? 1) + 1 : null,
-          prevPage: hasPrevPage ? (options.page ?? 1) - 1 : null,
+
+          nextPage: hasNextPage ? page + 1 : null,
+
+          prevPage: hasPrevPage ? page - 1 : null,
+
           hasNextPage,
           hasPrevPage,
         },
@@ -363,7 +570,9 @@ export const UserTestimonyController = () => {
             ],
           },
         ],
-      }).select("-isDeleted -isSecret -deletedAt -deletedBy");
+      })
+        .select("-isDeleted -isSecret -deletedAt -deletedBy")
+        .populate("userDetails");
 
       if (!testimony) {
         return sendErrorFeedback(res, 404, "Testimony not found");
@@ -1264,25 +1473,216 @@ export const UserTestimonyController = () => {
   ) => {
     try {
       const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req);
+      if (!errors.isEmpty()) {
+        return sendValidationErrorFeedback(res, errors);
+      }
+
+      const currentUser = await getUserDetails(req);
+
       const options = getPaginationOptions(req);
 
-      const result = (await TestimonyModel.paginate(
+      const page = options.page ?? 1;
+      const limit = options.limit ?? 20;
+
+      const { offset } = paginate({
+        page,
+        limit,
+      });
+
+      const [result] = await TestimonyModel.aggregate([
         {
-          userId: userDetails._id,
-          isDeleted: false,
+          $match: {
+            userId: currentUser._id,
+            isDeleted: false,
+          },
         },
+
+        // USER DETAILS
         {
-          ...options,
-          select: "-isDeleted -deletedAt -deletedBy",
-          sort: { createdAt: -1 },
+          $lookup: {
+            from: "users",
+            let: {
+              testimonyUserId: "$userId",
+              testimonyUserType: "$userType",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$$testimonyUserType", "user"],
+                      },
+                      {
+                        $eq: ["$_id", "$$testimonyUserId"],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  firstName: 1,
+                  lastName: 1,
+                  username: 1,
+                  profileImage: 1,
+                  accountType: 1,
+                },
+              },
+            ],
+            as: "user",
+          },
         },
-      )) as unknown as CustomPaginateResult<ITestimony>;
+
+        // ORGANIZATION DETAILS
+        {
+          $lookup: {
+            from: "organizations",
+            let: {
+              testimonyUserId: "$userId",
+              testimonyUserType: "$userType",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$$testimonyUserType", "organization"],
+                      },
+                      {
+                        $eq: ["$_id", "$$testimonyUserId"],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $project: {
+                  businessName: 1,
+                  businessLogoURL: 1,
+                  accountType: 1,
+                },
+              },
+            ],
+            as: "org",
+          },
+        },
+
+        // LIKED STATUS
+        {
+          $lookup: {
+            from: "testimony-likes",
+            let: {
+              testimonyId: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$testimonyId", "$$testimonyId"],
+                      },
+                      {
+                        $eq: ["$userId", currentUser._id],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "liked",
+          },
+        },
+
+        // COMPUTED FIELDS
+        {
+          $addFields: {
+            isLiked: {
+              $gt: [{ $size: "$liked" }, 0],
+            },
+
+            userDetails: {
+              $cond: {
+                if: {
+                  $eq: ["$userType", "user"],
+                },
+                then: {
+                  $arrayElemAt: ["$user", 0],
+                },
+                else: {
+                  $arrayElemAt: ["$org", 0],
+                },
+              },
+            },
+          },
+        },
+
+        {
+          $facet: {
+            results: [
+              {
+                $sort: {
+                  createdAt: -1,
+                },
+              },
+
+              {
+                $skip: offset,
+              },
+
+              {
+                $limit: limit,
+              },
+
+              {
+                $project: {
+                  liked: 0,
+                  user: 0,
+                  org: 0,
+                  isDeleted: 0,
+                  deletedAt: 0,
+                  deletedBy: 0,
+                },
+              },
+            ],
+
+            total: [
+              {
+                $count: "total",
+              },
+            ],
+          },
+        },
+      ]);
+
+      const testimonies = result?.results ?? [];
+
+      const totalCount = result?.total?.[0]?.total ?? 0;
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      const hasNextPage = offset + limit < totalCount;
+
+      const hasPrevPage = page > 1;
 
       return sendSuccessFeedback(res, "My testimonies retrieved", {
-        testimonies: result,
+        testimonies: {
+          results: testimonies,
+          totalResults: totalCount,
+          resultsPerPage: limit,
+          currentPage: page,
+          totalPages,
+
+          nextPage: hasNextPage ? page + 1 : null,
+
+          prevPage: hasPrevPage ? page - 1 : null,
+
+          hasNextPage,
+          hasPrevPage,
+        },
       });
     } catch (error: unknown) {
       return sendCatchFeedback(

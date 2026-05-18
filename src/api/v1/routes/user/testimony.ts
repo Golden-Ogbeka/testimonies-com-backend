@@ -263,11 +263,11 @@ UserTestimonyRouter.post(
     param("id", "Testimony ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
-    body("description", "Reply description is required")
+    body("content", "Reply content is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
       .isLength({ min: 1, max: 2000 })
-      .withMessage("Reply must be between 1 and 2000 characters"),
+      .withMessage("Reply content must be between 1 and 2000 characters"),
   ],
   Controller.ReplyToTestimony as any,
 );
