@@ -625,10 +625,15 @@ export const UserTestimonyController = () => {
 
       const userDetails = await getUserDetails(req);
 
+      let tags = req.body.tags;
+
+      if (tags) {
+        tags = JSON.parse(tags);
+      }
+
       const {
         title,
         description,
-        tags,
         isBroadcast,
         broadcastOrganizationId,
         isSecret,

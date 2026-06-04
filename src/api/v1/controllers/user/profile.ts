@@ -459,6 +459,15 @@ export const UserProfileController = () => {
         return sendErrorFeedback(res, 400, "Old password is incorrect");
       }
 
+      // Check if new password is same as old password
+      if (oldPassword === newPassword) {
+        return sendErrorFeedback(
+          res,
+          400,
+          "New password cannot be the same as old password",
+        );
+      }
+
       const hashedNewPassword = await bcryptjs.hash(newPassword, 10);
 
       userDetails.password = hashedNewPassword;

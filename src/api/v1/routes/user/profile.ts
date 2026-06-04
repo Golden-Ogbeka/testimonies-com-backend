@@ -146,18 +146,7 @@ UserProfileRouter.patch(
     body("oldPassword", "Old password is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
-      .isLength({ min: 8 })
-      .withMessage("Old password must be at least 8 characters long")
-      .matches(/[A-Z]/)
-      .withMessage("Old password must contain at least one uppercase letter")
-      .matches(/[a-z]/)
-      .withMessage("Old password must contain at least one lowercase letter")
-      .matches(/[0-9]/)
-      .withMessage("Old password must contain at least one number")
-      .matches(/[!@#$%^&*]/)
-      .withMessage(
-        "Old password must contain at least one special character (!@#$%^&*)",
-      ),
+      .withMessage("Old password is required to update password"),
     body("newPassword", "New password is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()

@@ -103,9 +103,8 @@ UserTestimonyRouter.post(
       .withMessage("Description must be between 10 and 5000 characters"),
     body("tags")
       .optional({ checkFalsy: true })
-      .isArray()
-      .withMessage("Tags must be an array")
       .custom((tags) => {
+        tags = JSON.parse(tags); // Parse the tags from string to array
         if (tags && tags.length > 10) {
           throw new Error("Maximum 10 tags allowed");
         }

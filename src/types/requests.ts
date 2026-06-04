@@ -202,7 +202,7 @@ export interface TestimonyUnflagRequestBody {
 export interface CreateTestimonyRequestBody {
   title: string;
   description: string;
-  tags?: string[];
+  tags?: string;
   isBroadcast?: boolean;
   broadcastOrganizationId?: string;
   isSecret?: boolean;
