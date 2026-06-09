@@ -202,7 +202,7 @@ export interface TestimonyUnflagRequestBody {
 export interface CreateTestimonyRequestBody {
   title: string;
   description: string;
-  tags?: string[];
+  tags?: string;
   isBroadcast?: boolean;
   broadcastOrganizationId?: string;
   isSecret?: boolean;
@@ -286,6 +286,7 @@ export interface TeamPermissionUpdateRequestBody {
 export interface PaginationQuery {
   page?: number;
   limit?: number;
+  isActive?: boolean;
 }
 
 export interface RoleFilterQuery extends PaginationQuery {

@@ -21,10 +21,10 @@ export const getUserDetails = async (req: CustomRequest) => {
   const details =
     (await UserModel.findOne({
       email: tokenData?.email,
-    })) ||
+    }).lean()) ||
     (await OrganizationModel.findOne({
       businessEmail: tokenData?.email,
-    }));
+    }).lean());
 
   if (!details) throw new Error("Unauthorized!");
 

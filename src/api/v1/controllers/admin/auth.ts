@@ -72,12 +72,13 @@ export const AdminAuthController = () => {
         );
 
         await AuditLogModel.create({
+          userType: "admin",
           adminId: existingAdmin._id,
           action: "FAILED_LOGIN_ATTEMPT",
           resource: "admin_auth",
           ipAddress,
           userAgent,
-          level: "info",
+          level: "warning",
           category: "auth",
           details: { email, success: false },
         });
@@ -104,6 +105,7 @@ export const AdminAuthController = () => {
 
       // Log audit event
       await AuditLogModel.create({
+        userType: "admin",
         adminId: existingAdmin._id,
         action: "LOGIN_SUCCESS",
         resource: "admin_auth",
@@ -169,12 +171,13 @@ export const AdminAuthController = () => {
       if (admin.verificationCode !== otp) {
         // Log audit event
         await AuditLogModel.create({
+          userType: "admin",
           adminId: admin._id,
           action: "FAILED_OTP_VERIFICATION",
           resource: "admin_auth",
           ipAddress,
           userAgent,
-          level: "info",
+          level: "warning",
           category: "auth",
           details: { email, success: false },
         });
@@ -210,6 +213,7 @@ export const AdminAuthController = () => {
       });
 
       await AuditLogModel.create({
+        userType: "admin",
         adminId: admin._id,
         action: "SUCCESSFUL_OTP_VERIFICATION",
         resource: "admin_auth",
@@ -313,6 +317,7 @@ export const AdminAuthController = () => {
 
       // Log event
       await AuditLogModel.create({
+        userType: "admin",
         adminId: admin._id,
         action: "PASSWORD_RESET_CODE_SENT",
         resource: "admin_auth",
@@ -449,6 +454,7 @@ export const AdminAuthController = () => {
 
       // Log event
       await AuditLogModel.create({
+        userType: "admin",
         adminId: admin._id,
         action: "PROFILE_UPDATED",
         resource: "admin_auth",

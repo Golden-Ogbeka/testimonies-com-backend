@@ -43,7 +43,10 @@ export const UserAuthController = () => {
         (await UserModel.findOne({ username }).lean()) ||
         (await OrganizationModel.findOne({ username }).lean());
       if (existingUser) {
-        return sendErrorFeedback(res, 409, "Username already exists.");
+        return sendSuccessFeedback(res, "Username is not available.", {
+          available: false,
+          username,
+        });
       }
       return sendSuccessFeedback(res, "Username is available.", {
         available: true,
@@ -89,10 +92,14 @@ export const UserAuthController = () => {
 
       if (existingUser) {
         const conflictField =
-          existingUser.email === businessEmail
+          existingUser.email === businessEmail ||
+          (existingUser as unknown as IOrganization).businessEmail ===
+            businessEmail
             ? "email"
-            : existingUser.phoneNumber === businessPhoneNumber
-              ? "phoneNumber"
+            : existingUser.phoneNumber === businessPhoneNumber ||
+                (existingUser as unknown as IOrganization)
+                  .businessPhoneNumber === businessPhoneNumber
+              ? "phone number"
               : "username";
         return sendErrorFeedback(
           res,
@@ -169,10 +176,13 @@ export const UserAuthController = () => {
 
       if (existingUser) {
         const conflictField =
-          existingUser.email === email
+          existingUser.email === email ||
+          (existingUser as unknown as IOrganization).businessEmail === email
             ? "email"
-            : existingUser.phoneNumber === phoneNumber
-              ? "phoneNumber"
+            : existingUser.phoneNumber === phoneNumber ||
+                (existingUser as unknown as IOrganization)
+                  .businessPhoneNumber === phoneNumber
+              ? "phone number"
               : "username";
         return sendErrorFeedback(
           res,
@@ -517,7 +527,7 @@ export const UserAuthController = () => {
       // Send OTP
       await notifyUser({
         sendEmailNotification: true,
-        title: "Verify Account",
+        title: "Login OTP",
         userDetails: existingUser,
         message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
       });
@@ -685,7 +695,7 @@ export const UserAuthController = () => {
       // Send OTP
       await notifyUser({
         sendEmailNotification: true,
-        title: "Verify Account",
+        title: "Login OTP",
         userDetails: existingUser,
         message: `Use <b>${existingUser.verificationCode}</b> as your OTP<br />OTP expires ${OTP_EXPIRY}`,
       });

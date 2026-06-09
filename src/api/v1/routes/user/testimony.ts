@@ -103,9 +103,8 @@ UserTestimonyRouter.post(
       .withMessage("Description must be between 10 and 5000 characters"),
     body("tags")
       .optional({ checkFalsy: true })
-      .isArray()
-      .withMessage("Tags must be an array")
       .custom((tags) => {
+        tags = JSON.parse(tags); // Parse the tags from string to array
         if (tags && tags.length > 10) {
           throw new Error("Maximum 10 tags allowed");
         }
@@ -263,11 +262,11 @@ UserTestimonyRouter.post(
     param("id", "Testimony ID is required")
       .exists({ checkFalsy: true, checkNull: true })
       .custom((value) => isValidObjectId(value)),
-    body("description", "Reply description is required")
+    body("content", "Reply content is required")
       .exists({ checkFalsy: true, checkNull: true })
       .trim()
       .isLength({ min: 1, max: 2000 })
-      .withMessage("Reply must be between 1 and 2000 characters"),
+      .withMessage("Reply content must be between 1 and 2000 characters"),
   ],
   Controller.ReplyToTestimony as any,
 );

@@ -2,6 +2,12 @@
 
 A robust, premium, and production-ready backend for the Testimonies.com platform. This API handles complex user engagement, high-performance messaging, organization management, and multi-gateway payment integrations.
 
+## 📋 Documentation
+
+- **[Product Requirements Document (PRD)](./PRD.md)** - Complete feature specifications and requirements
+- **[Agent Guidelines](./AGENTS.md)** - Development rules and coding standards for AI agents
+- **[API Documentation](http://localhost:<PORT>/docs/user)** - Interactive Swagger documentation
+
 ## 🚀 Key Features
 
 - **Testimony Management**: Comprehensive system for creating, broadcasting, liking, and replying to testimonies.
