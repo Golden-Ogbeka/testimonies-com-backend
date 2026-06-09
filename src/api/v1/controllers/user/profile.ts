@@ -42,7 +42,24 @@ export const UserProfileController = () => {
 
       if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
-      return sendSuccessFeedback(res, "Profile retrieved", { userDetails });
+      const [followerCount, followingCount] = await Promise.all([
+        FollowRequestModel.countDocuments({
+          leaderId: userDetails._id,
+          status: "accepted",
+        }),
+        FollowRequestModel.countDocuments({
+          followerId: userDetails._id,
+          status: "accepted",
+        }),
+      ]);
+
+      return sendSuccessFeedback(res, "Profile retrieved", {
+        userDetails: {
+          ...userDetails,
+          followerCount,
+          followingCount,
+        },
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -615,7 +632,7 @@ export const UserProfileController = () => {
           // since this endpoint is public, only public and private profiles to be fetched
         })
           .select(
-            "username firstName lastName profileImage coverImageURL accountType bio -_id",
+            "username firstName lastName profileImage coverImageURL accountType bio _id",
           )
           .lean()) ||
         (await OrganizationModel.findOne({
@@ -626,7 +643,7 @@ export const UserProfileController = () => {
           // since this endpoint is public, only public and private profiles to be fetched
         })
           .select(
-            "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType -_id",
+            "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType _id",
           )
           .lean());
 
@@ -650,64 +667,17 @@ export const UserProfileController = () => {
     res: Response,
   ) => {
     try {
-      // check for validation errors
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
-
-      const { id } = req.params;
-
-      // check if user is blocked
-      const loggedInUser = await getUserDetails(req as any);
-
-      const isBlocked = await UserBlockModel.findOne({
-        userBlockingId: id,
-        userToBlockId: loggedInUser._id,
-      });
-
-      if (isBlocked) {
-        return sendErrorFeedback(
-          res,
-          403,
-          "You are not allowed to view this profile",
-        );
-      }
-
-      const isFollowing = await FollowRequestModel.findOne({
-        leaderId: id,
-        followerId: loggedInUser._id,
-        status: "accepted",
-      });
-
-      const userDetails =
-        (await UserModel.findOne({
-          _id: id,
-          active: true,
-          isFlagged: false,
-          ...(isFollowing
-            ? { profileVisibility: { $in: ["public", "private"] } }
-            : {
-                profileVisibility: "public", // if user is not following, only public profiles to be fetched
-              }),
-        }).select(
-          "-emailIsVerified -phoneNumberIsVerified -ntfToken -subscriptionType -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
-        )) ||
-        (await OrganizationModel.findOne({
-          _id: id,
-          active: true,
-          isFlagged: false,
-          ...(isFollowing
-            ? { profileVisibility: { $in: ["public", "private"] } }
-            : {
-                profileVisibility: "public", // if user is not following, only public profiles to be fetched
-              }),
-        }).select(
-          "-emailIsVerified -phoneNumberIsVerified -ntfToken -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
-        ));
-
-      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
+      const profile = await getUserProfileWithFollowStatus(req);
+      if (!profile.userDetails)
+        return sendErrorFeedback(res, 400, "Profile not found");
 
       return sendSuccessFeedback(res, "Profile found", {
-        user: userDetails,
+        user: {
+          ...profile.userDetails,
+          isFollowing: !!profile.isFollowing,
+          followerCount: profile.followerCount,
+          followingCount: profile.followingCount,
+        },
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -715,6 +685,68 @@ export const UserProfileController = () => {
         error instanceof Error ? error : new Error(String(error)),
       );
     }
+  };
+
+  const getUserProfileWithFollowStatus = async (req: Request) => {
+    const { id } = req.params;
+
+    const loggedInUser = await getUserDetails(req as any);
+
+    const isBlocked = await UserBlockModel.findOne({
+      userBlockingId: id,
+      userToBlockId: loggedInUser._id,
+    });
+
+    if (isBlocked) return { isBlocked: true };
+
+    const isFollowing = await FollowRequestModel.findOne({
+      leaderId: id,
+      followerId: loggedInUser._id,
+      status: "accepted",
+    });
+
+    const [followerCount, followingCount] = await Promise.all([
+      FollowRequestModel.countDocuments({
+        leaderId: id,
+        status: "accepted",
+      }),
+      FollowRequestModel.countDocuments({
+        followerId: id,
+        status: "accepted",
+      }),
+    ]);
+
+    const userDetails =
+      (await UserModel.findOne({
+        _id: id,
+        active: true,
+        isFlagged: false,
+        ...(isFollowing
+          ? { profileVisibility: { $in: ["public", "private"] } }
+          : {
+              profileVisibility: "public",
+            }),
+      })
+        .select(
+          "-emailIsVerified -phoneNumberIsVerified -ntfToken -subscriptionType -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
+        )
+        .lean()) ||
+      (await OrganizationModel.findOne({
+        _id: id,
+        active: true,
+        isFlagged: false,
+        ...(isFollowing
+          ? { profileVisibility: { $in: ["public", "private"] } }
+          : {
+              profileVisibility: "public",
+            }),
+      })
+        .select(
+          "-emailIsVerified -phoneNumberIsVerified -ntfToken -kycCompleted -isFlagged -triedLogin -triedPasswordReset -lastLoginAttempt -lastSuccessfulLogin -triedSignup -active",
+        )
+        .lean());
+
+    return { userDetails, isFollowing, followerCount, followingCount };
   };
 
   const SearchUsers = async (
@@ -742,7 +774,7 @@ export const UserProfileController = () => {
         profileVisibility: { $in: ["public", "private"] },
       })
         .select(
-          "username firstName lastName profileImage coverImageURL accountType bio -_id",
+          "username firstName lastName profileImage coverImageURL accountType bio _id",
         )
         .limit(10)
         .lean();
@@ -758,7 +790,7 @@ export const UserProfileController = () => {
         profileVisibility: { $in: ["public", "private"] },
       })
         .select(
-          "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType -_id",
+          "username businessName businessAddress businessBio businessWebsite businessLogoURL coverImageURL accountType _id",
         )
         .limit(10)
         .lean();
@@ -840,11 +872,24 @@ export const UserProfileController = () => {
         followerType: userDetails.accountType,
       });
 
+      const updatedProfile = await getUserProfileWithFollowStatus(req);
+
+      if (updatedProfile.isBlocked)
+        return sendErrorFeedback(
+          res,
+          403,
+          "You are not allowed to view this profile",
+        );
+
       return sendSuccessFeedback(
         res,
         "You have successfully initiated a follow request to this user",
         {
           followRequest: newFollowRequest,
+          profile: {
+            ...updatedProfile.userDetails,
+            isFollowing: !!updatedProfile.isFollowing,
+          },
         },
       );
     } catch (error) {
@@ -1002,9 +1047,24 @@ export const UserProfileController = () => {
       if (!followRequest)
         return sendErrorFeedback(res, 400, "Follow request not found");
 
+      const updatedProfile = await getUserProfileWithFollowStatus(req);
+
+      if (updatedProfile.isBlocked)
+        return sendErrorFeedback(
+          res,
+          403,
+          "You are not allowed to view this profile",
+        );
+
       return sendSuccessFeedback(
         res,
         "You have successfully unfollowed this user",
+        {
+          profile: {
+            ...updatedProfile.userDetails,
+            isFollowing: !!updatedProfile.isFollowing,
+          },
+        },
       );
     } catch (error) {
       return sendCatchFeedback(
