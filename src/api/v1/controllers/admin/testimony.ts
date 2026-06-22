@@ -7,6 +7,7 @@ import {
   sendSuccessFeedback,
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
+import AnalyticsCacheModel from "../../../../models/analytics-cache.model";
 import TestimonyModel from "../../../../models/testimony.model";
 import { CustomRequest } from "../../../../types/express";
 import {
@@ -60,80 +61,18 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
-
-      // Get testimonies with highest engagement (likes + replies + views)
-      const testimonies = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonylikes",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "likes",
-          },
-        },
-        {
-          $lookup: {
-            from: "testimonyreplies",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "replies",
-          },
-        },
-        {
-          $lookup: {
-            from: "testimonyviews",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "views",
-          },
-        },
-        {
-          $addFields: {
-            count: {
-              $add: [
-                { $size: "$likes" },
-                { $size: "$replies" },
-                { $size: "$views" },
-              ],
-            },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-            // select user fields
-            pipeline: [
-              {
-                $project: {
-                  firstName: 1,
-                  lastName: 1,
-                  email: 1,
-                  profilePicture: 1,
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            description: 1,
-            createdAt: 1,
-            count: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
       return sendSuccessFeedback(res, "Most engaged testimonies retrieved", {
-        testimonies,
+        testimonies: cache.highestEngagement,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -152,57 +91,18 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
-
-      const testimonies = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonylikes",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "likes",
-          },
-        },
-        {
-          $addFields: {
-            count: { $size: "$likes" },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            // select user fields
-            pipeline: [
-              {
-                $project: {
-                  firstName: 1,
-                  lastName: 1,
-                  email: 1,
-                  profilePicture: 1,
-                },
-              },
-            ],
-            as: "user",
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            description: 1,
-            createdAt: 1,
-            count: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
       return sendSuccessFeedback(res, "Most liked testimonies retrieved", {
-        testimonies,
+        testimonies: cache.highestLikes,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -221,57 +121,18 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
-
-      const testimonies = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonyreplies",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "replies",
-          },
-        },
-        {
-          $addFields: {
-            count: { $size: "$replies" },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            // select user fields
-            pipeline: [
-              {
-                $project: {
-                  firstName: 1,
-                  lastName: 1,
-                  email: 1,
-                  profilePicture: 1,
-                },
-              },
-            ],
-            as: "user",
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            description: 1,
-            createdAt: 1,
-            count: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
       return sendSuccessFeedback(res, "Most replied testimonies retrieved", {
-        testimonies,
+        testimonies: cache.highestReplies,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -290,57 +151,18 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
-
-      const testimonies = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonyviews",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "views",
-          },
-        },
-        {
-          $addFields: {
-            count: { $size: "$views" },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            // select user fields
-            pipeline: [
-              {
-                $project: {
-                  firstName: 1,
-                  lastName: 1,
-                  email: 1,
-                  profilePicture: 1,
-                },
-              },
-            ],
-            as: "user",
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            description: 1,
-            createdAt: 1,
-            count: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
       return sendSuccessFeedback(res, "Most viewed testimonies retrieved", {
-        testimonies,
+        testimonies: cache.highestViews,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -359,48 +181,19 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
-      const users = await TestimonyModel.aggregate([
-        {
-          $group: {
-            _id: "$userId",
-            count: { $sum: 1 },
-            lastActivity: { $max: "$createdAt" },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "user",
-            // select user fields
-            pipeline: [
-              {
-                $project: {
-                  firstName: 1,
-                  lastName: 1,
-                  email: 1,
-                  profilePicture: 1,
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            count: 1,
-            lastActivity: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
-
-      return sendSuccessFeedback(res, "Most active users retrieved", { users });
+      return sendSuccessFeedback(res, "Most active users retrieved", {
+        users: cache.mostActiveUsers,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -418,65 +211,18 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
-
-      // Get users with highest engagement (likes + replies received on their testimonies)
-      const users = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonylikes",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "likes",
-          },
-        },
-        {
-          $lookup: {
-            from: "testimonyreplies",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "replies",
-          },
-        },
-        {
-          $addFields: {
-            totalLikes: { $size: "$likes" },
-            totalReplies: { $size: "$replies" },
-          },
-        },
-        {
-          $group: {
-            _id: "$userId",
-            count: { $sum: "$count" },
-            totalReplies: { $sum: "$totalReplies" },
-            totalLikes: {
-              $sum: { $add: ["$totalLikes", "$totalReplies"] },
-            },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $project: {
-            count: 1,
-            totalReplies: 1,
-            totalLikes: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
       return sendSuccessFeedback(res, "Most engaged users retrieved", {
-        users,
+        users: cache.mostEngagedUsers,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -495,48 +241,19 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
-      const users = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonylikes",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "likes",
-          },
-        },
-        {
-          $addFields: {
-            count: { $size: "$likes" },
-          },
-        },
-        {
-          $group: {
-            _id: "$userId",
-            count: { $sum: "$count" },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $project: {
-            count: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
-
-      return sendSuccessFeedback(res, "Most liked users retrieved", { users });
+      return sendSuccessFeedback(res, "Most liked users retrieved", {
+        users: cache.mostLikedUsers,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,
@@ -554,48 +271,19 @@ export const AdminTestimonyController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const { limit = "10" } = req.query;
-      const limitInt = parseInt(limit as string, 10);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
+      });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
-      const users = await TestimonyModel.aggregate([
-        {
-          $lookup: {
-            from: "testimonyviews",
-            localField: "_id",
-            foreignField: "testimonyId",
-            as: "views",
-          },
-        },
-        {
-          $addFields: {
-            count: { $size: "$views" },
-          },
-        },
-        {
-          $group: {
-            _id: "$userId",
-            count: { $sum: "$count" },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: limitInt },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $project: {
-            count: 1,
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ]);
-
-      return sendSuccessFeedback(res, "Most viewed users retrieved", { users });
+      return sendSuccessFeedback(res, "Most viewed users retrieved", {
+        users: cache.mostViewedUsers,
+      });
     } catch (error) {
       return sendCatchFeedback(
         res,

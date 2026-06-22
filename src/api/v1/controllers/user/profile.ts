@@ -3,11 +3,8 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import { escapeRegex, generateRandomNumbers } from "../../../../functions";
-import {
-  getLocationFromIP,
-  getUserDetails,
-  parseUserAgent,
-} from "../../../../functions/auth";
+import { getUserDetails, parseUserAgent } from "../../../../functions/auth";
+import { AuthOpsCronSchedules } from "../../../../jobs/schedules/auth-ops";
 import {
   JWT_SECRET,
   OTP_EXPIRY,
@@ -168,25 +165,23 @@ export const UserProfileController = () => {
           const deviceInfo = req.headers["user-agent"]
             ? parseUserAgent(req.headers["user-agent"])
             : null;
-          const locationInfo = await getLocationFromIP(req.ip);
-
           const session = await AuthSessionModel.create({
             userId: existingUser._id,
             token,
             ipAddress: req.ip,
             userAgent: req.headers["user-agent"],
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            city: locationInfo?.city,
-            region: locationInfo?.region,
-            country: locationInfo?.country,
-            latitude: locationInfo?.latitude,
-            longitude: locationInfo?.longitude,
             deviceType: deviceInfo?.deviceType,
             deviceOS: deviceInfo?.os,
             deviceOSVersion: deviceInfo?.osVersion,
             deviceModel: deviceInfo?.model,
             deviceManufacturer: deviceInfo?.manufacturer,
           });
+
+          AuthOpsCronSchedules.resolveIPLocationNow(
+            session._id.toString(),
+            req.ip as string,
+          );
 
           await notifyUser({
             sendEmailNotification: true,

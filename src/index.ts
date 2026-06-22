@@ -26,6 +26,7 @@ import {
 } from "./functions/env";
 import { sendCatchFeedback, sendErrorFeedback } from "./functions/feedback";
 import { AgendaControl } from "./jobs";
+import { CRON_JOB_NAMES } from "./jobs/data";
 import logger from "./middleware/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { multerErrorHandler } from "./utils/cloudinary";
@@ -228,12 +229,17 @@ const server = httpServer.listen(PORT, async () => {
   );
   console.log("");
   // Run DB and Agenda in background so the process doesn't freeze if they're slow
-  Promise.all([connectMongoDB(), await AgendaControl.start()]).catch((err) => {
-    console.error(
-      "Startup error (server is up; /health may report down):",
-      err,
-    );
-  });
+  Promise.all([connectMongoDB(), await AgendaControl.start()])
+    .then(() => {
+      // Schedule recurring analytics every 24 hours
+      AgendaControl.every("24 hours", CRON_JOB_NAMES.COMPUTE_ADMIN_ANALYTICS);
+    })
+    .catch((err) => {
+      console.error(
+        "Startup error (server is up; /health may report down):",
+        err,
+      );
+    });
 });
 
 server.on("error", (error: NodeJS.ErrnoException) => {

@@ -20,8 +20,8 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import { AdminCronSchedules } from "../../../../jobs/schedules/admin";
+import { AuditCronSchedules } from "../../../../jobs/schedules/audit";
 import AdminModel, { IAdmin } from "../../../../models/admin.model";
-import AuditLogModel from "../../../../models/audit-log.model";
 import AuthSessionModel from "../../../../models/auth-session.model";
 import { CustomRequest } from "../../../../types/express";
 import {
@@ -71,16 +71,13 @@ export const AdminAuthController = () => {
           { lastLoginAttempt: new Date() },
         );
 
-        await AuditLogModel.create({
-          userType: "admin",
-          adminId: existingAdmin._id,
+        AuditCronSchedules.createAuditLogNow({
+          adminId: String(existingAdmin._id),
           action: "FAILED_LOGIN_ATTEMPT",
-          resource: "admin_auth",
-          ipAddress,
+          details: JSON.stringify({ email, success: false }),
+          email: existingAdmin.email,
+          ipAddress: ipAddress as string,
           userAgent,
-          level: "warning",
-          category: "auth",
-          details: { email, success: false },
         });
         return sendErrorFeedback(res, 400, "Invalid email or password");
       }
@@ -104,16 +101,13 @@ export const AdminAuthController = () => {
       await AdminCronSchedules.resetOTP(email);
 
       // Log audit event
-      await AuditLogModel.create({
-        userType: "admin",
-        adminId: existingAdmin._id,
+      AuditCronSchedules.createAuditLogNow({
+        adminId: String(existingAdmin._id),
         action: "LOGIN_SUCCESS",
-        resource: "admin_auth",
-        ipAddress,
+        details: JSON.stringify({ email, success: true }),
+        email: existingAdmin.email,
+        ipAddress: ipAddress as string,
         userAgent,
-        level: "info",
-        category: "auth",
-        details: { email, success: true },
       });
 
       return sendSuccessFeedback(res, "Login successful. Please verify OTP", {
@@ -170,16 +164,13 @@ export const AdminAuthController = () => {
 
       if (admin.verificationCode !== otp) {
         // Log audit event
-        await AuditLogModel.create({
-          userType: "admin",
-          adminId: admin._id,
+        AuditCronSchedules.createAuditLogNow({
+          adminId: String(admin._id),
           action: "FAILED_OTP_VERIFICATION",
-          resource: "admin_auth",
-          ipAddress,
+          details: JSON.stringify({ email, success: false }),
+          email,
+          ipAddress: ipAddress as string,
           userAgent,
-          level: "warning",
-          category: "auth",
-          details: { email, success: false },
         });
         return sendErrorFeedback(res, 400, "Invalid OTP");
       }
@@ -212,16 +203,13 @@ export const AdminAuthController = () => {
         expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
       });
 
-      await AuditLogModel.create({
-        userType: "admin",
-        adminId: admin._id,
+      AuditCronSchedules.createAuditLogNow({
+        adminId: String(admin._id),
         action: "SUCCESSFUL_OTP_VERIFICATION",
-        resource: "admin_auth",
-        ipAddress,
+        details: JSON.stringify({ email, success: true }),
+        email,
+        ipAddress: ipAddress as string,
         userAgent,
-        level: "info",
-        category: "auth",
-        details: { email, success: true },
       });
 
       return sendSuccessFeedback(res, "OTP verified successfully", {
@@ -316,14 +304,11 @@ export const AdminAuthController = () => {
       await AdminCronSchedules.resetOTP(email);
 
       // Log event
-      await AuditLogModel.create({
-        userType: "admin",
-        adminId: admin._id,
+      AuditCronSchedules.createAuditLogNow({
+        adminId: String(admin._id),
         action: "PASSWORD_RESET_CODE_SENT",
-        resource: "admin_auth",
-        level: "info",
-        category: "auth",
-        details: { email },
+        details: JSON.stringify({ email }),
+        email,
       });
 
       return sendSuccessFeedback(res, "Password reset code sent");
@@ -453,14 +438,11 @@ export const AdminAuthController = () => {
       await admin.save();
 
       // Log event
-      await AuditLogModel.create({
-        userType: "admin",
-        adminId: admin._id,
+      AuditCronSchedules.createAuditLogNow({
+        adminId: String(admin._id),
         action: "PROFILE_UPDATED",
-        resource: "admin_auth",
-        level: "info",
-        category: "auth",
-        details: { email: admin.email },
+        details: JSON.stringify({ email: admin.email }),
+        email: admin.email,
       });
 
       return sendSuccessFeedback(res, "Profile updated successfully", {

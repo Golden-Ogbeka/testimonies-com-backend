@@ -4,6 +4,7 @@ import {
   sendErrorFeedback,
   sendSuccessFeedback,
 } from "../../../../functions/feedback";
+import { CleanupCronSchedules } from "../../../../jobs/schedules/cleanup";
 import ConversationModel from "../../../../models/conversation.model";
 import MessageModel from "../../../../models/message.model";
 import OrganizationModel from "../../../../models/organization.model";
@@ -331,27 +332,11 @@ export const UserMessagingController = () => {
     try {
       const { userId } = getUserIdAndType(req);
 
-      const conversations = await ConversationModel.find({
-        "participants.userId": userId,
-      });
-      const conversationIds = conversations.map((c) => c._id);
-
-      await MessageModel.updateMany(
-        {
-          conversationId: { $in: conversationIds },
-          senderId: { $ne: userId },
-          isRead: false,
-        },
-        { isRead: true, readAt: new Date() },
+      CleanupCronSchedules.markAllConversationsReadNow(userId);
+      return sendSuccessFeedback(
+        res,
+        "Marking all conversations as read in the background",
       );
-
-      // Reset all unread counts for this user
-      for (const conv of conversations) {
-        conv.unreadCount.set(userId.toString(), 0);
-        await conv.save();
-      }
-
-      return sendSuccessFeedback(res, "All conversations marked as read");
     } catch (error: unknown) {
       return sendCatchFeedback(
         res,

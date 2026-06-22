@@ -1,20 +1,15 @@
-import axios from "axios";
+import crypto from "crypto";
 import { Response } from "express";
-import Stripe from "stripe";
-import {
-  FLUTTERWAVE_SECRET_KEY,
-  PAYSTACK_SECRET_KEY,
-  STRIPE_SECRET_KEY,
-  WEBSITE_URL,
-} from "../../../../functions/env";
 import {
   sendCatchFeedback,
   sendErrorFeedback,
   sendSuccessFeedback,
 } from "../../../../functions/feedback";
-import { IOrganization } from "../../../../models/organization.model";
+import { PaymentCronSchedules } from "../../../../jobs/schedules/payment";
+import JobResultModel from "../../../../models/job-result.model";
 import SubscriptionPlanModel from "../../../../models/subscription-plan.model";
 import SubscriptionModel from "../../../../models/subscription.model";
+import { IOrganization } from "../../../../models/organization.model";
 import { IUser } from "../../../../models/user.model";
 import {
   AuthUserRequest,
@@ -24,8 +19,6 @@ import {
   VerifyPaymentRequestBody,
 } from "../../../../types";
 import { getPaginationOptions } from "../../../../utils/pagination";
-
-const stripe = new Stripe(STRIPE_SECRET_KEY as string);
 
 export const UserSubscriptionController = () => {
   const getUserIdAndType = (req: AuthUserRequest) => {
@@ -180,109 +173,30 @@ export const UserSubscriptionController = () => {
       if (!subscriptionId)
         return sendErrorFeedback(res, 400, "subscriptionId is required");
 
-      const subscription = await SubscriptionModel.findOne({
-        _id: subscriptionId,
+      const jobToken = crypto.randomUUID();
+      await JobResultModel.create({
+        token: jobToken,
+        type: "payment_init",
+        status: "pending",
         userId,
-      }).populate("planDetails");
-      if (!subscription)
-        return sendErrorFeedback(res, 404, "Subscription not found");
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+      });
 
-      if (subscription.status === "active") {
-        return sendErrorFeedback(res, 400, "Subscription is already active");
-      }
+      PaymentCronSchedules.initPaymentNow({
+        userId,
+        userType: user.accountType === "organization" ? "organization" : "user",
+        email: (user as IUser).email || (user as IOrganization).businessEmail,
+        name: (user as IUser).firstName
+          ? `${(user as IUser).firstName} ${(user as IUser).lastName || ""}`
+          : (user as IOrganization).businessName,
+        subscriptionId,
+        paymentGateway,
+        jobToken,
+      });
 
-      const plan = subscription.planDetails;
-      if (!plan || plan.price <= 0)
-        return sendErrorFeedback(res, 400, "Invalid plan or price");
-
-      const amountToPay = plan.price;
-
-      subscription.paymentGateway = paymentGateway;
-
-      if (paymentGateway === "stripe") {
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(amountToPay * 100), // Stripe expects cents
-          currency: "usd",
-          metadata: {
-            subscriptionId: (subscription._id as any).toString(),
-            userId: userId.toString(),
-            userType: subscription.userType,
-          },
-        });
-
-        subscription.paymentReference = paymentIntent.id;
-        await subscription.save();
-
-        return sendSuccessFeedback(res, "Stripe payment initialized", {
-          clientSecret: paymentIntent.client_secret,
-        });
-      } else if (paymentGateway === "paystack") {
-        const response = await axios.post(
-          "https://api.paystack.co/transaction/initialize",
-          {
-            email:
-              (user as IUser).email || (user as IOrganization).businessEmail,
-            amount: Math.round(amountToPay * 100), // Kobo / Cents
-            metadata: {
-              subscriptionId: (subscription._id as any).toString(),
-              userId: userId.toString(),
-            },
-            callback_url: `${WEBSITE_URL}/dashboard/payment/success`,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        subscription.paymentReference = response.data.data.reference;
-        await subscription.save();
-
-        return sendSuccessFeedback(res, "Paystack payment initialized", {
-          authorization_url: response.data.data.authorization_url,
-          reference: response.data.data.reference,
-        });
-      } else if (paymentGateway === "flutterwave") {
-        const tx_ref = `tx-${userId}-${Date.now()}`;
-        const response = await axios.post(
-          "https://api.flutterwave.com/v3/payments",
-          {
-            tx_ref,
-            amount: amountToPay, // Flutterwave expects standard currency
-            currency: "USD",
-            redirect_url: `${WEBSITE_URL}/dashboard/payment/success`,
-            meta: {
-              subscriptionId: (subscription._id as any).toString(),
-              userId: userId.toString(),
-            },
-            customer: {
-              email:
-                (user as IUser).email || (user as IOrganization).businessEmail,
-              name: (user as IUser).firstName
-                ? `${(user as IUser).firstName} ${(user as IUser).lastName || ""}`
-                : (user as IOrganization).businessName,
-            },
-            customizations: {
-              title: "Testimonies Subscription",
-            },
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${FLUTTERWAVE_SECRET_KEY}`,
-            },
-          },
-        );
-
-        subscription.paymentReference = tx_ref;
-        await subscription.save();
-
-        return sendSuccessFeedback(res, "Flutterwave payment initialized", {
-          link: response.data.data.link,
-          tx_ref,
-        });
-      }
+      return sendSuccessFeedback(res, "Payment initialization started", {
+        token: jobToken,
+      });
     } catch (error: unknown) {
       console.log(error);
       return sendCatchFeedback(res, error as Error);
