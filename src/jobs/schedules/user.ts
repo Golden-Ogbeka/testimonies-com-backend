@@ -1,5 +1,6 @@
 import { AgendaControl } from "..";
 import { DEFAULT_JOB_TIMER, OTP_EXPIRY } from "../../functions/env";
+import { MailContentType } from "../../types";
 import { CRON_JOB_NAMES } from "../data";
 
 export const UserCronSchedules = {
@@ -38,5 +39,8 @@ export const UserCronSchedules = {
         email,
       },
     );
+  },
+  sendEmailNow: async (data: MailContentType) => {
+    await AgendaControl.now(CRON_JOB_NAMES.SEND_EMAIL, data);
   },
 };
