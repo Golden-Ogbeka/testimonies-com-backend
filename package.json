@@ -25,6 +25,7 @@
     "audit": "npm audit",
     "audit:ci": "npm audit --audit-level=moderate",
     "prepare": "simple-git-hooks",
+    "precommit": "lint-staged && npm run type:check",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status"
@@ -36,7 +37,7 @@
     ]
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged && npm run type:check"
+    "pre-commit": "npm run precommit"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
