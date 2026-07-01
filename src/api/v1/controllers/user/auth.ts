@@ -319,7 +319,7 @@ export const UserAuthController = () => {
       existingUser.triedSignup = false;
 
       await existingUser.save();
-      // Generate JWT Token
+
       return sendSuccessFeedback(
         res,
         "Verification Successful. Proceed to login",
