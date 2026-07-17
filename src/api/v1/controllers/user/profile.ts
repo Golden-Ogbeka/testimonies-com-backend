@@ -3,7 +3,11 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import { escapeRegex, generateRandomNumbers } from "../../../../functions";
-import { getUserDetails, parseUserAgent } from "../../../../functions/auth";
+import {
+  getUserDetails,
+  getUserDocument,
+  parseUserAgent,
+} from "../../../../functions/auth";
 import { AuthOpsCronSchedules } from "../../../../jobs/schedules/auth-ops";
 import {
   JWT_SECRET,
@@ -74,7 +78,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = (await getUserDetails(req as any)) as IUser;
+      const userDetails = (await getUserDocument(req as any)) as IUser;
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       const { firstName, lastName, bio, address } = req.body;
 
@@ -215,7 +220,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       if (!userDetails.triedLogin) {
         return sendErrorFeedback(
@@ -265,7 +271,8 @@ export const UserProfileController = () => {
 
       const { verificationCode } = req.body;
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       if (!userDetails.triedLogin) {
         return sendErrorFeedback(
@@ -317,7 +324,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       const { username } = req.body;
 
@@ -366,7 +374,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       const { phoneNumber } = req.body;
 
@@ -424,7 +433,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = (await getUserDetails(req as any)) as IOrganization;
+      const userDetails = (await getUserDocument(req as any)) as IOrganization;
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       const { businessName, businessAddress, businessWebsite, businessBio } =
         req.body;
@@ -463,7 +473,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       const { oldPassword, newPassword } = req.body;
 
@@ -549,7 +560,8 @@ export const UserProfileController = () => {
       if (!profilePhoto || profilePhoto.fieldname !== "profilePhoto")
         return sendErrorFeedback(res, 400, "Please upload a profile photo");
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       if (userDetails.accountType === "user") {
         userDetails.profileImage = profilePhoto.path;
@@ -582,7 +594,8 @@ export const UserProfileController = () => {
       if (!coverImage || coverImage.fieldname !== "coverImage")
         return sendErrorFeedback(res, 400, "Please upload a cover image");
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       userDetails.coverImageURL = coverImage.path; // both users and organizations use the same cover image field
 
@@ -1349,7 +1362,8 @@ export const UserProfileController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const userDetails = await getUserDetails(req as any);
+      const userDetails = await getUserDocument(req as any);
+      if (!userDetails) return sendErrorFeedback(res, 400, "Profile not found");
 
       const { profileVisibility } = req.body;
 
