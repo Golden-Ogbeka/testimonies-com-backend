@@ -210,6 +210,8 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
 // Socket connection to express app
 socketHandler(io);
+console.log("PORT from Render:", process.env.PORT);
+console.log("PORT_ENV:", PORT_ENV);
 
 const server = httpServer.listen(PORT, async () => {
   const baseUrl = BASE_URL || `http://localhost:${PORT}`;
