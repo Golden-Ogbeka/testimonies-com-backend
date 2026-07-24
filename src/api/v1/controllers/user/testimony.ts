@@ -12,6 +12,9 @@ import {
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
 import { paginate } from "../../../../functions/pagination";
+import { AnalyticsCronSchedules } from "../../../../jobs/schedules/analytics";
+import { CleanupCronSchedules } from "../../../../jobs/schedules/cleanup";
+import AnalyticsCacheModel from "../../../../models/analytics-cache.model";
 import OrganizationModel from "../../../../models/organization.model";
 import TestimonyLikeModel from "../../../../models/testimony-like.model";
 import TestimonyReplyLikeModel from "../../../../models/testimony-reply-like.model";
@@ -599,6 +602,9 @@ export const UserTestimonyController = () => {
         });
         testimony.viewsCount = (testimony.viewsCount || 0) + 1;
         await testimony.save();
+
+        AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
+        AnalyticsCronSchedules.computeUserStatsNow(String(testimony.userId));
       }
 
       return sendSuccessFeedback(res, "Testimony retrieved", {
@@ -678,6 +684,8 @@ export const UserTestimonyController = () => {
         isSecret: isSecret || false,
         userType: userDetails.accountType,
       });
+
+      AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
 
       return sendSuccessFeedback(res, "Testimony created successfully", {
         testimony,
@@ -786,6 +794,8 @@ export const UserTestimonyController = () => {
       testimony.deletedAt = new Date();
       await testimony.save();
 
+      AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
+
       return sendSuccessFeedback(res, "Testimony deleted successfully", {
         testimony,
       });
@@ -837,6 +847,8 @@ export const UserTestimonyController = () => {
       // Update testimony replies count
       testimony.repliesCount = (testimony.repliesCount || 0) + 1;
       await testimony.save();
+
+      AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
 
       return sendSuccessFeedback(res, "Reply created successfully", {
         reply,
@@ -927,6 +939,8 @@ export const UserTestimonyController = () => {
         await testimony.save();
       }
 
+      AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
+
       return sendSuccessFeedback(res, "Reply deleted successfully", {
         reply,
       });
@@ -987,6 +1001,9 @@ export const UserTestimonyController = () => {
       testimony.likesCount += 1;
       await testimony.save();
 
+      AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
+      AnalyticsCronSchedules.computeUserStatsNow(String(testimony.userId));
+
       return sendSuccessFeedback(res, "Testimony liked successfully", {
         testimony,
       });
@@ -1034,6 +1051,9 @@ export const UserTestimonyController = () => {
         testimony.likesCount -= 1;
         await testimony.save();
       }
+
+      AnalyticsCronSchedules.computeUserStatsNow(String(userDetails._id));
+      AnalyticsCronSchedules.computeUserStatsNow(String(testimony.userId));
 
       return sendSuccessFeedback(res, "Testimony unliked successfully", {
         testimony,
@@ -1766,19 +1786,11 @@ export const UserTestimonyController = () => {
         return sendErrorFeedback(res, 403, "Incorrect password");
       }
 
-      const result = await TestimonyModel.updateMany(
-        {
-          userId: userDetails._id,
-          isDeleted: false,
-        },
-        {
-          isDeleted: true,
-          deletedAt: new Date(),
-        },
+      await CleanupCronSchedules.deleteUserTestimoniesNow(
+        String(userDetails._id),
       );
-
-      return sendSuccessFeedback(res, "All testimonies deleted successfully", {
-        deletedCount: result.modifiedCount,
+      return sendSuccessFeedback(res, "All testimonies deletion started", {
+        message: "Your testimonies are being deleted in the background",
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -1813,19 +1825,9 @@ export const UserTestimonyController = () => {
       if (!passwordMatch) {
         return sendErrorFeedback(res, 403, "Incorrect password");
       }
-      const result = await TestimonyReplyModel.updateMany(
-        {
-          userId: userDetails._id,
-          isDeleted: false,
-        },
-        {
-          isDeleted: true,
-          deletedAt: new Date(),
-        },
-      );
-
-      return sendSuccessFeedback(res, "All replies deleted successfully", {
-        deletedCount: result.modifiedCount,
+      await CleanupCronSchedules.deleteUserRepliesNow(String(userDetails._id));
+      return sendSuccessFeedback(res, "All replies deletion started", {
+        message: "Your replies are being deleted in the background",
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -1845,28 +1847,19 @@ export const UserTestimonyController = () => {
 
       const { limit } = req.query;
 
-      const result = await TestimonyModel.aggregate([
-        {
-          $match: {
-            isDeleted: false,
-            isSecret: false,
-          },
-        },
-        { $unwind: "$tags" },
-        {
-          $group: {
-            _id: "$tags",
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: Number(limit ?? 20) },
-        { $project: { _id: 1 } },
-      ]);
-
-      return sendSuccessFeedback(res, "Testimony tags retrieved", {
-        tags: result.map((item) => item._id),
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
       });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
+
+      const tags = cache.testimonyTags.slice(0, Number(limit ?? 50));
+
+      return sendSuccessFeedback(res, "Testimony tags retrieved", { tags });
     } catch (error: unknown) {
       return sendCatchFeedback(
         res,
@@ -1966,51 +1959,21 @@ export const UserTestimonyController = () => {
 
       const userDetails = await getUserDetails(req);
 
-      const [
-        testimoniesCount,
-        repliesCount,
-        likesReceivedCount,
-        viewsReceivedCount,
-      ] = await Promise.all([
-        TestimonyModel.countDocuments({
-          userId: userDetails._id,
-          isDeleted: false,
-        }),
-        TestimonyReplyModel.countDocuments({
-          userId: userDetails._id,
-          isDeleted: false,
-        }),
-        TestimonyLikeModel.countDocuments({
-          testimonyId: {
-            $in: await TestimonyModel.find({
-              userId: userDetails._id,
-              isDeleted: false,
-            }).distinct("_id"),
-          },
-        }),
-        TestimonyModel.aggregate([
-          {
-            $match: {
-              userId: userDetails._id,
-              isDeleted: false,
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              totalViews: { $sum: "$viewsCount" },
-            },
-          },
-        ]).then((result) => result[0]?.totalViews || 0),
-      ]);
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "user_stats",
+        userId: String(userDetails._id),
+      });
+
+      if (!cache) {
+        return sendErrorFeedback(
+          res,
+          404,
+          "User stats not available yet. Please try again later.",
+        );
+      }
 
       return sendSuccessFeedback(res, "User testimony statistics retrieved", {
-        stats: {
-          testimoniesCount,
-          repliesCount,
-          likesReceivedCount,
-          viewsReceivedCount,
-        },
+        stats: cache.userStats,
       });
     } catch (error: unknown) {
       return sendCatchFeedback(

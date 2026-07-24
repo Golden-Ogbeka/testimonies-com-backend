@@ -6,11 +6,8 @@ import {
   sendSuccessFeedback,
   sendValidationErrorFeedback,
 } from "../../../../functions/feedback";
+import AnalyticsCacheModel from "../../../../models/analytics-cache.model";
 import OrganizationModel from "../../../../models/organization.model";
-import TestimonyLikeModel from "../../../../models/testimony-like.model";
-import TestimonyReplyModel from "../../../../models/testimony-reply.model";
-import TestimonyViewModel from "../../../../models/testimony-view.model";
-import TestimonyModel from "../../../../models/testimony.model";
 import UserModel from "../../../../models/user.model";
 import { CustomRequest } from "../../../../types/express";
 import {
@@ -215,18 +212,21 @@ export const AdminUserController = () => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
 
-      const totalUsers = await UserModel.countDocuments();
-      const activeUsers = await UserModel.countDocuments({ active: true });
-      const flaggedUsers = await UserModel.countDocuments({ isFlagged: true });
-      const verifiedUsers = await UserModel.countDocuments({
-        emailIsVerified: true,
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "admin_dashboard",
       });
+      if (!cache)
+        return sendErrorFeedback(
+          res,
+          404,
+          "Analytics data not available yet. Please try again later.",
+        );
 
       return sendSuccessFeedback(res, "User profile statistics retrieved", {
-        totalUsers,
-        activeUsers,
-        flaggedUsers,
-        verifiedUsers,
+        totalUsers: cache.overview.totalUsers,
+        activeUsers: cache.overview.activeUsers,
+        flaggedUsers: cache.overview.flaggedUsers,
+        verifiedUsers: cache.overview.verifiedUsers,
       });
     } catch (error) {
       return sendCatchFeedback(
@@ -252,28 +252,22 @@ export const AdminUserController = () => {
         return sendErrorFeedback(res, 404, "User not found");
       }
 
-      // Get user-specific statistics
-      const testimoniesCount = await TestimonyModel.countDocuments({
-        userId: id,
-      });
-      const likesCount = await TestimonyLikeModel.countDocuments({
-        userId: id,
-      });
-      const repliesCount = await TestimonyReplyModel.countDocuments({
-        userId: id,
-      });
-      const viewsCount = await TestimonyViewModel.countDocuments({
+      const cache = await AnalyticsCacheModel.findOne({
+        type: "user_stats",
         userId: id,
       });
 
+      if (!cache) {
+        return sendErrorFeedback(
+          res,
+          404,
+          "User stats not available yet. Please try again later.",
+        );
+      }
+
       return sendSuccessFeedback(res, "User profile statistics retrieved", {
         user,
-        statistics: {
-          testimoniesCount,
-          likesCount,
-          repliesCount,
-          viewsCount,
-        },
+        statistics: cache.userStats,
       });
     } catch (error) {
       return sendCatchFeedback(

@@ -3,7 +3,7 @@ import { IOrganization } from "../../../models/organization.model";
 import { IUser } from "../../../models/user.model";
 import { EmailAttachmentType } from "../../../types";
 import { NotificationType, PushNotificationType } from "../../../types/data";
-import { sendEmail } from "../../../utils/mailer";
+import { UserCronSchedules } from "../../../jobs/schedules/user";
 
 // --- Type definitions ---
 
@@ -88,7 +88,7 @@ export const notifyUser = async (
         const email = getUserEmail(user);
         if (!email) continue;
 
-        await sendEmail({
+        await UserCronSchedules.sendEmailNow({
           recipient: email,
           subject: title,
           email: message,
@@ -99,7 +99,7 @@ export const notifyUser = async (
     } else if (userDetails) {
       const email = getUserEmail(userDetails);
       if (email) {
-        await sendEmail({
+        await UserCronSchedules.sendEmailNow({
           recipient: email,
           subject: title,
           email: message,

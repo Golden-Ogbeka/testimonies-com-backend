@@ -1,36 +1,17 @@
 import { Document, PaginateModel, Schema, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
+import { IBaseUser } from "./user.model";
 
-export interface IOrganization extends Document {
-  username: string;
+export interface IOrganization extends IBaseUser {
   businessName: string;
   businessEmail: string;
   businessPhoneNumber: string;
-  password: string;
-  verificationCode?: string;
   businessLogoURL?: string;
-  coverImageURL?: string;
   businessAddress: string;
   businessLocationGeographicCoordinates?: [number, number];
   businessWebsite?: string;
-  active: boolean;
-  emailIsVerified: boolean;
-  phoneNumberIsVerified: boolean;
-  ntfToken?: string;
-  smsPinId?: string;
-  isFlagged: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-  subscriptionType: "basic" | "premium";
-  kycCompleted: boolean;
   businessBio?: string;
-  triedLogin: boolean;
-  triedPasswordReset: boolean;
-  lastLoginAttempt?: Date; // Date of last failed login attempt
-  lastSuccessfulLogin?: Date; // Date of last successful login
   accountType: "organization";
-  triedSignup?: boolean; // Boolean to track if user has tried to signup
-  profileVisibility: "public" | "private" | "secret";
 }
 
 const organizationSchema = new Schema<IOrganization>(

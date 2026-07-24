@@ -31,6 +31,15 @@ export const getUserDetails = async (req: CustomRequest) => {
   return details as IUser | IOrganization;
 };
 
+export const getUserDocument = async (req: CustomRequest) => {
+  const lean = await getUserDetails(req);
+  if (!lean) return null;
+  const doc =
+    (await UserModel.findById(lean._id)) ||
+    (await OrganizationModel.findById(lean._id));
+  return doc as IUser | IOrganization;
+};
+
 export const getTokenData = (req: CustomRequest) => {
   const authorization = req.headers["x-jwt-token"];
 

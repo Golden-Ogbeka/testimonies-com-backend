@@ -3,6 +3,8 @@ import colors from "colors/safe";
 import { generateRandomNumbers } from "../../functions";
 import OrganizationModel from "../../models/organization.model";
 import UserModel from "../../models/user.model";
+import { MailContentType } from "../../types";
+import { sendEmail } from "../../utils/mailer";
 import { CRON_JOB_NAMES } from "../data";
 
 export const UserCronDefinitions = (agenda: Agenda) => {
@@ -101,4 +103,18 @@ export const UserCronDefinitions = (agenda: Agenda) => {
       }
     },
   );
+
+  // Send Email
+  agenda.define(CRON_JOB_NAMES.SEND_EMAIL, async (job, done) => {
+    try {
+      const { attrs } = job;
+      const data = attrs.data as MailContentType;
+
+      await sendEmail(data);
+
+      done();
+    } catch (error) {
+      console.log("CRON:", colors.red(JSON.stringify(error)));
+    }
+  });
 };

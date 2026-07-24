@@ -301,17 +301,20 @@ UserAuthRouter.post(
 );
 
 // Sign in and sign up with google (automatic verification of email)
-// UserAuthRouter.post("/google", Controller.GoogleAuth);
+UserAuthRouter.post("/google", Controller.GoogleAuth);
 
-// //Google Login callback
-// UserAuthRouter.post(
-//   "/google/callback",
-//   body("code", "OAuth Code is required").exists({
-//     checkFalsy: true,
-//     checkNull: true,
-//   }),
-//   Controller.GoogleOAuthCallback,
-// );
+//Google Login callback
+UserAuthRouter.post(
+  "/google/callback",
+  body("code", "OAuth Code is required").exists({
+    checkFalsy: true,
+    checkNull: true,
+  }),
+  Controller.GoogleOAuthCallback,
+);
+
+// Poll for async job result
+UserAuthRouter.get("/job-result/:token", Controller.GetJobResult);
 
 // Get user sessions
 UserAuthRouter.get("/sessions", isUserOrOrganization, Controller.GetSessions);

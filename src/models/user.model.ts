@@ -1,17 +1,11 @@
 import { Document, PaginateModel, Schema, model } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
-export interface IUser extends Document {
+export interface IBaseUser extends Document {
   username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
   password?: string;
   verificationCode?: string;
   coverImageURL?: string;
-  profileImage?: string;
-  address?: string;
   active: boolean;
   emailIsVerified: boolean;
   phoneNumberIsVerified: boolean;
@@ -22,14 +16,23 @@ export interface IUser extends Document {
   updatedAt?: Date;
   subscriptionType: "basic" | "premium";
   kycCompleted: boolean;
-  bio?: string;
   triedLogin: boolean;
   triedPasswordReset: boolean;
-  lastLoginAttempt?: Date; // Date of last failed login attempt
-  lastSuccessfulLogin?: Date; // Date of last successful login
-  accountType: "user";
-  triedSignup?: boolean; // Boolean to track if user has tried to signup
+  lastLoginAttempt?: Date;
+  lastSuccessfulLogin?: Date;
+  triedSignup?: boolean;
   profileVisibility: "public" | "private" | "secret";
+}
+
+export interface IUser extends IBaseUser {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  profileImage?: string;
+  address?: string;
+  bio?: string;
+  accountType: "user";
 }
 
 const userSchema = new Schema<IUser>(
