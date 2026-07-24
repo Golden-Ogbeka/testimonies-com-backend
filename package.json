@@ -24,7 +24,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "audit": "npm audit",
     "audit:ci": "npm audit --audit-level=moderate",
-    "prepare": "simple-git-hooks",
+    "prepare": "command -v simple-git-hooks >/dev/null && simple-git-hooks || true",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status"
