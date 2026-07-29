@@ -238,6 +238,7 @@ const server = httpServer.listen(PORT, async () => {
       console.error(
         colors.red("Couldn't setup email transporter"),
         error.message,
+        { error },
       );
     } else {
       console.log(colors.blue("Email transporter setup successful"));
