@@ -448,14 +448,10 @@ export const UserAuthController = () => {
 
             await UserCronSchedules.resetOTP(existingUser.email);
 
-            return sendErrorFeedback(
-              res,
-              401,
-              "You need to verify your account to continue",
-              {
-                user: existingUser,
-              },
-            );
+            return sendSuccessFeedback(res, "Verify your account to continue", {
+              user: existingUser,
+              needsVerification: true,
+            });
           }
 
           existingUser.triedLogin = true;
