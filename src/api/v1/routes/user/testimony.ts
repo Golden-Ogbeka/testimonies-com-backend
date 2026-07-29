@@ -104,7 +104,9 @@ UserTestimonyRouter.post(
     body("tags")
       .optional({ checkFalsy: true })
       .custom((tags) => {
-        tags = JSON.parse(tags); // Parse the tags from string to array
+        if (typeof tags === "string") {
+          tags = JSON.parse(tags);
+        }
         if (tags && tags.length > 10) {
           throw new Error("Maximum 10 tags allowed");
         }
