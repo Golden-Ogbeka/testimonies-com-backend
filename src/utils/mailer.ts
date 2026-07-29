@@ -15,13 +15,14 @@ import { MailContentType } from "../types";
 const transporter = nodemailer.createTransport({
   host: EMAIL_HOST,
   port: Number(EMAIL_PORT),
+  secure: Number(EMAIL_PORT) === 465,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS,
   },
-  connectionTimeout: 5000, // 10 seconds
-  greetingTimeout: 5000,
-  socketTimeout: 5000,
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 // Handlebars view engine setup
@@ -95,4 +96,4 @@ const sendEmail = async ({
   }
 };
 
-export { sendEmail };
+export { sendEmail, transporter };

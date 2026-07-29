@@ -30,6 +30,7 @@ import { CRON_JOB_NAMES } from "./jobs/data";
 import logger from "./middleware/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { multerErrorHandler } from "./utils/cloudinary";
+import { transporter } from "./utils/mailer";
 import { corsList } from "./utils/constants";
 import { ErrorCodes } from "./utils/error-codes";
 
@@ -230,6 +231,19 @@ const server = httpServer.listen(PORT, async () => {
     "  Note: /api and /api/v1 require the x-api-key header. Swagger docs are public.",
   );
   console.log("");
+
+  // Verify nodemailer transporter
+  transporter.verify((error) => {
+    if (error) {
+      console.error(
+        colors.red("Couldn't setup email transporter"),
+        error.message,
+      );
+    } else {
+      console.log(colors.blue("Email transporter setup successful"));
+    }
+  });
+
   // Run DB and Agenda in background so the process doesn't freeze if they're slow
   Promise.all([connectMongoDB(), await AgendaControl.start()])
     .then(() => {
