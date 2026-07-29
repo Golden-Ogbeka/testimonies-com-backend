@@ -45,6 +45,8 @@ teamMemberSchema.virtual("userDetails", {
   localField: "user",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 teamMemberSchema.virtual("organizationDetails", {
@@ -52,6 +54,8 @@ teamMemberSchema.virtual("organizationDetails", {
   localField: "organization",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 teamMemberSchema.virtual("roleDetails", {

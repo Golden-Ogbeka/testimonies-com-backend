@@ -49,6 +49,8 @@ followRequestSchema.virtual("leaderDetails", {
   localField: "leaderId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 followRequestSchema.virtual("followerDetails", {
@@ -56,6 +58,8 @@ followRequestSchema.virtual("followerDetails", {
   localField: "followerId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 const FollowRequestModel = model<IFollowRequest, PaginateModel<IFollowRequest>>(

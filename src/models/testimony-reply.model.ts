@@ -53,6 +53,8 @@ testimonyReplySchema.virtual("userDetails", {
   localField: "userId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 testimonyReplySchema.plugin(mongoosePaginate);

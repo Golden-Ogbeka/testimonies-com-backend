@@ -43,6 +43,8 @@ userBlockSchema.virtual("userToBlockDetails", {
   localField: "userToBlockId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 userBlockSchema.virtual("userBlockingDetails", {
@@ -50,6 +52,8 @@ userBlockSchema.virtual("userBlockingDetails", {
   localField: "userBlockingId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 const UserBlockModel = model<IUserBlock, PaginateModel<IUserBlock>>(

@@ -51,6 +51,8 @@ promotionRequestSchema.virtual("userDetails", {
   localField: "user",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 promotionRequestSchema.plugin(mongoosePaginate);

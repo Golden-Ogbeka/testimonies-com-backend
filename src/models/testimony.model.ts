@@ -88,6 +88,8 @@ testimonySchema.virtual("userDetails", {
   localField: "userId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 // Virtuals for broadcast user details
@@ -96,6 +98,8 @@ testimonySchema.virtual("broadcastOrganizationDetails", {
   localField: "broadcastOrganizationId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 // flagged by details

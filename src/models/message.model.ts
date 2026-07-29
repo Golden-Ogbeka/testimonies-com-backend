@@ -48,6 +48,8 @@ messageSchema.virtual("senderDetails", {
   localField: "senderId",
   foreignField: "_id",
   justOne: true,
+  select:
+    "-triedLogin -kycCompleted -profileVisibility -ntfToken -isFlagged -lastLoginAttempt -lastSuccessfulLogin -triedPasswordReset -triedSignup -active -phoneNumberIsVerified",
 });
 
 const MessageModel = model<IMessage, PaginateModel<IMessage>>(
