@@ -3,8 +3,8 @@ import mongoosePaginate from "mongoose-paginate-v2";
 import { ISubscriptionPlan } from "./subscription-plan.model";
 
 export interface ISubscription extends Document {
-  userId: string;
-  planId: string;
+  userId: Types.ObjectId;
+  planId: Types.ObjectId;
   status: "active" | "cancelled" | "expired" | "trial" | "pending";
   startDate: Date;
   endDate: Date;
@@ -22,8 +22,8 @@ export interface ISubscription extends Document {
 
 const subscriptionSchema = new Schema<ISubscription>(
   {
-    userId: { type: String, required: true, unique: true },
-    planId: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, required: true, unique: true },
+    planId: { type: Schema.Types.ObjectId, required: true },
     status: {
       type: String,
       enum: ["active", "cancelled", "expired", "trial", "pending"],
