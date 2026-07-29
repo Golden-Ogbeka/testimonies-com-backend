@@ -421,26 +421,6 @@ UserTestimonyRouter.get(
   Controller.GetReplyLikes as any,
 );
 
-// Get testimonies of a specific user by userId (authenticated)
-UserTestimonyRouter.get(
-  "/user/:userId",
-  [
-    isUserOrOrganization,
-    param("userId", "User ID is required")
-      .exists({ checkFalsy: true, checkNull: true })
-      .custom((value) => isValidObjectId(value)),
-    query("page")
-      .optional()
-      .isInt({ min: 1 })
-      .withMessage("Page must be a positive integer"),
-    query("limit")
-      .optional()
-      .isInt({ min: 1, max: 100 })
-      .withMessage("Limit must be between 1 and 100"),
-  ],
-  Controller.GetUserTestimonies as any,
-);
-
 // Get user's testimonies (for authenticated users only)
 UserTestimonyRouter.get(
   "/user/my-testimonies",
@@ -521,6 +501,26 @@ UserTestimonyRouter.post(
       ),
   ],
   Controller.DeleteAllReplies,
+);
+
+// Get testimonies of a specific user by userId (authenticated)
+UserTestimonyRouter.get(
+  "/by-user/:userId",
+  [
+    isUserOrOrganization,
+    param("userId", "User ID is required")
+      .exists({ checkFalsy: true, checkNull: true })
+      .custom((value) => isValidObjectId(value)),
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage("Limit must be between 1 and 100"),
+  ],
+  Controller.GetUserTestimonies as any,
 );
 
 // Get tags for testimonies
