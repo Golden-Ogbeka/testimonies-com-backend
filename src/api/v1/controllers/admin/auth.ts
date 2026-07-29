@@ -74,6 +74,7 @@ export const AdminAuthController = () => {
         AuditCronSchedules.createAuditLogNow({
           adminId: String(existingAdmin._id),
           action: "FAILED_LOGIN_ATTEMPT",
+          category: "auth",
           details: JSON.stringify({ email, success: false }),
           email: existingAdmin.email,
           ipAddress: ipAddress as string,
@@ -104,6 +105,7 @@ export const AdminAuthController = () => {
       AuditCronSchedules.createAuditLogNow({
         adminId: String(existingAdmin._id),
         action: "LOGIN_SUCCESS",
+        category: "auth",
         details: JSON.stringify({ email, success: true }),
         email: existingAdmin.email,
         ipAddress: ipAddress as string,
@@ -167,6 +169,7 @@ export const AdminAuthController = () => {
         AuditCronSchedules.createAuditLogNow({
           adminId: String(admin._id),
           action: "FAILED_OTP_VERIFICATION",
+          category: "auth",
           details: JSON.stringify({ email, success: false }),
           email,
           ipAddress: ipAddress as string,
@@ -206,6 +209,7 @@ export const AdminAuthController = () => {
       AuditCronSchedules.createAuditLogNow({
         adminId: String(admin._id),
         action: "SUCCESSFUL_OTP_VERIFICATION",
+        category: "auth",
         details: JSON.stringify({ email, success: true }),
         email,
         ipAddress: ipAddress as string,
@@ -307,6 +311,7 @@ export const AdminAuthController = () => {
       AuditCronSchedules.createAuditLogNow({
         adminId: String(admin._id),
         action: "PASSWORD_RESET_CODE_SENT",
+        category: "auth",
         details: JSON.stringify({ email }),
         email,
       });
@@ -441,6 +446,7 @@ export const AdminAuthController = () => {
       AuditCronSchedules.createAuditLogNow({
         adminId: String(admin._id),
         action: "PROFILE_UPDATED",
+        category: "user",
         details: JSON.stringify({ email: admin.email }),
         email: admin.email,
       });

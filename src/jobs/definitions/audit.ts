@@ -6,6 +6,7 @@ import { CRON_JOB_NAMES } from "../data";
 type AuditLogJobData = {
   adminId: string;
   action: string;
+  category: "auth" | "user" | "testimony" | "system" | "data" | "security";
   details?: string;
   email?: string;
   ipAddress?: string;
@@ -21,6 +22,7 @@ export const AuditCronDefinitions = (agenda: Agenda) => {
       await AuditLogModel.create({
         adminId: data.adminId,
         action: data.action,
+        category: data.category,
         details: data.details,
         email: data.email,
         ipAddress: data.ipAddress,

@@ -4,6 +4,7 @@ import { CRON_JOB_NAMES } from "../data";
 type AuditLogData = {
   adminId: string;
   action: string;
+  category: "auth" | "user" | "testimony" | "system" | "data" | "security";
   details?: string;
   email?: string;
   ipAddress?: string;
