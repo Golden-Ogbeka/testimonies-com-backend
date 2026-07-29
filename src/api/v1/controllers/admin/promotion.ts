@@ -77,9 +77,9 @@ export const AdminPromotionController = () => {
       const { id } = req.params;
 
       const promotion = await PromotionModel.findById(id).populate([
-        "createdBy",
-        "updatedBy",
-        "flaggedBy",
+        "createdByDetails",
+        "updatedByDetails",
+        "flaggedByDetails",
       ]);
 
       if (!promotion) {

@@ -50,8 +50,6 @@ promotionRequestSchema.virtual("userDetails", {
   refPath: "userType",
   localField: "user",
   foreignField: "_id",
-  select:
-    "username firstName lastName email businessLogoURL profileImage businessName accountType",
   justOne: true,
 });
 

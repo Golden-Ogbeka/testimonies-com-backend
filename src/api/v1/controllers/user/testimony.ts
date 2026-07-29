@@ -15,12 +15,15 @@ import { paginate } from "../../../../functions/pagination";
 import { AnalyticsCronSchedules } from "../../../../jobs/schedules/analytics";
 import { CleanupCronSchedules } from "../../../../jobs/schedules/cleanup";
 import AnalyticsCacheModel from "../../../../models/analytics-cache.model";
+import FollowRequestModel from "../../../../models/follow-request.model";
 import OrganizationModel from "../../../../models/organization.model";
 import TestimonyLikeModel from "../../../../models/testimony-like.model";
 import TestimonyReplyLikeModel from "../../../../models/testimony-reply-like.model";
 import TestimonyReplyModel from "../../../../models/testimony-reply.model";
 import TestimonyViewModel from "../../../../models/testimony-view.model";
 import TestimonyModel, { ITestimony } from "../../../../models/testimony.model";
+import UserBlockModel from "../../../../models/user-block.model";
+import UserModel from "../../../../models/user.model";
 import {
   AuthUserRequest,
   CreateTestimonyRequestBody,
@@ -1717,6 +1720,211 @@ export const UserTestimonyController = () => {
     }
   };
 
+  const GetUserTestimonies = async (
+    req: AuthUserRequest<
+      { userId: string },
+      any,
+      any,
+      { page?: string; limit?: string }
+    >,
+    res: Response,
+  ) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) return sendValidationErrorFeedback(res, errors);
+
+      const currentUser = await getUserDetails(req);
+      const { userId } = req.params;
+
+      // Resolve target: could be a user or an organization
+      const [userTarget, orgTarget] = await Promise.all([
+        UserModel.findById(userId).lean(),
+        OrganizationModel.findById(userId).lean(),
+      ]);
+
+      const target = userTarget ?? orgTarget;
+      if (!target || !target.active) {
+        return sendErrorFeedback(res, 404, "User not found");
+      }
+
+      const targetId = target._id;
+      const isOrganization = !!orgTarget;
+      const isOwnProfile = String(targetId) === String(currentUser._id);
+
+      // Check if either party has blocked the other
+      const blockExists = await UserBlockModel.findOne({
+        $or: [
+          { userToBlockId: targetId, userBlockingId: currentUser._id },
+          { userToBlockId: currentUser._id, userBlockingId: targetId },
+        ],
+      }).lean();
+
+      if (blockExists) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "You cannot view this user's testimonies",
+        );
+      }
+
+      // Profile visibility check
+      const profileVisibility = (target as any).profileVisibility ?? "public";
+
+      if (profileVisibility === "secret" && !isOwnProfile) {
+        return sendErrorFeedback(
+          res,
+          403,
+          "This user's profile is not accessible",
+        );
+      }
+
+      if (profileVisibility === "private" && !isOwnProfile) {
+        const isFollowing = await FollowRequestModel.findOne({
+          leaderId: targetId,
+          followerId: currentUser._id,
+          status: "accepted",
+        }).lean();
+
+        if (!isFollowing) {
+          return sendErrorFeedback(
+            res,
+            403,
+            "You must follow this user to view their testimonies",
+          );
+        }
+      }
+
+      const options = getPaginationOptions(req);
+      const page = options.page ?? 1;
+      const limit = options.limit ?? 20;
+      const { offset } = paginate({ page, limit });
+
+      const matchQuery: Record<string, any> = {
+        userId: new ObjectId(userId),
+        userType: isOrganization ? "organization" : "user",
+        isDeleted: false,
+      };
+
+      if (!isOwnProfile) {
+        matchQuery.isSecret = false;
+      }
+
+      matchQuery.$or = [
+        { isBroadcast: false },
+        { isBroadcast: true, broadcastApproved: true },
+      ];
+
+      const [result] = await TestimonyModel.aggregate([
+        { $match: matchQuery },
+
+        // USER / ORGANIZATION DETAILS (only the matching collection)
+        {
+          $lookup: {
+            from: isOrganization ? "organizations" : "users",
+            let: { testimonyUserId: "$userId" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$$testimonyUserId"] },
+                },
+              },
+              {
+                $project: isOrganization
+                  ? {
+                      businessName: 1,
+                      businessLogoURL: 1,
+                      accountType: 1,
+                    }
+                  : {
+                      firstName: 1,
+                      lastName: 1,
+                      username: 1,
+                      profileImage: 1,
+                      accountType: 1,
+                    },
+              },
+            ],
+            as: "userDetails",
+          },
+        },
+
+        // LIKED STATUS
+        {
+          $lookup: {
+            from: "testimony-likes",
+            let: { testimonyId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$testimonyId", "$$testimonyId"] },
+                      { $eq: ["$userId", currentUser._id] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "liked",
+          },
+        },
+
+        // COMPUTED FIELDS
+        {
+          $addFields: {
+            isLiked: { $gt: [{ $size: "$liked" }, 0] },
+            userDetails: { $arrayElemAt: ["$userDetails", 0] },
+          },
+        },
+
+        {
+          $facet: {
+            results: [
+              { $sort: { createdAt: -1 } },
+              { $skip: offset },
+              { $limit: limit },
+              {
+                $project: {
+                  liked: 0,
+                  isDeleted: 0,
+                  deletedAt: 0,
+                  deletedBy: 0,
+                  isSecret: 0,
+                },
+              },
+            ],
+            total: [{ $count: "total" }],
+          },
+        },
+      ]);
+
+      const testimonies = result?.results ?? [];
+      const totalCount = result?.total?.[0]?.total ?? 0;
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasNextPage = offset + limit < totalCount;
+      const hasPrevPage = page > 1;
+
+      return sendSuccessFeedback(res, "User testimonies retrieved", {
+        testimonies: {
+          results: testimonies,
+          totalResults: totalCount,
+          resultsPerPage: limit,
+          currentPage: page,
+          totalPages,
+          nextPage: hasNextPage ? page + 1 : null,
+          prevPage: hasPrevPage ? page - 1 : null,
+          hasNextPage,
+          hasPrevPage,
+        },
+      });
+    } catch (error: unknown) {
+      return sendCatchFeedback(
+        res,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+  };
+
   const GetMyReplies = async (
     req: AuthUserRequest<
       never,
@@ -2174,6 +2382,7 @@ export const UserTestimonyController = () => {
     CheckReplyLiked,
     GetReplyLikes,
     GetMyTestimonies,
+    GetUserTestimonies,
     GetMyReplies,
     DeleteAllTestimonies,
     DeleteAllReplies,

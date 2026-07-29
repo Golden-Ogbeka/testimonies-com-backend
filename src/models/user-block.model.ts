@@ -42,10 +42,6 @@ userBlockSchema.virtual("userToBlockDetails", {
   refPath: "userToBlockType",
   localField: "userToBlockId",
   foreignField: "_id",
-  options: {
-    select:
-      "username firstName lastName email businessLogoURL profileImage businessName accountType",
-  },
   justOne: true,
 });
 
@@ -54,10 +50,6 @@ userBlockSchema.virtual("userBlockingDetails", {
   localField: "userBlockingId",
   foreignField: "_id",
   justOne: true,
-  options: {
-    select:
-      "username firstName lastName email businessLogoURL profileImage businessName accountType",
-  },
 });
 
 const UserBlockModel = model<IUserBlock, PaginateModel<IUserBlock>>(

@@ -47,8 +47,6 @@ messageSchema.virtual("senderDetails", {
   refPath: "senderType",
   localField: "senderId",
   foreignField: "_id",
-  select:
-    "username firstName lastName email businessLogoURL profileImage businessName accountType",
   justOne: true,
 });
 

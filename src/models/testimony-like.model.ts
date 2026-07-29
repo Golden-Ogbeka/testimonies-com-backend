@@ -40,10 +40,6 @@ testimonyLikeSchema.virtual("userDetails", {
   refPath: "userType",
   localField: "userId",
   foreignField: "_id",
-  options: {
-    select:
-      "username firstName lastName email businessLogoURL profileImage businessName accountType",
-  },
   justOne: true,
 });
 

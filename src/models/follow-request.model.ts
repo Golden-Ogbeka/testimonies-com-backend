@@ -48,10 +48,6 @@ followRequestSchema.virtual("leaderDetails", {
   refPath: "leaderType",
   localField: "leaderId",
   foreignField: "_id",
-  options: {
-    select:
-      "username firstName lastName email businessLogoURL profileImage businessName accountType",
-  },
   justOne: true,
 });
 
@@ -60,10 +56,6 @@ followRequestSchema.virtual("followerDetails", {
   localField: "followerId",
   foreignField: "_id",
   justOne: true,
-  options: {
-    select:
-      "username firstName lastName email businessLogoURL profileImage businessName accountType",
-  },
 });
 
 const FollowRequestModel = model<IFollowRequest, PaginateModel<IFollowRequest>>(
