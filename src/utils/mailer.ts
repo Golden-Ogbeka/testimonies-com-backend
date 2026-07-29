@@ -23,8 +23,6 @@ const transporter = nodemailer.createTransport({
   connectionTimeout: 30000,
   greetingTimeout: 30000,
   socketTimeout: 30000,
-  logger: true,
-  debug: true,
 });
 
 // Handlebars view engine setup
