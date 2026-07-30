@@ -16,7 +16,7 @@ A robust, premium, and production-ready backend for the Testimonies.com platform
 - **Organization & Team Tools**: Advanced role-based access control (RBAC) for organizations and their internal teams.
 - **Subscription & Promotions**: Dynamic plan management and promotion request workflows.
 - **Global Search & Discovery**: Optimized MongoDB text search and indexing for testimonies and users.
-- **Security & Optimization**: 
+- **Security & Optimization**:
   - Rate limiting and standard security headers (Helmet).
   - CSRF and parameter pollution protection.
   - Compound MongoDB indexing for high-load performance.
@@ -35,31 +35,36 @@ A robust, premium, and production-ready backend for the Testimonies.com platform
 ## 📖 API Documentation
 
 The project uses Swagger to provide interactive documentation:
+
 - **User API Documentation**: `http://localhost:<PORT>/docs/user`
 - **Admin API Documentation**: `http://localhost:<PORT>/docs/admin`
 
-*Note: Most endpoints require an `x-api-key` header and valid JWT authentication.*
+_Note: Most endpoints require an `x-api-key` header and valid JWT authentication._
 
 ## ⚙️ Setup & Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd testimonies-com-backend
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Configure Environment Variables**:
    Copy the `.env.example` to `.env` and fill in the required keys (MongoDB URI, Payment Secrets, etc.):
+
    ```bash
    cp .env.example .env
    ```
 
 4. **Run in Development**:
+
    ```bash
    npm run dev
    ```
@@ -79,4 +84,4 @@ The project uses Swagger to provide interactive documentation:
 
 ## 📄 License
 
-This project is licensed under the [ISC License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
