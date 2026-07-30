@@ -61,9 +61,6 @@ UserTestimonyRouter.get(
       .optional()
       .isIn(["broadcast", "normal"])
       .withMessage("Type must be either 'broadcast' or 'normal'"),
-    query("userId")
-      .optional()
-      .custom((value) => isValidObjectId(value)),
   ],
   Controller.GetTestimonies as any,
 );

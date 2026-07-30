@@ -129,7 +129,6 @@ export const UserTestimonyController = () => {
         tag?: string;
         keyword?: string;
         type?: "broadcast" | "normal";
-        userId?: string;
         page?: string;
         limit?: string;
       }
@@ -155,7 +154,7 @@ export const UserTestimonyController = () => {
         limit,
       });
 
-      const { tag, keyword, type, userId } = req.query;
+      const { tag, keyword, type } = req.query;
 
       const matchQuery: Record<string, any> = {
         isDeleted: false,
@@ -163,11 +162,6 @@ export const UserTestimonyController = () => {
       };
 
       const andConditions: Record<string, any>[] = [];
-
-      // FILTER BY USER
-      if (userId) {
-        matchQuery.userId = new ObjectId(userId);
-      }
 
       // FILTER BY TAG
       if (tag) {

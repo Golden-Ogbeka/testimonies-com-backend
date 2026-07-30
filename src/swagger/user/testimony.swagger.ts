@@ -2,7 +2,7 @@
  * @swagger
  * /user/testimony:
  *   get:
- *     summary: Get user testimonies
+ *     summary: Get user testimonies feed
  *     tags: [User Testimony]
  *     security:
  *       - ApiKey: []
@@ -12,9 +12,47 @@
  *         name: page
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: tag
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: keyword
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [broadcast, normal]
  *     responses:
  *       200:
  *         description: Testimonies retrieved
+ *
+ * /user/testimony/by-user/{userId}:
+ *   get:
+ *     summary: Get testimonies by user (with privacy checks)
+ *     tags: [User Testimony]
+ *     security:
+ *       - ApiKey: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: User testimonies retrieved
+ *       403:
+ *         description: Cannot view this user's testimonies (blocked/private/secret)
+ *       404:
+ *         description: User not found
  *
  *   post:
  *     summary: Create newly published testimony
