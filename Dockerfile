@@ -1,24 +1,26 @@
-FROM node:20-alpine
-
+FROM node:20-alpine AS deps
 WORKDIR /app
-
-# Install node dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
 
-# Copy source code
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 COPY . .
-
-# Build TypeScript
-RUN npm run type:check
 RUN npx tsc
 
-# Expose port
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY package*.json ./
+COPY migrate-mongo-config.js ./
+COPY migrations ./migrations
+
 EXPOSE 5000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:5000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
-# Run migrations and start server
 CMD ["sh", "-c", "npm run migrate:up && node dist/src/index.js"]
